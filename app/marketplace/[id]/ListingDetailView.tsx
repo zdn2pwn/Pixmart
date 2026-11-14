@@ -81,6 +81,10 @@ export function ListingDetailView({
       router.push(`/login?from=/marketplace/${listing.id}`);
       return;
     }
+    if (session.role === "SELLER") {
+      setErrorMsg("Akun Seller hanya untuk menjual. Silakan buat/gunakan akun Buyer untuk berbelanja.");
+      return;
+    }
     setShowNegoModal(true);
   }
 
@@ -88,6 +92,10 @@ export function ListingDetailView({
     e.preventDefault();
     if (!session) {
       router.push(`/login?from=/marketplace/${listing.id}`);
+      return;
+    }
+    if (session.role === "SELLER") {
+      setErrorMsg("Akun Seller tidak dapat menawar barang.");
       return;
     }
     setErrorMsg(null);
@@ -111,7 +119,8 @@ export function ListingDetailView({
       router.push(`/login?from=/marketplace/${listing.id}`);
       return;
     }
-    if (!confirm(`Konfirmasi pembelian langsung sesuai harga katalog Rp ${listing.fiatEstimateIdr.toLocaleString("id-ID")}? Sistem akan membuat Escrow Room untuk serah terima COD.`)) {
+    if (session.role === "SELLER") {
+      setErrorMsg("Akun Seller hanya untuk menjual barang. Gunakan akun Buyer untuk transaksi pembelian.");
       return;
     }
     setErrorMsg(null);

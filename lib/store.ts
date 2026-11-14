@@ -26,6 +26,7 @@ import {
   SEED_LISTINGS,
   SEED_NEGOTIATIONS,
   SEED_ORDERS,
+  SEED_ESCROW_ROOMS,
 } from "@/lib/data/seed";
 
 import { calculateDistanceKm, formatDistance, type Coordinates } from "@/lib/location";
@@ -102,45 +103,14 @@ class MarketplaceStore {
       console.warn("Failed to load persisted state, falling back to seed", e);
     }
 
-    // Default Seed Initialization
+    // Clean Initial State (No Dummy Data)
     this.users = [...SEED_USERS];
     this.listings = [...SEED_LISTINGS];
     this.negotiations = [...SEED_NEGOTIATIONS];
-    this.escrowRooms = [...SEED_ORDERS];
-    this.wishlists = {
-      usr_buyer_01: ["lst_001", "lst_003"],
-    };
-    this.auditLogs = [
-      {
-        id: "aud_01",
-        actorId: "usr_buyer_01",
-        actorRole: "BUYER",
-        action: "OFFER_MADE",
-        targetId: "neg_001",
-        details: "Buyer membuat offer Rp 4.200.000 untuk ThinkPad X230 Libreboot",
-        timestamp: new Date("2026-11-14T14:10:00+07:00"),
-      },
-      {
-        id: "aud_02",
-        actorId: "system",
-        actorRole: "OWNER",
-        action: "ESCROW_ROOM_CREATED",
-        targetId: "ESC-7701",
-        details: "Escrow room dibuat setelah kesepakatan deal Game Boy Color",
-        timestamp: new Date("2026-11-14T10:15:00+07:00"),
-      },
-    ];
-    this.notifications = [
-      {
-        id: "notif_01",
-        userId: "usr_seller_01",
-        title: "Penawaran Baru Diterima",
-        message: "Anonymous Buyer #8821 mengajukan tawaran Rp 4.200.000",
-        linkUrl: "/negotiations/neg_001",
-        read: false,
-        createdAt: new Date(),
-      },
-    ];
+    this.escrowRooms = [...SEED_ESCROW_ROOMS];
+    this.wishlists = {};
+    this.auditLogs = [];
+    this.notifications = [];
     this.saveState();
   }
 
@@ -186,9 +156,23 @@ class MarketplaceStore {
     return this.users.find((u) => u.codename.toLowerCase() === email.toLowerCase()) || null;
   }
 
+  getFallbackUser(id: string, role: UserRole = "SELLER"): User {
+    return {
+      id,
+      codename: `Anonymous ${role === "SELLER" ? "Seller" : "Buyer"} #${id ? id.slice(-4) : "0000"}`,
+      email: `${id}@pixmart.local`,
+      role,
+      reputation: 100,
+      completedDeals: 0,
+      locationCity: "Jakarta",
+      avatarSeed: id || "pix",
+      createdAt: new Date(),
+    };
+  }
+
   getUserByRole(role: UserRole): User {
     const u = this.users.find((user) => user.role === role);
-    return u || this.users[0];
+    return u || this.users[0] || this.getFallbackUser("usr_system", "OWNER");
   }
 
   ensureUser(data: { id: string; codename: string; email: string; role: UserRole }): User {
@@ -238,7 +222,7 @@ class MarketplaceStore {
         return true;
       })
       .map((l) => {
-        const seller = this.getUserById(l.sellerId) || this.users[1];
+        const seller = this.getUserById(l.sellerId) || this.getFallbackUser(l.sellerId, "SELLER");
         return { ...l, seller };
       });
   }
@@ -252,7 +236,7 @@ class MarketplaceStore {
     if (!l) return null;
     l.views += 1;
     this.saveState();
-    const seller = this.getUserById(l.sellerId) || this.users[1];
+    const seller = this.getUserById(l.sellerId) || this.getFallbackUser(l.sellerId, "SELLER");
     return { ...l, seller };
   }
 
@@ -298,7 +282,7 @@ class MarketplaceStore {
 
     // Map to public sanitized listing with distance calculation
     const enriched: PublicListingItem[] = items.map((l) => {
-      const seller = this.getUserById(l.sellerId) || this.users[1];
+      const seller = this.getUserById(l.sellerId) || this.getFallbackUser(l.sellerId, "SELLER");
 
       let distanceKm: number | null = null;
       let distanceFormatted = "Pilih / deteksi lokasi";
@@ -794,8 +778,8 @@ class MarketplaceStore {
 
   private enrichNegotiation(neg: Negotiation): NegotiationWithDetails {
     const listing = this.listings.find((l) => l.id === neg.listingId) || this.listings[0];
-    const buyer = this.getUserById(neg.buyerId) || this.users[4];
-    const seller = this.getUserById(neg.sellerId) || this.users[1];
+    const buyer = this.getUserById(neg.buyerId) || this.getFallbackUser(neg.buyerId, "BUYER");
+    const seller = this.getUserById(neg.sellerId) || this.getFallbackUser(neg.sellerId, "SELLER");
     return { ...neg, listing, buyer, seller };
   }
 
@@ -1173,8 +1157,8 @@ class MarketplaceStore {
 
   private enrichEscrowRoom(r: EscrowRoom): EscrowRoomWithDetails {
     const listing = this.listings.find((l) => l.id === r.listingId) || this.listings[0];
-    const seller = this.getUserById(r.sellerId) || this.users[1];
-    const buyer = this.getUserById(r.buyerId) || this.users[4];
+    const seller = this.getUserById(r.sellerId) || this.getFallbackUser(r.sellerId, "SELLER");
+    const buyer = this.getUserById(r.buyerId) || this.getFallbackUser(r.buyerId, "BUYER");
     const meetupLocation =
       r.meetingConfirmed?.locationName ||
       r.meetingProposal?.locationName ||

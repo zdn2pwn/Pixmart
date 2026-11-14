@@ -227,3 +227,49 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #39FF14;
 }
+
+/* Pixel Dissolve / Ephemeral Burn Animation */
+@keyframes pixel-burn {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+    filter: contrast(100%) brightness(100%);
+  }
+  30% {
+    opacity: 0.8;
+    filter: contrast(200%) brightness(140%);
+    text-shadow: 2px 0 #39FF14, -2px 0 #ff0055;
+    clip-path: polygon(0 0, 100% 0, 100% 70%, 0 85%);
+  }
+  60% {
+    opacity: 0.45;
+    filter: blur(1.5px) grayscale(80%);
+    transform: scale(0.97) skewX(-1.5deg);
+    clip-path: polygon(0 20%, 100% 10%, 100% 90%, 0 75%);
+  }
+  85% {
+    opacity: 0.2;
+    filter: blur(4px);
+    transform: scale(0.94);
+  }
+  100% {
+    opacity: 0;
+    filter: blur(6px);
+    transform: scale(0.9);
+  }
+}
+
+.pixel-dissolving {
+  animation: pixel-burn 1.1s forwards ease-out;
+  pointer-events: none;
+}
+
+.pixel-burned-placeholder {
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(255, 255, 255, 0.02),
+    rgba(255, 255, 255, 0.02) 1px,
+    transparent 1px,
+    transparent 2px
+  );
+}

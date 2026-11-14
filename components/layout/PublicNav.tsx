@@ -17,7 +17,7 @@ import {
   RefreshCw,
   ChevronDown,
 } from "lucide-react";
-import { logoutAction, changeRoleAction } from "@/app/actions/auth";
+import { logoutAction } from "@/app/actions/auth";
 
 interface PublicNavProps {
   currentRole?: string;
@@ -33,18 +33,10 @@ export function PublicNav({
   const [open, setOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [isPendingLogout, startLogout] = useTransition();
-  const [isPendingSwitch, startSwitch] = useTransition();
 
   function handleLogout() {
     startLogout(async () => {
       await logoutAction();
-    });
-  }
-
-  function handleSwitchRole(role: "BUYER" | "SELLER") {
-    setUserMenuOpen(false);
-    startSwitch(async () => {
-      await changeRoleAction(role);
     });
   }
 
@@ -162,38 +154,11 @@ export function PublicNav({
                     <div className="absolute right-0 top-full mt-1.5 z-20 w-48 bg-[#111] border border-[#2a2a2a] shadow-xl">
                       {/* Role badge */}
                       <div className="px-3 py-2 border-b border-[#1a1a1a]">
-                        <div className="text-[11px] font-mono text-[#555]">Role saat ini</div>
-                        <div className="text-xs font-bold font-mono text-[#39FF14]">{currentRole}</div>
-                      </div>
-
-                      {/* Switch role — only buyer/seller can switch */}
-                      {(currentRole === "BUYER" || currentRole === "SELLER") && (
-                        <div className="border-b border-[#1a1a1a]">
-                          <div className="px-3 pt-2 pb-1 text-[10px] font-mono text-[#555] uppercase tracking-wider">
-                            Ganti Role
-                          </div>
-                          {currentRole !== "BUYER" && (
-                            <button
-                              onClick={() => handleSwitchRole("BUYER")}
-                              disabled={isPendingSwitch}
-                              className="w-full flex items-center gap-2 px-3 py-2 text-xs font-mono text-[#aaa] hover:bg-[#1a1a1a] hover:text-white transition-colors disabled:opacity-50"
-                            >
-                              <ShoppingBag size={12} className="text-[#39FF14]" />
-                              Jadi Buyer
-                            </button>
-                          )}
-                          {currentRole !== "SELLER" && (
-                            <button
-                              onClick={() => handleSwitchRole("SELLER")}
-                              disabled={isPendingSwitch}
-                              className="w-full flex items-center gap-2 px-3 py-2 text-xs font-mono text-[#aaa] hover:bg-[#1a1a1a] hover:text-white transition-colors disabled:opacity-50"
-                            >
-                              <Store size={12} className="text-[#39FF14]" />
-                              Jadi Seller
-                            </button>
-                          )}
+                        <div className="text-[10px] font-mono text-[#555] uppercase tracking-wider">Peran Akun</div>
+                        <div className="text-xs font-bold font-mono text-[#39FF14]">
+                          {currentRole === "SELLER" ? "SELLER (Penjual)" : currentRole === "BUYER" ? "BUYER (Pembeli)" : "OPERATOR"}
                         </div>
-                      )}
+                      </div>
 
                       {/* Logout */}
                       <button

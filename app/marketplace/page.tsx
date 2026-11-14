@@ -39,6 +39,7 @@ export default async function MarketplacePage({
         initialCity={city || "ALL"}
         initialCategory={category || "ALL"}
         initialSearch={q || ""}
+        session={session}
       />
       <PublicFooter />
     </div>

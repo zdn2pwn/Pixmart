@@ -188,72 +188,89 @@ export default async function HomePage() {
           </div>
 
           {/* Product Cards Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {listings.slice(0, 6).map((listing: any) => {
-              const hasImage = listing.images && listing.images.length > 0 && listing.images[0];
+          {listings.length === 0 ? (
+            <div className="bg-[#111111] border border-[#222222] p-12 text-center space-y-4">
+              <Package size={40} className="mx-auto text-[#444]" />
+              <div className="text-white font-bold text-base">Belum ada produk terdaftar</div>
+              <p className="text-xs text-[#777] max-w-md mx-auto font-sans">
+                Pasang iklan pertamamu di kotamu untuk mulai jual-beli langsung secara aman dan anonim.
+              </p>
+              <Link
+                href="/marketplace/new"
+                className="btn-primary text-xs font-bold px-5 py-2.5 inline-flex items-center gap-2 shadow-[0_0_15px_rgba(57,255,20,0.25)]"
+              >
+                <Plus size={14} />
+                <span>+ Pasang Iklan Pertama</span>
+              </Link>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {listings.slice(0, 6).map((listing: any) => {
+                const hasImage = listing.images && listing.images.length > 0 && listing.images[0];
 
-              return (
-                <Link
-                  key={listing.id}
-                  href={`/marketplace/${listing.id}`}
-                  className="group bg-[#111111] border border-[#222222] hover:border-[#39FF14] transition-all flex flex-col overflow-hidden hover:shadow-[0_0_20px_rgba(57,255,20,0.12)] cursor-pointer"
-                >
-                  {/* Photo */}
-                  <div className="relative aspect-[16/10] bg-[#161616] overflow-hidden border-b border-[#222222]">
-                    {hasImage && (
-                      <img
-                        src={listing.images[0]}
-                        alt={listing.title}
-                        className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300"
-                        loading="lazy"
-                      />
-                    )}
-                    {!hasImage && (
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <Package size={32} className="text-[#333]" />
+                return (
+                  <Link
+                    key={listing.id}
+                    href={`/marketplace/${listing.id}`}
+                    className="group bg-[#111111] border border-[#222222] hover:border-[#39FF14] transition-all flex flex-col overflow-hidden hover:shadow-[0_0_20px_rgba(57,255,20,0.12)] cursor-pointer"
+                  >
+                    {/* Photo */}
+                    <div className="relative aspect-[16/10] bg-[#161616] overflow-hidden border-b border-[#222222]">
+                      {hasImage && (
+                        <img
+                          src={listing.images[0]}
+                          alt={listing.title}
+                          className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300"
+                          loading="lazy"
+                        />
+                      )}
+                      {!hasImage && (
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <Package size={32} className="text-[#333]" />
+                        </div>
+                      )}
+                      <div className="absolute top-3 left-3">
+                        <span className="badge-muted text-[11px] bg-black/85">
+                          {listing.category.replace(/_/g, " ")}
+                        </span>
                       </div>
-                    )}
-                    <div className="absolute top-3 left-3">
-                      <span className="badge-muted text-[11px] bg-black/85">
-                        {listing.category.replace(/_/g, " ")}
-                      </span>
-                    </div>
-                    <div className="absolute top-3 right-3">
-                      <span className="badge-green text-[11px] bg-black/85">
-                        {listing.condition}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Body */}
-                  <div className="p-4 space-y-3 flex-1 flex flex-col justify-between">
-                    <div className="space-y-1.5">
-                      <h3 className="text-sm font-bold text-white group-hover:text-[#39FF14] transition-colors line-clamp-2 leading-snug">
-                        {listing.title}
-                      </h3>
-                      <div className="flex items-center gap-2 text-xs font-mono text-[#777]">
-                        <span>{listing.seller?.codename ?? "Seller"}</span>
-                        <span>·</span>
-                        <span className="flex items-center gap-1 text-[#aaa]">
-                          <MapPin size={11} className="text-[#39FF14]" /> {listing.locationCity}
+                      <div className="absolute top-3 right-3">
+                        <span className="badge-green text-[11px] bg-black/85">
+                          {listing.condition}
                         </span>
                       </div>
                     </div>
 
-                    <div className="pt-2.5 border-t border-[#1c1c1c] flex items-center justify-between font-mono">
-                      <div className="text-sm font-bold text-[#39FF14]">
-                        {formatCurrency(listing.fiatEstimateIdr)}
+                    {/* Body */}
+                    <div className="p-4 space-y-3 flex-1 flex flex-col justify-between">
+                      <div className="space-y-1.5">
+                        <h3 className="text-sm font-bold text-white group-hover:text-[#39FF14] transition-colors line-clamp-2 leading-snug">
+                          {listing.title}
+                        </h3>
+                        <div className="flex items-center gap-2 text-xs font-mono text-[#777]">
+                          <span>{listing.seller?.codename ?? "Seller"}</span>
+                          <span>·</span>
+                          <span className="flex items-center gap-1 text-[#aaa]">
+                            <MapPin size={11} className="text-[#39FF14]" /> {listing.locationCity}
+                          </span>
+                        </div>
                       </div>
-                      <div className="text-xs text-[#555] flex items-center gap-1">
-                        <Clock size={10} />
-                        <span>COD</span>
+
+                      <div className="pt-2.5 border-t border-[#1c1c1c] flex items-center justify-between font-mono">
+                        <div className="text-sm font-bold text-[#39FF14]">
+                          {formatCurrency(listing.fiatEstimateIdr)}
+                        </div>
+                        <div className="text-xs text-[#555] flex items-center gap-1">
+                          <Clock size={10} />
+                          <span>COD</span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
         </div>
       </section>
 

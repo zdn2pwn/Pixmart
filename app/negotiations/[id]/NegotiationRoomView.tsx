@@ -24,7 +24,142 @@ import {
   MapPin,
   Clock,
   AlertTriangle,
+  Flame,
+  Shield,
 } from "lucide-react";
+
+function EphemeralMessageBubble({
+  message,
+  isMe,
+  counterpartyName,
+  currentOfferPrice,
+}: {
+  message: NegotiationMessage;
+  isMe: boolean;
+  counterpartyName: string;
+  currentOfferPrice: number;
+}) {
+  const isSystem = message.senderRole === "SYSTEM" || message.messageType === "DEAL_LOCKED";
+
+  // Calculate self-destruct duration based on sentence & text length (min 6s, max 35s)
+  const textLength = message.content ? message.content.length : 12;
+  const initialDuration = Math.max(6, Math.min(35, Math.ceil(4 + textLength * 0.08)));
+
+  const [timeLeft, setTimeLeft] = useState(initialDuration);
+  const [burnState, setBurnState] = useState<"ACTIVE" | "DISSOLVING" | "DESTROYED">("ACTIVE");
+
+  useEffect(() => {
+    if (isSystem) return;
+
+    const timer = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          setBurnState("DISSOLVING");
+          setTimeout(() => {
+            setBurnState("DESTROYED");
+          }, 1100);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [isSystem]);
+
+  if (isSystem) {
+    return (
+      <div className="bg-[#181818] border border-[#333] p-3 text-center text-[#39FF14] text-[11px] max-w-xl mx-auto shadow-sm">
+        <div className="font-bold flex items-center justify-center gap-1.5">
+          <Lock size={12} />
+          <span>{message.content}</span>
+        </div>
+      </div>
+    );
+  }
+
+  const isOffer = message.messageType === "OFFER" || message.messageType === "COUNTER_OFFER";
+  const progressPercent = Math.max(0, (timeLeft / initialDuration) * 100);
+
+  if (burnState === "DESTROYED") {
+    return (
+      <div className={`flex flex-col ${isMe ? "items-end" : "items-start"} my-1.5`}>
+        <div className="px-3 py-1.5 border border-[#222] bg-[#0c0c0c] text-[10px] font-mono text-[#555] flex items-center gap-2 pixel-burned-placeholder">
+          <Flame size={11} className="text-[#333]" />
+          <span>
+            {isOffer
+              ? `[PENAWARAN RP ${Number(message.amount || currentOfferPrice).toLocaleString("id-ID")} • CATATAN HANCUR // BURNED]`
+              : "[PESAN TERHAPUS OTOMATIS // EPHEMERAL BURN]"}
+          </span>
+          <span className="text-[#333]">
+            {new Date(message.createdAt).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}
+          </span>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className={`flex flex-col ${isMe ? "items-end" : "items-start"} my-2 transition-all ${burnState === "DISSOLVING" ? "pixel-dissolving" : ""}`}>
+      <div
+        className={`max-w-md p-3.5 relative border ${
+          isOffer
+            ? isMe
+              ? "bg-[#161616] border-[#39FF14]/50 shadow-[0_0_15px_rgba(57,255,20,0.1)]"
+              : "bg-[#141414] border-[#FFB800]/50 shadow-[0_0_15px_rgba(255,184,0,0.1)]"
+            : isMe
+            ? "bg-[#1a1a1a] border-[#333] text-white"
+            : "bg-[#121212] border-[#252525] text-[#ccc]"
+        }`}
+      >
+        {/* Top Burn HUD */}
+        <div className="flex items-center justify-between gap-4 mb-2 pb-1.5 border-b border-[#222]">
+          <span className="text-[10px] font-mono text-[#777]">
+            {isMe ? "Kamu" : counterpartyName}
+          </span>
+          <div className="flex items-center gap-1.5 text-[10px] font-mono">
+            <Flame size={11} className={timeLeft <= 3 ? "text-red-500 animate-pulse" : "text-[#FF6600]"} />
+            <span className={timeLeft <= 3 ? "text-red-400 font-bold" : "text-[#888]"}>
+              DESTROY IN: <strong className="text-white">{String(timeLeft).padStart(2, "0")}s</strong>
+            </span>
+          </div>
+        </div>
+
+        {/* Depleting progress bar */}
+        <div className="h-0.5 w-full bg-[#222] mb-2 overflow-hidden">
+          <div
+            className={`h-full transition-all duration-1000 ${timeLeft <= 3 ? "bg-red-500" : "bg-[#39FF14]"}`}
+            style={{ width: `${progressPercent}%` }}
+          />
+        </div>
+
+        {/* Offer Amount if Offer */}
+        {isOffer && (
+          <div className="mb-2">
+            <div className="text-[9px] font-mono uppercase text-[#777]">
+              {message.messageType === "COUNTER_OFFER" ? "Counter-Offer Baru" : "Penawaran Harga"}
+            </div>
+            <div className="text-lg font-bold text-[#39FF14] font-mono">
+              Rp {Number(message.amount || currentOfferPrice).toLocaleString("id-ID")}
+            </div>
+          </div>
+        )}
+
+        {/* Content */}
+        {message.content && (
+          <p className="text-xs font-sans text-white/90 leading-relaxed whitespace-pre-wrap">
+            {message.content}
+          </p>
+        )}
+
+        <div className="text-[9px] font-mono text-[#555] text-right mt-1.5">
+          {new Date(message.createdAt).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export function NegotiationRoomView({
   initialNegotiation,
@@ -280,73 +415,32 @@ export function NegotiationRoomView({
         </div>
       )}
 
+      {/* Burn-After-Reading Security Notice */}
+      <div className="bg-[#121212] border border-[#262626] px-4 py-2 flex items-center justify-between text-[11px] font-mono text-[#888]">
+        <div className="flex items-center gap-2">
+          <Flame size={13} className="text-[#FF6600]" />
+          <span>
+            <strong className="text-white">BURN-AFTER-READING PROTOCOL:</strong> Pesan &amp; tawaran hancur otomatis setelah dibaca (timer mengikuti panjang kalimat) dengan animasi pixel dissolve.
+          </span>
+        </div>
+        <div className="hidden sm:flex items-center gap-1.5 text-[10px] text-[#39FF14]">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#39FF14] pulse-green" />
+          <span>P2P ENCRYPTED</span>
+        </div>
+      </div>
+
       {/* Chat Messages Log */}
-      <div className="bg-[#0e0e0e] border border-[#262626] h-[400px] overflow-y-auto p-4 sm:p-6 space-y-4 font-mono text-xs">
+      <div className="bg-[#0e0e0e] border border-[#262626] h-[400px] overflow-y-auto p-4 sm:p-6 space-y-3 font-mono text-xs">
         {messages.map((m) => {
           const isMe = m.senderId === session?.userId || m.senderRole === myRole;
-          const isSystem = m.senderRole === "SYSTEM" || m.messageType === "DEAL_LOCKED";
-
-          if (isSystem) {
-            return (
-              <div
-                key={m.id}
-                className="bg-[#181818] border border-[#333] p-3 text-center text-[#39FF14] text-[11px] max-w-xl mx-auto rounded-none shadow-sm"
-              >
-                <div className="font-bold flex items-center justify-center gap-1.5">
-                  <Lock size={12} />
-                  <span>{m.content}</span>
-                </div>
-              </div>
-            );
-          }
-
-          if (m.messageType === "OFFER" || m.messageType === "COUNTER_OFFER") {
-            return (
-              <div
-                key={m.id}
-                className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}
-              >
-                <div
-                  className={`max-w-md p-4 border ${
-                    isMe
-                      ? "bg-[#181818] border-[#39FF14]/40 text-white"
-                      : "bg-[#151515] border-[#FFB800]/40 text-white"
-                  }`}
-                >
-                  <div className="text-[10px] text-[#888] uppercase mb-1 flex items-center justify-between gap-4">
-                    <span>{isMe ? "Tawaran Kamu" : `Tawaran dari ${counterpartyName}`}</span>
-                    <span>{new Date(m.createdAt).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}</span>
-                  </div>
-                  <div className="text-lg font-bold text-[#39FF14] font-mono">
-                    Rp {Number(m.amount || negotiation.currentOfferPrice).toLocaleString("id-ID")}
-                  </div>
-                  {m.content && <p className="text-xs text-[#ccc] mt-2 font-sans">{m.content}</p>}
-                </div>
-              </div>
-            );
-          }
-
           return (
-            <div
+            <EphemeralMessageBubble
               key={m.id}
-              className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}
-            >
-              <div
-                className={`max-w-md p-3 px-4 ${
-                  isMe
-                    ? "bg-[#1f1f1f] border border-[#333] text-white"
-                    : "bg-[#141414] border border-[#222] text-[#ccc]"
-                }`}
-              >
-                <div className="text-[9px] text-[#777] mb-1">
-                  {isMe ? "Kamu" : counterpartyName}
-                </div>
-                <div className="text-xs whitespace-pre-wrap font-sans">{m.content}</div>
-                <div className="text-[9px] text-[#555] text-right mt-1">
-                  {new Date(m.createdAt).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}
-                </div>
-              </div>
-            </div>
+              message={m}
+              isMe={isMe}
+              counterpartyName={counterpartyName}
+              currentOfferPrice={negotiation.currentOfferPrice}
+            />
           );
         })}
         <div ref={chatEndRef} />

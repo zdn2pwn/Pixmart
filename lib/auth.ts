@@ -24,14 +24,17 @@ export async function getSession(): Promise<Session | null> {
     } = await supabase.auth.getUser();
 
     if (error || !user) {
-      // Check legacy cookie fallback (for OWNER demo)
+      // Only allow OWNER demo via explicit legacy cookie for /admin testing
       const cookieStore = await cookies();
       const legacyCookie = cookieStore.get(SESSION_COOKIE);
       if (legacyCookie?.value) {
         try {
-          return JSON.parse(
+          const parsed = JSON.parse(
             Buffer.from(legacyCookie.value, "base64").toString("utf-8")
           ) as Session;
+          if (parsed?.role === "OWNER") {
+            return parsed;
+          }
         } catch {
           return null;
         }

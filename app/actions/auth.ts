@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { store } from "@/lib/store";
 import type { UserRole } from "@/lib/types";
@@ -97,6 +98,9 @@ export async function loginAction(_prev: unknown, formData: FormData) {
 export async function logoutAction() {
   const supabase = await createSupabaseServerClient();
   await supabase.auth.signOut();
+  const cookieStore = await cookies();
+  cookieStore.delete("pixmart_session");
+  cookieStore.delete("arcade_session");
   redirect("/login");
 }
 

@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import type { PublicListingItem, ListingCategory } from "@/lib/types";
 import { formatBtc, formatXmr, formatCurrency } from "@/lib/format";
 import { calculateDistanceKm, formatDistance, INDONESIAN_LOCATIONS, type Coordinates } from "@/lib/location";
@@ -45,6 +46,7 @@ interface MarketplaceExplorerProps {
   initialCategory?: string;
   initialSearch?: string;
   userId?: string;
+  session?: any;
 }
 
 export function MarketplaceExplorer({
@@ -53,7 +55,9 @@ export function MarketplaceExplorer({
   initialCategory = "ALL",
   initialSearch = "",
   userId,
+  session,
 }: MarketplaceExplorerProps) {
+  const router = useRouter();
   const [search, setSearch] = useState(initialSearch);
   const [city, setCity] = useState(initialCity);
   const [category, setCategory] = useState(initialCategory);
@@ -106,6 +110,10 @@ export function MarketplaceExplorer({
   async function handleToggleWishlist(listingId: string, e: React.MouseEvent) {
     e.preventDefault();
     e.stopPropagation();
+    if (!session) {
+      router.push("/login?from=/marketplace");
+      return;
+    }
     setWishlistIds((prev) =>
       prev.includes(listingId) ? prev.filter((id) => id !== listingId) : [...prev, listingId]
     );
@@ -383,16 +391,26 @@ export function MarketplaceExplorer({
           <p className="text-xs text-[#888] max-w-md mx-auto">
             Coba perbesar radius jarak pencarian atau ubah filter kategori untuk melihat barang lain di area sekitar.
           </p>
-          <button
-            onClick={() => {
-              setRadiusKm(0);
-              setCategory("ALL");
-              setSearch("");
-            }}
-            className="btn-primary text-xs font-bold px-4 py-2"
-          >
-            Reset Semua Filter
-          </button>
+          <div className="flex flex-wrap justify-center gap-2 pt-2">
+            <button
+              onClick={() => {
+                setRadiusKm(0);
+                setCategory("ALL");
+                setSearch("");
+              }}
+              className="btn-ghost text-xs font-bold px-4 py-2"
+            >
+              Reset Semua Filter
+            </button>
+            {session?.role === "SELLER" && (
+              <Link
+                href="/marketplace/new"
+                className="btn-primary text-xs font-bold px-5 py-2 shadow-[0_0_12px_rgba(57,255,20,0.3)]"
+              >
+                + Pasang Iklan Sekarang
+              </Link>
+            )}
+          </div>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
