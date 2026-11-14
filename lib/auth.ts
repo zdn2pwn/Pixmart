@@ -12,9 +12,16 @@ export interface Session {
   email: string;
   role: UserRole;
   codename: string;
+  walletBtc?: string;
+  walletXmr?: string;
+  balanceBtc?: number;
+  balanceXmr?: number;
+  depositAddressBtc?: string;
+  depositAddressXmr?: string;
+  locationCity?: string;
 }
 
-/** Get current Supabase Auth user + their profile from DB / metadata */
+/** Get current Supabase Auth user + their profile from DB / metadata / secure session */
 export async function getSession(): Promise<Session | null> {
   try {
     const supabase = await createSupabaseServerClient();
@@ -24,14 +31,32 @@ export async function getSession(): Promise<Session | null> {
     } = await supabase.auth.getUser();
 
     if (error || !user) {
-      // Only allow OWNER demo via explicit legacy cookie for /admin testing
+      // Check secure session cookie fallback
       const cookieStore = await cookies();
-      const legacyCookie = cookieStore.get(SESSION_COOKIE);
-      if (legacyCookie?.value) {
+      const sessionCookie = cookieStore.get(SESSION_COOKIE);
+      if (sessionCookie?.value) {
         try {
           const parsed = JSON.parse(
-            Buffer.from(legacyCookie.value, "base64").toString("utf-8")
+            Buffer.from(sessionCookie.value, "base64").toString("utf-8")
           ) as Session;
+
+          const storeUser = store.getUserById(parsed.userId);
+          if (storeUser) {
+            return {
+              userId: storeUser.id,
+              name: storeUser.codename,
+              email: storeUser.email,
+              role: storeUser.role,
+              codename: storeUser.codename,
+              walletBtc: storeUser.walletBtc,
+              walletXmr: storeUser.walletXmr,
+              balanceBtc: storeUser.balanceBtc,
+              balanceXmr: storeUser.balanceXmr,
+              depositAddressBtc: storeUser.depositAddressBtc,
+              depositAddressXmr: storeUser.depositAddressXmr,
+              locationCity: storeUser.locationCity,
+            };
+          }
           if (parsed?.role === "OWNER") {
             return parsed;
           }
@@ -45,17 +70,21 @@ export async function getSession(): Promise<Session | null> {
     // Try fetching profile from DB
     let dbRole: UserRole | null = null;
     let dbCodename: string | null = null;
+    let dbWalletBtc: string | null = null;
+    let dbWalletXmr: string | null = null;
+    let dbCity: string | null = null;
 
     try {
       const { data: profile } = await supabase
         .from("profiles")
-        .select("role, codename")
+        .select("role, codename, location_city")
         .eq("id", user.id)
         .single();
 
       if (profile) {
         dbRole = profile.role as UserRole;
         dbCodename = profile.codename;
+        dbCity = profile.location_city;
       }
     } catch {
       // DB table might not exist yet, fallback to user_metadata
@@ -68,9 +97,16 @@ export async function getSession(): Promise<Session | null> {
       `Anon_#${user.id.slice(0, 4).toUpperCase()}`;
 
     if (!role) {
-      // User exists but has not selected role yet
       return null;
     }
+
+    // Sync and retrieve from store
+    const storeUser = store.ensureUser({
+      id: user.id,
+      codename,
+      email: user.email ?? "",
+      role,
+    });
 
     const session: Session = {
       userId: user.id,
@@ -78,15 +114,14 @@ export async function getSession(): Promise<Session | null> {
       email: user.email ?? "",
       role,
       codename,
+      walletBtc: storeUser.walletBtc || dbWalletBtc || "",
+      walletXmr: storeUser.walletXmr || dbWalletXmr || "",
+      balanceBtc: storeUser.balanceBtc,
+      balanceXmr: storeUser.balanceXmr,
+      depositAddressBtc: storeUser.depositAddressBtc,
+      depositAddressXmr: storeUser.depositAddressXmr,
+      locationCity: storeUser.locationCity || dbCity || "Jakarta",
     };
-
-    // Sync user with authoritative store
-    store.ensureUser({
-      id: session.userId,
-      codename: session.codename,
-      email: session.email,
-      role: session.role,
-    });
 
     return session;
   } catch {

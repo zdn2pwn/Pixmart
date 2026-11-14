@@ -64,6 +64,7 @@ export function EscrowHandshakeRoom({
 
   // Dispute modal state
   const [showDisputeModal, setShowDisputeModal] = useState(false);
+  const [showCodConfirmModal, setShowCodConfirmModal] = useState(false);
   const [disputeReason, setDisputeReason] = useState("Lawan transaksi tidak hadir di titik temu");
   const [disputeNote, setDisputeNote] = useState("");
 
@@ -247,13 +248,13 @@ export function EscrowHandshakeRoom({
     });
   }
 
-  // Handle COD Double Confirmation
-  async function handleCodConfirmation() {
-    const actionText = isBuyer
-      ? "Konfirmasi bahwa barang fisik telah Anda terima dan diperiksa dengan baik?"
-      : "Konfirmasi bahwa barang fisik telah Anda serahkan dan pembayaran telah diterima?";
-    if (!confirm(actionText)) return;
+  // Handle COD Double Confirmation via Custom UI Modal (No native browser alerts)
+  function handleCodConfirmation() {
+    setShowCodConfirmModal(true);
+  }
 
+  function executeCodConfirmation() {
+    setShowCodConfirmModal(false);
     startTransition(async () => {
       const res = await confirmCodHandshakeAction(room.id);
       if (res.success && res.room) {
@@ -994,6 +995,51 @@ export function EscrowHandshakeRoom({
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* CUSTOM UI MODAL: COD DOUBLE CONFIRMATION */}
+      {showCodConfirmModal && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#111] border border-[#39FF14] max-w-md w-full p-6 space-y-4 shadow-[0_0_30px_rgba(57,255,20,0.3)]">
+            <div className="flex items-center gap-2 text-[#39FF14] border-b border-[#222] pb-3">
+              <ShieldCheck size={20} />
+              <h3 className="text-sm font-bold font-mono uppercase tracking-wider text-white">
+                Konfirmasi Handshake COD
+              </h3>
+            </div>
+
+            <p className="text-xs font-mono text-[#ccc] leading-relaxed">
+              {isBuyer
+                ? "Apakah Anda mengonfirmasi bahwa barang fisik telah Anda periksa secara menyeluruh dan Anda terima dalam kondisi baik di titik temu?"
+                : "Apakah Anda mengonfirmasi bahwa barang fisik telah Anda serahkan kepada pembeli dan pembayaran telah diterima secara penuh di titik temu?"}
+            </p>
+
+            <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#222]">
+              <button
+                type="button"
+                onClick={() => setShowCodConfirmModal(false)}
+                className="btn-outline text-xs font-mono py-2 px-4 text-[#888] hover:text-white"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                disabled={isPending}
+                onClick={executeCodConfirmation}
+                className="btn-primary text-xs font-mono font-bold py-2 px-5 flex items-center gap-2"
+              >
+                {isPending ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : (
+                  <>
+                    <CheckCircle2 size={14} />
+                    <span>Ya, Konfirmasi Transaksi Selesai</span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       )}

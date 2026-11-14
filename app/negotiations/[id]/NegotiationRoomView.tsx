@@ -179,6 +179,10 @@ export function NegotiationRoomView({
   const [counterPrice, setCounterPrice] = useState<number>(negotiation.currentOfferPrice);
   const [counterNote, setCounterNote] = useState("");
 
+  // Custom UI Modals (No native browser alerts)
+  const [showAcceptConfirm, setShowAcceptConfirm] = useState(false);
+  const [showRejectConfirm, setShowRejectConfirm] = useState(false);
+
   const chatEndRef = useRef<HTMLDivElement>(null);
   const channelRef = useRef<any>(null);
 
@@ -277,12 +281,13 @@ export function NegotiationRoomView({
     });
   }
 
-  // Accept current offer -> Locks deal & creates Escrow Room
-  async function handleAccept() {
-    if (!confirm(`Sepakati harga Rp ${negotiation.currentOfferPrice.toLocaleString("id-ID")} dan buat Escrow Room?`)) {
-      return;
-    }
+  // Accept current offer -> Locks deal & creates Escrow Room (Custom UI modal)
+  function handleAccept() {
+    setShowAcceptConfirm(true);
+  }
 
+  function executeAccept() {
+    setShowAcceptConfirm(false);
     const fd = new FormData();
     fd.append("negotiationId", negotiation.id);
 
@@ -319,9 +324,13 @@ export function NegotiationRoomView({
     });
   }
 
-  // Reject offer
-  async function handleReject() {
-    if (!confirm("Yakin ingin menolak penawaran dan menutup negosiasi?")) return;
+  // Reject offer (Custom UI modal)
+  function handleReject() {
+    setShowRejectConfirm(true);
+  }
+
+  function executeReject() {
+    setShowRejectConfirm(false);
     const fd = new FormData();
     fd.append("negotiationId", negotiation.id);
     startTransition(async () => {
@@ -566,6 +575,100 @@ export function NegotiationRoomView({
             <span className="hidden sm:inline">Kirim</span>
           </button>
         </form>
+      )}
+
+      {/* CUSTOM UI MODAL: ACCEPT OFFER CONFIRMATION */}
+      {showAcceptConfirm && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#111] border border-[#39FF14] max-w-md w-full p-6 space-y-4 shadow-[0_0_30px_rgba(57,255,20,0.3)]">
+            <div className="flex items-center gap-2 text-[#39FF14] border-b border-[#222] pb-3">
+              <CheckCircle2 size={20} />
+              <h3 className="text-sm font-bold font-mono uppercase tracking-wider text-white">
+                Sepakati Penawaran &amp; Buka Escrow
+              </h3>
+            </div>
+
+            <p className="text-xs font-mono text-[#ccc] leading-relaxed">
+              Anda akan menyepakati harga akhir{" "}
+              <span className="text-[#39FF14] font-bold">
+                Rp {negotiation.currentOfferPrice.toLocaleString("id-ID")}
+              </span>{" "}
+              untuk barang &quot;{negotiation.listing.title}&quot;. Setelah deal disepakati, sistem akan secara otomatis membuat <strong>Escrow Room</strong> untuk menentukan jadwal dan titik temu COD.
+            </p>
+
+            <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#222]">
+              <button
+                type="button"
+                onClick={() => setShowAcceptConfirm(false)}
+                className="btn-outline text-xs font-mono py-2 px-4 text-[#888] hover:text-white"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                disabled={isPending}
+                onClick={executeAccept}
+                className="btn-primary text-xs font-mono font-bold py-2 px-5 flex items-center gap-2"
+              >
+                {isPending ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : (
+                  <>
+                    <CheckCircle2 size={14} />
+                    <span>Sepakati &amp; Buka Escrow</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* CUSTOM UI MODAL: REJECT OFFER CONFIRMATION */}
+      {showRejectConfirm && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#111] border border-red-500/80 max-w-md w-full p-6 space-y-4 shadow-[0_0_30px_rgba(239,68,68,0.2)]">
+            <div className="flex items-center gap-2 text-red-400 border-b border-[#222] pb-3">
+              <AlertTriangle size={18} />
+              <h3 className="text-sm font-bold font-mono uppercase tracking-wider text-white">
+                Tolak Penawaran
+              </h3>
+            </div>
+
+            <p className="text-xs font-mono text-[#ccc] leading-relaxed">
+              Yakin ingin menolak penawaran harga sebesar{" "}
+              <span className="text-white font-bold">
+                Rp {negotiation.currentOfferPrice.toLocaleString("id-ID")}
+              </span>{" "}
+              dan menutup negosiasi ini?
+            </p>
+
+            <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#222]">
+              <button
+                type="button"
+                onClick={() => setShowRejectConfirm(false)}
+                className="btn-outline text-xs font-mono py-2 px-4 text-[#888] hover:text-white"
+              >
+                Kembali
+              </button>
+              <button
+                type="button"
+                disabled={isPending}
+                onClick={executeReject}
+                className="bg-red-600 hover:bg-red-500 text-white text-xs font-mono font-bold py-2 px-4 flex items-center gap-1.5 transition-colors"
+              >
+                {isPending ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : (
+                  <>
+                    <XCircle size={14} />
+                    <span>Tolak Penawaran</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

@@ -23,6 +23,12 @@ export interface User {
   avatarSeed: string;
   walletBtc?: string;
   walletXmr?: string;
+  balanceBtc?: number; // Saldo simulasi BTC
+  balanceXmr?: number; // Saldo simulasi XMR
+  depositAddressBtc?: string; // Generated deposit address untuk top up
+  depositAddressXmr?: string; // Generated deposit address untuk top up
+  passwordHash?: string;
+  setupCompleted?: boolean;
   createdAt: Date;
 }
 

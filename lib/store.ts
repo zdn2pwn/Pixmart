@@ -30,6 +30,7 @@ import {
 } from "@/lib/data/seed";
 
 import { calculateDistanceKm, formatDistance, type Coordinates } from "@/lib/location";
+import { generateBtcAddress, generateXmrAddress, hashPassword } from "@/lib/crypto-wallet";
 
 const DATA_DIR = path.join(process.cwd(), ".data");
 const STATE_FILE = path.join(DATA_DIR, "pixmart-state.json");
@@ -147,13 +148,182 @@ class MarketplaceStore {
   }
 
   getUserByEmail(email: string): User | null {
+    if (!email) return null;
     return this.users.find((u) => u.email.toLowerCase() === email.toLowerCase()) ?? null;
   }
 
-  authenticateUser(email: string, _password?: string): User | null {
+  authenticateUser(email: string, password?: string): User | null {
     const user = this.getUserByEmail(email);
-    if (user) return user;
-    return this.users.find((u) => u.codename.toLowerCase() === email.toLowerCase()) || null;
+    if (!user) {
+      return this.users.find((u) => u.codename.toLowerCase() === email.toLowerCase()) || null;
+    }
+    if (password && user.passwordHash) {
+      const incomingHash = hashPassword(password);
+      if (user.passwordHash !== incomingHash) {
+        return null;
+      }
+    }
+    return user;
+  }
+
+  createUser(data: {
+    id?: string;
+    email: string;
+    password?: string;
+    role: UserRole;
+    codename?: string;
+    locationCity?: string;
+    locationDistrict?: string;
+    walletBtc?: string;
+    walletXmr?: string;
+  }): User {
+    const userId = data.id || `usr_${Date.now()}`;
+    const codename =
+      data.codename ||
+      `Anonymous ${data.role === "SELLER" ? "Seller" : "Buyer"} #${userId.slice(-4).toUpperCase()}`;
+    const passwordHash = data.password ? hashPassword(data.password) : undefined;
+
+    const newUser: User = {
+      id: userId,
+      codename,
+      email: data.email,
+      role: data.role,
+      reputation: 100,
+      completedDeals: 0,
+      locationCity: data.locationCity || "Jakarta",
+      locationDistrict: data.locationDistrict || "Pusat",
+      avatarSeed: codename,
+      walletBtc: data.walletBtc || "",
+      walletXmr: data.walletXmr || "",
+      balanceBtc: data.role === "BUYER" ? 0.05 : 0.0,
+      balanceXmr: data.role === "BUYER" ? 3.5 : 0.0,
+      depositAddressBtc: generateBtcAddress(userId),
+      depositAddressXmr: generateXmrAddress(userId),
+      passwordHash,
+      setupCompleted: false,
+      createdAt: new Date(),
+    };
+
+    const existingIdx = this.users.findIndex((u) => u.email.toLowerCase() === data.email.toLowerCase());
+    if (existingIdx !== -1) {
+      this.users[existingIdx] = newUser;
+    } else {
+      this.users.push(newUser);
+    }
+
+    this.saveState();
+    return newUser;
+  }
+
+  topUpUserBalance(
+    userId: string,
+    currency: "BTC" | "XMR",
+    amount: number
+  ): { success: boolean; newBalance: number } {
+    const user = this.getUserById(userId);
+    if (!user) return { success: false, newBalance: 0 };
+    if (currency === "BTC") {
+      user.balanceBtc = Number(((user.balanceBtc || 0) + amount).toFixed(6));
+      this.saveState();
+      return { success: true, newBalance: user.balanceBtc };
+    } else {
+      user.balanceXmr = Number(((user.balanceXmr || 0) + amount).toFixed(4));
+      this.saveState();
+      return { success: true, newBalance: user.balanceXmr };
+    }
+  }
+
+  updateUserBiodata(
+    userId: string,
+    data: {
+      role?: UserRole;
+      locationCity?: string;
+      locationDistrict?: string;
+      walletBtc?: string;
+      walletXmr?: string;
+    }
+  ): User | null {
+    let user = this.getUserById(userId);
+    if (!user) {
+      user = this.ensureUser({
+        id: userId,
+        email: `${userId}@pixmart.local`,
+        codename: `Anon_#${userId.slice(0, 4).toUpperCase()}`,
+        role: data.role || "BUYER",
+      });
+    }
+
+    if (data.role) user.role = data.role;
+    if (data.locationCity) user.locationCity = data.locationCity;
+    if (data.locationDistrict) user.locationDistrict = data.locationDistrict;
+    if (data.walletBtc) user.walletBtc = data.walletBtc;
+    if (data.walletXmr) user.walletXmr = data.walletXmr;
+    user.setupCompleted = true;
+
+    // Generate anonymous codename based on role
+    user.codename = `Anonymous ${user.role === "SELLER" ? "Seller" : "Buyer"} #${user.id.slice(0, 4).toUpperCase()}`;
+
+    // Ensure wallet deposit address & initial balance
+    if (!user.depositAddressBtc) user.depositAddressBtc = generateBtcAddress(user.id);
+    if (!user.depositAddressXmr) user.depositAddressXmr = generateXmrAddress(user.id);
+    if (user.role === "BUYER" && (user.balanceBtc === undefined || user.balanceBtc === 0)) {
+      user.balanceBtc = 0.05;
+      user.balanceXmr = 3.5;
+    } else if (user.role === "SELLER" && (user.balanceBtc === undefined || user.balanceBtc === 0)) {
+      user.balanceBtc = 0.02;
+      user.balanceXmr = 1.25;
+    }
+
+    this.saveState();
+    return user;
+  }
+
+  withdrawSellerBalance(
+    sellerId: string,
+    currency: "BTC" | "XMR",
+    amount: number,
+    destinationAddress: string
+  ): { success: boolean; newBalance: number; error?: string; txHash?: string } {
+    const user = this.getUserById(sellerId);
+    if (!user) return { success: false, newBalance: 0, error: "Akun seller tidak ditemukan" };
+
+    if (!amount || amount <= 0) {
+      return { success: false, newBalance: 0, error: "Jumlah penarikan harus lebih dari 0" };
+    }
+
+    if (currency === "BTC") {
+      const cur = user.balanceBtc || 0;
+      if (cur < amount) {
+        return { success: false, newBalance: cur, error: `Saldo Bitcoin tidak mencukupi (Tersedia: ${cur} BTC)` };
+      }
+      user.balanceBtc = Number((cur - amount).toFixed(6));
+      const txHash = "btc_tx_" + Math.random().toString(36).substring(2, 10) + Date.now().toString(36);
+      this.recordAuditLog(
+        sellerId,
+        "SELLER",
+        "WITHDRAW_PROCESSED",
+        txHash,
+        `Penarikan ${amount} BTC ke ${destinationAddress}`
+      );
+      this.saveState();
+      return { success: true, newBalance: user.balanceBtc, txHash };
+    } else {
+      const cur = user.balanceXmr || 0;
+      if (cur < amount) {
+        return { success: false, newBalance: cur, error: `Saldo Monero tidak mencukupi (Tersedia: ${cur} XMR)` };
+      }
+      user.balanceXmr = Number((cur - amount).toFixed(4));
+      const txHash = "xmr_tx_" + Math.random().toString(36).substring(2, 10) + Date.now().toString(36);
+      this.recordAuditLog(
+        sellerId,
+        "SELLER",
+        "WITHDRAW_PROCESSED",
+        txHash,
+        `Penarikan ${amount} XMR ke ${destinationAddress}`
+      );
+      this.saveState();
+      return { success: true, newBalance: user.balanceXmr, txHash };
+    }
   }
 
   getFallbackUser(id: string, role: UserRole = "SELLER"): User {
@@ -166,6 +336,10 @@ class MarketplaceStore {
       completedDeals: 0,
       locationCity: "Jakarta",
       avatarSeed: id || "pix",
+      balanceBtc: role === "BUYER" ? 0.05 : 0.0,
+      balanceXmr: role === "BUYER" ? 3.5 : 0.0,
+      depositAddressBtc: generateBtcAddress(id),
+      depositAddressXmr: generateXmrAddress(id),
       createdAt: new Date(),
     };
   }
@@ -181,6 +355,8 @@ class MarketplaceStore {
       existing.role = data.role;
       if (data.codename) existing.codename = data.codename;
       if (data.email) existing.email = data.email;
+      if (!existing.depositAddressBtc) existing.depositAddressBtc = generateBtcAddress(existing.id);
+      if (!existing.depositAddressXmr) existing.depositAddressXmr = generateXmrAddress(existing.id);
       this.saveState();
       return existing;
     }
@@ -193,6 +369,10 @@ class MarketplaceStore {
       completedDeals: 0,
       locationCity: "Jakarta",
       avatarSeed: data.codename || data.id,
+      balanceBtc: data.role === "BUYER" ? 0.05 : 0.0,
+      balanceXmr: data.role === "BUYER" ? 3.5 : 0.0,
+      depositAddressBtc: generateBtcAddress(data.id),
+      depositAddressXmr: generateXmrAddress(data.id),
       createdAt: new Date(),
     };
     this.users.push(newUser);
@@ -1000,11 +1180,15 @@ class MarketplaceStore {
         listing.stock = Math.max(0, listing.stock - 1);
       }
 
-      // Increment completed deals and reputation
+      // Increment completed deals, reputation and payout balance
       const seller = this.getUserById(room.sellerId);
       if (seller) {
         seller.completedDeals += 1;
         seller.reputation = Math.min(100, seller.reputation + 1);
+        const earnedXmr = Number((room.finalPriceIdr / 2500000).toFixed(4));
+        const earnedBtc = Number((room.finalPriceIdr / 1400000000).toFixed(6));
+        seller.balanceXmr = Number(((seller.balanceXmr || 0) + earnedXmr).toFixed(4));
+        seller.balanceBtc = Number(((seller.balanceBtc || 0) + earnedBtc).toFixed(6));
       }
       const buyer = this.getUserById(room.buyerId);
       if (buyer) {
