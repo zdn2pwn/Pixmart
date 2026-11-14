@@ -1,10 +1,9 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const SESSION_COOKIE = "arcade_session";
-
 function getSessionFromCookie(request: NextRequest) {
-  const cookie = request.cookies.get(SESSION_COOKIE);
+  const cookie =
+    request.cookies.get("pixmart_session") || request.cookies.get("arcade_session");
   if (!cookie?.value) return null;
   try {
     return JSON.parse(Buffer.from(cookie.value, "base64").toString("utf-8"));
@@ -19,15 +18,15 @@ export function proxy(request: NextRequest) {
 
   // Protect admin routes
   if (pathname.startsWith("/admin")) {
-    if (!session) {
+    if (!session || session.role !== "OWNER") {
       const loginUrl = new URL("/login", request.url);
       loginUrl.searchParams.set("from", pathname);
       return NextResponse.redirect(loginUrl);
     }
   }
 
-  // If logged in and visiting login page, redirect to admin
-  if (pathname === "/login" && session) {
+  // If logged in as owner and visiting login page, redirect to admin
+  if (pathname === "/login" && session?.role === "OWNER") {
     return NextResponse.redirect(new URL("/admin", request.url));
   }
 
