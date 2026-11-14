@@ -57,6 +57,7 @@ export async function getSession(): Promise<Session | null> {
               locationCity: storeUser.locationCity,
             };
           }
+          // OWNER bypass (for demo/testing)
           if (parsed?.role === "OWNER") {
             return parsed;
           }
@@ -90,17 +91,13 @@ export async function getSession(): Promise<Session | null> {
       // DB table might not exist yet, fallback to user_metadata
     }
 
-    const role = dbRole || (user.user_metadata?.role as UserRole) || null;
+    const role = dbRole || (user.user_metadata?.role as UserRole) || "BUYER"; // Default to BUYER if no role yet
     const codename =
       dbCodename ||
       user.user_metadata?.codename ||
       `Anon_#${user.id.slice(0, 4).toUpperCase()}`;
 
-    if (!role) {
-      return null;
-    }
-
-    // Sync and retrieve from store
+    // Always sync and retrieve from store (authoritative source)
     const storeUser = store.ensureUser({
       id: user.id,
       codename,
@@ -129,7 +126,7 @@ export async function getSession(): Promise<Session | null> {
   }
 }
 
-/** Returns true if user is logged in but hasn't picked a role yet */
+/** Returns true if user is logged in but hasn't completed onboarding */
 export async function needsOnboarding(): Promise<boolean> {
   try {
     const supabase = await createSupabaseServerClient();
@@ -138,16 +135,12 @@ export async function needsOnboarding(): Promise<boolean> {
     } = await supabase.auth.getUser();
     if (!user) return false;
 
-    // Check user_metadata first
-    if (user.user_metadata?.role) return false;
-
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .single();
-
-    return !profile?.role;
+    // Check from store (authoritative source)
+    const storeUser = store.getUserById(user.id);
+    if (!storeUser) return true; // User exists in auth but not in store = needs onboarding
+    
+    // User needs onboarding if setupCompleted is false or undefined
+    return !storeUser.setupCompleted;
   } catch {
     return false;
   }
@@ -156,6 +149,13 @@ export async function needsOnboarding(): Promise<boolean> {
 export async function requireSession(): Promise<Session> {
   const session = await getSession();
   if (!session) redirect("/login");
+  
+  // Check if user needs onboarding
+  const user = store.getUserById(session.userId);
+  if (user && !user.setupCompleted) {
+    redirect("/onboarding");
+  }
+  
   return session;
 }
 

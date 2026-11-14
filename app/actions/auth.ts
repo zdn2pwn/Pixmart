@@ -3,17 +3,90 @@
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { store } from "@/lib/store";
-import { setSession, clearSession, getSession } from "@/lib/auth";
 import { isValidBtcAddress, isValidXmrAddress } from "@/lib/crypto-wallet";
+import { generateBtcAddress, generateXmrAddress, hashPassword } from "@/lib/crypto-wallet";
 import type { UserRole } from "@/lib/types";
 
-// ── REGISTER ──────────────────────────────────────────────────────────────────
-export async function registerAction(_prev: unknown, formData: FormData) {
+const SESSION_COOKIE = "pixmart_session";
+
+export interface SimpleSession {
+  userId: string;
+  email: string;
+  codename: string;
+  role: UserRole;
+  setupCompleted: boolean;
+}
+
+// ═══════════════════════════════════════════════════════════
+// SESSION HELPERS
+// ═══════════════════════════════════════════════════════════
+
+async function setSessionCookie(session: SimpleSession) {
+  const cookieStore = await cookies();
+  const encoded = Buffer.from(JSON.stringify(session)).toString("base64");
+  cookieStore.set(SESSION_COOKIE, encoded, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: 60 * 60 * 24 * 7,
+    path: "/",
+  });
+}
+
+export async function getSimpleSession(): Promise<SimpleSession | null> {
+  try {
+    const cookieStore = await cookies();
+    const cookie = cookieStore.get(SESSION_COOKIE);
+    
+    if (!cookie?.value) {
+      return null;
+    }
+
+    const decoded = Buffer.from(cookie.value, "base64").toString("utf-8");
+    const session = JSON.parse(decoded) as SimpleSession;
+    
+    // Verify user still exists in database
+    const supabase = await createSupabaseServerClient();
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", session.userId)
+      .single();
+
+    if (!profile) {
+      return null;
+    }
+
+    return {
+      userId: profile.id,
+      email: profile.email,
+      codename: profile.codename,
+      role: profile.role as UserRole,
+      setupCompleted: profile.setup_completed || false,
+    };
+  } catch (err) {
+    console.error("[getSimpleSession] Error:", err);
+    return null;
+  }
+}
+
+async function clearSessionCookie() {
+  const cookieStore = await cookies();
+  cookieStore.delete(SESSION_COOKIE);
+}
+
+// ═══════════════════════════════════════════════════════════
+// REGISTER (Pure Database, No Supabase Auth)
+// ═══════════════════════════════════════════════════════════
+
+export async function registerSimpleAction(_prev: unknown, formData: FormData) {
   const email = (formData.get("email") as string)?.trim().toLowerCase();
   const password = formData.get("password") as string;
   const confirmPassword = formData.get("confirmPassword") as string;
 
+  console.log("[Register] Starting registration for:", email);
+
+  // Validation
   if (!email || !password) {
     return { error: "Email dan password wajib diisi." };
   }
@@ -24,191 +97,145 @@ export async function registerAction(_prev: unknown, formData: FormData) {
     return { error: "Konfirmasi password tidak cocok." };
   }
 
-  // 1. Check if email already registered in store
-  const existingInStore = store.getUserByEmail(email);
-  if (existingInStore && existingInStore.passwordHash) {
-    return { error: "Email sudah terdaftar. Silakan langsung masuk (login)." };
-  }
-
-  let supabaseUserId: string | null = null;
-
-  // 2. Try Supabase Auth
   try {
     const supabase = await createSupabaseServerClient();
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-    });
 
-    if (error) {
-      if (error.message.includes("already registered") || error.message.includes("User already registered")) {
-        console.warn("Supabase user already exists in auth. Continuing to sync profile and login.");
-      } else {
-        console.warn("Supabase auth signUp warning (falling back to store):", error.message);
-      }
-    } else if (data?.user?.id) {
-      supabaseUserId = data.user.id;
+    // Check if email already exists
+    const { data: existingProfile } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("email", email)
+      .single();
+
+    if (existingProfile) {
+      console.log("[Register] Email already exists:", email);
+      return { error: "Email sudah terdaftar. Silakan login." };
     }
-  } catch (err) {
-    console.warn("Supabase auth exception, continuing with local store:", err);
-  }
 
-  // 3. Create or update user in authoritative store with password hash
-  const user = store.createUser({
-    id: supabaseUserId || existingInStore?.id || `usr_${Date.now()}`,
-    email,
-    password,
-    role: "BUYER", // temporary until onboarding
-  });
+    // Generate user ID
+    const userId = `usr_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const codename = `Anonymous Buyer #${userId.slice(4, 8).toUpperCase()}`;
+    const passwordHash = hashPassword(password);
 
-  // 4. Synchronize immediately to Supabase `profiles` table
-  try {
-    const supabase = await createSupabaseServerClient();
-    await supabase.from("profiles").upsert({
-      id: user.id,
-      email: user.email,
-      codename: user.codename,
-      role: user.role,
+    console.log("[Register] Creating user:", userId);
+
+    // Insert profile directly to database
+    const { error: insertError } = await supabase.from("profiles").insert({
+      id: userId,
+      email: email,
+      codename: codename,
+      role: "BUYER",
+      password_hash: passwordHash,
+      setup_completed: false,
       reputation: 100,
       completed_deals: 0,
-      location_city: user.locationCity || "Jakarta",
+      location_city: "Jakarta",
+      balance_btc: 0.0,
+      balance_xmr: 0.0,
+      deposit_address_btc: generateBtcAddress(userId),
+      deposit_address_xmr: generateXmrAddress(userId),
+      avatar_seed: codename,
+      created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     });
-  } catch (err) {
-    console.warn("Failed to sync profile to Supabase:", err);
+
+    if (insertError) {
+      console.error("[Register] Insert error:", insertError);
+      return { error: "Gagal membuat akun. Coba lagi." };
+    }
+
+    console.log("[Register] User created, setting session...");
+
+    // Set session
+    await setSessionCookie({
+      userId,
+      email,
+      codename,
+      role: "BUYER",
+      setupCompleted: false,
+    });
+
+    console.log("[Register] Session set, redirecting to onboarding...");
+
+    // Redirect to onboarding (this throws NEXT_REDIRECT internally - it's normal!)
+    redirect("/onboarding");
+  } catch (err: any) {
+    // IMPORTANT: redirect() throws NEXT_REDIRECT which is expected behavior
+    // We should NOT catch it as an error
+    if (err.message === "NEXT_REDIRECT" || err.digest?.includes("NEXT_REDIRECT")) {
+      throw err; // Re-throw redirect errors
+    }
+    
+    console.error("[Register] Exception:", err);
+    return { error: "Terjadi kesalahan. Coba lagi." };
   }
-
-  // 5. Set session immediately (No OTP required!)
-  await setSession({
-    userId: user.id,
-    name: user.codename,
-    email: user.email,
-    role: user.role,
-    codename: user.codename,
-    balanceBtc: user.balanceBtc,
-    balanceXmr: user.balanceXmr,
-    depositAddressBtc: user.depositAddressBtc,
-    depositAddressXmr: user.depositAddressXmr,
-    locationCity: user.locationCity,
-  });
-
-  // 6. Redirect to onboarding to complete biodata & wallet
-  redirect("/onboarding");
 }
 
-// ── LOGIN ─────────────────────────────────────────────────────────────────────
-export async function loginAction(_prev: unknown, formData: FormData) {
+// ═══════════════════════════════════════════════════════════
+// LOGIN (Pure Database)
+// ═══════════════════════════════════════════════════════════
+
+export async function loginSimpleAction(_prev: unknown, formData: FormData) {
   const email = (formData.get("email") as string)?.trim().toLowerCase();
   const password = formData.get("password") as string;
-  const from = formData.get("from") as string | null;
 
   if (!email || !password) {
     return { error: "Email dan password wajib diisi." };
   }
 
-  let matchedUser: any = null;
-
-  // 1. Try Supabase Auth first
   try {
     const supabase = await createSupabaseServerClient();
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (!error && data?.user) {
-      matchedUser = store.getUserById(data.user.id) || store.getUserByEmail(email);
-      if (!matchedUser) {
-        matchedUser = store.ensureUser({
-          id: data.user.id,
-          email: data.user.email || email,
-          codename: `Anon_#${data.user.id.slice(0, 4).toUpperCase()}`,
-          role: (data.user.user_metadata?.role as UserRole) || "BUYER",
-        });
-      }
-    } else if (error) {
-      // Supabase may return "Email not confirmed" or rate limit. Log warning and proceed to store auth!
-      console.warn("Supabase signIn returned:", error.message, "- falling back to store auth");
+
+    // Get profile with password hash
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("email", email)
+      .single();
+
+    if (!profile) {
+      return { error: "Email atau password salah." };
     }
-  } catch (err) {
-    console.warn("Supabase signIn exception:", err);
-  }
 
-  // 2. If Supabase Auth failed (e.g. rate limit, "Email not confirmed", or offline), verify against store
-  if (!matchedUser) {
-    matchedUser = store.authenticateUser(email, password);
-  }
-
-  // 3. Fallback: Check if user exists in Supabase `profiles` table (e.g. registered before restart)
-  if (!matchedUser) {
-    try {
-      const supabase = await createSupabaseServerClient();
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("email", email)
-        .maybeSingle();
-
-      if (profile) {
-        // User exists in Supabase profiles! Provision into store with their password hash
-        matchedUser = store.createUser({
-          id: profile.id,
-          email: profile.email,
-          password: password,
-          role: (profile.role as UserRole) || "BUYER",
-          codename: profile.codename || `Anon_#${profile.id.slice(0, 4).toUpperCase()}`,
-          locationCity: profile.location_city || "Jakarta",
-          locationDistrict: profile.location_district || "Pusat",
-        });
-      }
-    } catch (err) {
-      console.warn("Error querying Supabase profile fallback:", err);
+    // Verify password
+    const passwordHash = hashPassword(password);
+    if (profile.password_hash !== passwordHash) {
+      return { error: "Email atau password salah." };
     }
+
+    // Set session
+    await setSessionCookie({
+      userId: profile.id,
+      email: profile.email,
+      codename: profile.codename,
+      role: profile.role as UserRole,
+      setupCompleted: profile.setup_completed || false,
+    });
+
+    // Redirect based on setup status
+    if (!profile.setup_completed) {
+      redirect("/onboarding");
+    }
+
+    redirect(profile.role === "SELLER" ? "/seller" : "/dashboard");
+  } catch (err: any) {
+    // Re-throw redirect errors (they're not actual errors)
+    if (err.message === "NEXT_REDIRECT" || err.digest?.includes("NEXT_REDIRECT")) {
+      throw err;
+    }
+    
+    console.error("[Login] Exception:", err);
+    return { error: "Login gagal. Coba lagi." };
   }
-
-  if (!matchedUser) {
-    return { error: "Email atau password salah. Pastikan kredensial sudah benar." };
-  }
-
-  // 4. Set authenticated session
-  await setSession({
-    userId: matchedUser.id,
-    name: matchedUser.codename,
-    email: matchedUser.email,
-    role: matchedUser.role,
-    codename: matchedUser.codename,
-    walletBtc: matchedUser.walletBtc,
-    walletXmr: matchedUser.walletXmr,
-    balanceBtc: matchedUser.balanceBtc,
-    balanceXmr: matchedUser.balanceXmr,
-    depositAddressBtc: matchedUser.depositAddressBtc,
-    depositAddressXmr: matchedUser.depositAddressXmr,
-    locationCity: matchedUser.locationCity,
-  });
-
-  // 5. If onboarding not yet completed, redirect to onboarding
-  if (!matchedUser.setupCompleted) {
-    redirect("/onboarding");
-  }
-
-  const dest = from || (matchedUser.role === "SELLER" ? "/seller" : "/dashboard");
-  redirect(dest);
 }
 
-// ── LOGOUT ────────────────────────────────────────────────────────────────────
-export async function logoutAction() {
-  try {
-    const supabase = await createSupabaseServerClient();
-    await supabase.auth.signOut();
-  } catch {
-    // ignore
-  }
-  await clearSession();
-  const cookieStore = await cookies();
-  cookieStore.delete("pixmart_session");
-  cookieStore.delete("arcade_session");
-  redirect("/login");
-}
+// ═══════════════════════════════════════════════════════════
+// ONBOARDING
+// ═══════════════════════════════════════════════════════════
 
-// ── ONBOARDING: COMPLETE BIODATA & WALLET ──────────────────────────────────────
-export async function completeBiodataAction(_prev: unknown, formData: FormData) {
-  const session = await getSession();
+export async function completeOnboardingSimpleAction(_prev: unknown, formData: FormData) {
+  const session = await getSimpleSession();
+
   if (!session) {
     return { error: "Sesi tidak ditemukan. Silakan login kembali." };
   }
@@ -219,96 +246,151 @@ export async function completeBiodataAction(_prev: unknown, formData: FormData) 
   const walletBtc = (formData.get("walletBtc") as string)?.trim() || "";
   const walletXmr = (formData.get("walletXmr") as string)?.trim() || "";
 
-  // VALIDATION: Salah satu wallet address (BTC atau XMR) wajib diisi!
+  // Validation
   if (!walletBtc && !walletXmr) {
-    return { error: "Wajib mengisi salah satu wallet address (Bitcoin atau Monero) untuk transaksi." };
+    return { error: "Wajib mengisi salah satu wallet address." };
   }
 
   if (walletBtc && !isValidBtcAddress(walletBtc)) {
-    return { error: "Format Bitcoin address tidak valid. Harus dimulai dengan bc1, 1, atau 3 (26-62 karakter)." };
+    return { error: "Format Bitcoin address tidak valid." };
   }
 
   if (walletXmr && !isValidXmrAddress(walletXmr)) {
-    return { error: "Format Monero address tidak valid. Harus berupa standard 95-karakter address (dimulai angka 4 atau 8)." };
+    return { error: "Format Monero address tidak valid." };
   }
 
-  // Update store biodata
-  const updatedUser = store.updateUserBiodata(session.userId, {
-    role,
-    locationCity,
-    locationDistrict,
-    walletBtc,
-    walletXmr,
-  });
-
-  if (!updatedUser) {
-    return { error: "Gagal memperbarui profil. Coba lagi." };
-  }
-
-  // Sync to Supabase if DB table exists
   try {
     const supabase = await createSupabaseServerClient();
-    await supabase.from("profiles").upsert({
-      id: updatedUser.id,
-      email: updatedUser.email,
-      role: updatedUser.role,
-      codename: updatedUser.codename,
-      location_city: updatedUser.locationCity,
-      location_district: updatedUser.locationDistrict,
-      updated_at: new Date().toISOString(),
+
+    // Generate new codename based on role
+    const codename = `Anonymous ${role === "SELLER" ? "Seller" : "Buyer"} #${session.userId.slice(4, 8).toUpperCase()}`;
+
+    // Set initial balance based on role
+    const balanceBtc = role === "BUYER" ? 0.05 : 0.02;
+    const balanceXmr = role === "BUYER" ? 3.5 : 1.25;
+
+    // Update profile
+    const { error: updateError } = await supabase
+      .from("profiles")
+      .update({
+        role,
+        codename,
+        location_city: locationCity,
+        location_district: locationDistrict,
+        wallet_btc: walletBtc,
+        wallet_xmr: walletXmr,
+        balance_btc: balanceBtc,
+        balance_xmr: balanceXmr,
+        setup_completed: true,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", session.userId);
+
+    if (updateError) {
+      console.error("[Onboarding] Update error:", updateError);
+      return { error: "Gagal memperbarui profil." };
+    }
+
+    // Update session
+    await setSessionCookie({
+      userId: session.userId,
+      email: session.email,
+      codename,
+      role,
+      setupCompleted: true,
     });
-    await supabase.auth.updateUser({
-      data: { role: updatedUser.role, codename: updatedUser.codename },
-    });
-  } catch {
-    // ignore
+
+    // Redirect to dashboard
+    redirect(role === "SELLER" ? "/seller" : "/dashboard");
+  } catch (err: any) {
+    // Re-throw redirect errors
+    if (err.message === "NEXT_REDIRECT" || err.digest?.includes("NEXT_REDIRECT")) {
+      throw err;
+    }
+    
+    console.error("[Onboarding] Exception:", err);
+    return { error: "Terjadi kesalahan." };
   }
-
-  // Save full session
-  await setSession({
-    userId: updatedUser.id,
-    name: updatedUser.codename,
-    email: updatedUser.email,
-    role: updatedUser.role,
-    codename: updatedUser.codename,
-    walletBtc: updatedUser.walletBtc,
-    walletXmr: updatedUser.walletXmr,
-    balanceBtc: updatedUser.balanceBtc,
-    balanceXmr: updatedUser.balanceXmr,
-    depositAddressBtc: updatedUser.depositAddressBtc,
-    depositAddressXmr: updatedUser.depositAddressXmr,
-    locationCity: updatedUser.locationCity,
-  });
-
-  redirect(role === "SELLER" ? "/seller" : "/dashboard");
 }
 
-// ── TOP UP SALDO SIMULASI (FAUCET) ─────────────────────────────────────────────
-export async function topUpBalanceAction(currency: "BTC" | "XMR", amount: number) {
-  const session = await getSession();
-  if (!session) return { error: "UNAUTHORIZED" };
+// ═══════════════════════════════════════════════════════════
+// LOGOUT
+// ═══════════════════════════════════════════════════════════
 
-  const res = store.topUpUserBalance(session.userId, currency, amount);
-  if (!res.success) return { error: "Gagal mengisi saldo" };
+export async function logoutSimpleAction() {
+  await clearSessionCookie();
+  redirect("/login");
+}
 
-  // Refresh session cookie
-  const user = store.getUserById(session.userId);
-  if (user) {
-    await setSession({
-      userId: user.id,
-      name: user.codename,
-      email: user.email,
-      role: user.role,
-      codename: user.codename,
-      walletBtc: user.walletBtc,
-      walletXmr: user.walletXmr,
-      balanceBtc: user.balanceBtc,
-      balanceXmr: user.balanceXmr,
-      depositAddressBtc: user.depositAddressBtc,
-      depositAddressXmr: user.depositAddressXmr,
-      locationCity: user.locationCity,
-    });
+// Alias for compatibility
+export const logoutAction = logoutSimpleAction;
+
+// ═══════════════════════════════════════════════════════════
+// TOP UP BALANCE (Demo/Testing)
+// ═══════════════════════════════════════════════════════════
+
+export async function topUpBalanceAction(crypto: "BTC" | "XMR", amount: number) {
+  const session = await getSimpleSession();
+  
+  if (!session) {
+    return { error: "Sesi tidak ditemukan." };
   }
 
-  return { success: true, newBalance: res.newBalance };
+  try {
+    const supabase = await createSupabaseServerClient();
+
+    const field = crypto === "BTC" ? "balance_btc" : "balance_xmr";
+    
+    // Get current balance
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("balance_btc, balance_xmr")
+      .eq("id", session.userId)
+      .single();
+
+    if (!profile) {
+      return { error: "Profil tidak ditemukan." };
+    }
+
+    const currentBalance = Number(profile[field]) || 0;
+    const newBalance = currentBalance + amount;
+
+    // Update balance
+    const { error: updateError } = await supabase
+      .from("profiles")
+      .update({ [field]: newBalance, updated_at: new Date().toISOString() })
+      .eq("id", session.userId);
+
+    if (updateError) {
+      console.error("[TopUp] Error:", updateError);
+      return { error: "Gagal top up balance." };
+    }
+
+    return { 
+      success: true, 
+      newBalance,
+      message: `Top up ${amount} ${crypto} berhasil!` 
+    };
+  } catch (err: any) {
+    console.error("[TopUp] Exception:", err);
+    return { error: "Terjadi kesalahan." };
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// REQUIRE SESSION
+// ═══════════════════════════════════════════════════════════
+
+export async function requireSimpleSession(): Promise<SimpleSession> {
+  const session = await getSimpleSession();
+
+  if (!session) {
+    redirect("/login");
+  }
+
+  if (!session.setupCompleted) {
+    redirect("/onboarding");
+  }
+
+  return session;
 }

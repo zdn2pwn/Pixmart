@@ -1,13 +1,13 @@
-import { store } from "@/lib/store";
-import { getSession } from "@/lib/auth";
+import { requireSimpleSession } from "@/app/actions/auth";
 import { redirect } from "next/navigation";
 import { PublicNav } from "@/components/layout/PublicNav";
 import { PublicFooter } from "@/components/layout/PublicFooter";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { ShieldCheck, MapPin, CheckCircle2, Clock, AlertTriangle, ArrowRight, Package } from "lucide-react";
 import type { Metadata } from "next";
 
-export const instant = false;
+export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
   title: "Pusat Escrow Room COD — PIXMART",
@@ -15,18 +15,23 @@ export const metadata: Metadata = {
 };
 
 export default async function EscrowListPage() {
-  const session = await getSession();
-  if (!session) {
-    redirect("/login?from=/escrow");
-  }
+  const session = await requireSimpleSession();
+  const supabase = await createSupabaseServerClient();
 
   const currentRole = session.role;
   const userId = session.userId;
 
-  const rooms =
-    currentRole === "OWNER"
-      ? store.getAllEscrowRooms()
-      : store.getEscrowRoomsByUser(userId);
+  // Fetch escrow sessions
+  const { data: rooms = [] } = await supabase
+    .from("escrow_sessions")
+    .select(`
+      *,
+      buyer:profiles!escrow_sessions_buyer_id_fkey(id, codename, email),
+      seller:profiles!escrow_sessions_seller_id_fkey(id, codename, email),
+      listing:marketplace_listings(*)
+    `)
+    .or(`buyer_id.eq.${userId},seller_id.eq.${userId}`)
+    .order("created_at", { ascending: false });
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-[#e8e8e8] flex flex-col">
@@ -44,7 +49,7 @@ export default async function EscrowListPage() {
               Ruang Transaksi Escrow COD
             </h1>
             <p className="text-xs font-mono text-[#888] mt-1">
-              Login sebagai: <span className="text-[#39FF14] font-bold">{session?.name}</span> ({currentRole})
+              Login sebagai: <span className="text-[#39FF14] font-bold">{session?.codename}</span> ({currentRole})
             </p>
           </div>
 
@@ -56,7 +61,7 @@ export default async function EscrowListPage() {
           </Link>
         </div>
 
-        {rooms.length === 0 ? (
+        {!rooms || rooms.length === 0 ? (
           <div className="bg-[#121212] border border-[#222] p-12 text-center space-y-4">
             <ShieldCheck size={40} className="mx-auto text-[#444]" />
             <h3 className="text-white font-bold text-base">Belum Ada Escrow Room Aktif</h3>
@@ -69,12 +74,12 @@ export default async function EscrowListPage() {
           </div>
         ) : (
           <div className="space-y-4">
-            {rooms.map((room) => {
+            {rooms.map((room: any) => {
               const hasImage = room.listing?.images && room.listing.images.length > 0;
-              const isCompleted = room.meetingStatus === "COMPLETED";
-              const isDisputed = room.meetingStatus === "DISPUTED";
+              const isCompleted = room.status === "COMPLETED";
+              const isDisputed = room.status === "DISPUTED";
               const counterparty =
-                room.buyerId === userId ? room.seller.codename : room.buyer.codename;
+                room.buyer_id === userId ? room.seller?.codename : room.buyer?.codename;
 
               return (
                 <Link
@@ -103,18 +108,16 @@ export default async function EscrowListPage() {
                           <span>Lawan: {counterparty}</span>
                         </div>
                         <h3 className="text-sm font-bold text-white group-hover:text-[#39FF14] transition-colors line-clamp-1">
-                          {room.listing.title}
+                          {room.listing?.title || "Produk"}
                         </h3>
                         <div className="text-xs font-mono text-[#aaa] flex items-center gap-3">
                           <span className="text-white font-bold">
-                            Rp {room.finalPriceIdr.toLocaleString("id-ID")}
+                            Rp {(room.final_price_idr || 0).toLocaleString("id-ID")}
                           </span>
                           <span className="text-[#666]">|</span>
                           <span className="flex items-center gap-1 text-[#39FF14]">
                             <MapPin size={11} />
-                            {room.meetingConfirmed?.locationName ||
-                              room.meetingProposal?.locationName ||
-                              "Titik temu belum ditentukan"}
+                            {room.meeting_location || "Titik temu belum ditentukan"}
                           </span>
                         </div>
                       </div>
@@ -131,7 +134,7 @@ export default async function EscrowListPage() {
                         </span>
                       ) : (
                         <span className="badge-warn text-xs font-bold py-1.5 px-3 flex items-center gap-1.5 animate-pulse">
-                          <Clock size={13} /> {room.meetingStatus.replace(/_/g, " ")}
+                          <Clock size={13} /> {room.status?.replace(/_/g, " ") || "PENDING"}
                         </span>
                       )}
 

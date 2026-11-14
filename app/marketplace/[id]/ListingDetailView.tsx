@@ -36,10 +36,7 @@ export function ListingDetailView({
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
-  // Nego state
-  const [offerPrice, setOfferPrice] = useState<number>(listing.fiatEstimateIdr * 0.9);
-  const [negoNote, setNegoNote] = useState<string>("Bisa ketemuan di area publik terdekat untuk cek fisik?");
-  const [showNegoModal, setShowNegoModal] = useState<boolean>(false);
+  // Nego state - simplified
   const [isWishlisted, setIsWishlisted] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -85,33 +82,29 @@ export function ListingDetailView({
       setErrorMsg("Akun Seller hanya untuk menjual. Silakan buat/gunakan akun Buyer untuk berbelanja.");
       return;
     }
-    setShowNegoModal(true);
+    
+    // Directly create negotiation and redirect to chat room
+    setErrorMsg(null);
+    startTransition(async () => {
+      const fd = new FormData();
+      fd.append("listingId", listing.id);
+      // Use listing price as initial offer (buyer can counter in chat)
+      fd.append("offerPriceIdr", String(listing.fiatEstimateIdr));
+      fd.append("messageText", "Halo, saya tertarik dengan produk ini. Bisa nego?");
+
+      const res = await createOfferAction(fd);
+      if (res.success && res.negotiationId) {
+        // Redirect to negotiation chat room
+        router.push(`/negotiations/${res.negotiationId}`);
+      } else {
+        setErrorMsg(res.error || "Gagal membuat ruang negosiasi");
+      }
+    });
   }
 
   async function handleSubmitOffer(e: React.FormEvent) {
+    // Not used anymore - direct nego creation
     e.preventDefault();
-    if (!session) {
-      router.push(`/login?from=/marketplace/${listing.id}`);
-      return;
-    }
-    if (session.role === "SELLER") {
-      setErrorMsg("Akun Seller tidak dapat menawar barang.");
-      return;
-    }
-    setErrorMsg(null);
-    const fd = new FormData();
-    fd.append("listingId", listing.id);
-    fd.append("offerPriceIdr", String(offerPrice));
-    fd.append("messageText", negoNote);
-
-    startTransition(async () => {
-      const res = await createOfferAction(fd);
-      if (res.success && res.negotiationId) {
-        router.push(`/negotiations/${res.negotiationId}`);
-      } else {
-        setErrorMsg(res.error || "Gagal mengajukan penawaran");
-      }
-    });
   }
 
   async function handleDirectBuy() {
@@ -265,15 +258,26 @@ export function ListingDetailView({
           <div className="bg-[#121212] border border-[#2a2a2a] p-6 space-y-6">
             {/* Price section */}
             <div className="border-b border-[#222] pb-5">
-              <div className="text-[10px] font-mono text-[#888] uppercase tracking-wider">Harga Patokan Katalog</div>
-              <div className="text-3xl font-bold text-white font-mono mt-1">
-                Rp {listing.fiatEstimateIdr.toLocaleString("id-ID")}
+              <div className="text-[10px] font-mono text-[#888] uppercase tracking-wider mb-2">Harga (Patokan Katalog)</div>
+              
+              {/* Primary: Crypto Prices */}
+              <div className="space-y-2 mb-3">
+                <div className="text-2xl font-bold text-[#F7931A] font-mono flex items-center gap-2">
+                  <span>{formatBtc(listing.priceBtc)}</span>
+                  <span className="text-xs text-[#666]">BTC</span>
+                </div>
+                <div className="text-2xl font-bold text-[#FF6600] font-mono flex items-center gap-2">
+                  <span>{formatXmr(listing.priceXmr)}</span>
+                  <span className="text-xs text-[#666]">XMR</span>
+                </div>
               </div>
-              <div className="flex items-center gap-3 mt-2 text-xs font-mono text-[#888]">
-                <span>Setara:</span>
-                <span className="text-[#FF6600] font-bold">{formatXmr(listing.priceXmr)}</span>
-                <span>atau</span>
-                <span className="text-[#F7931A] font-bold">{formatBtc(listing.priceBtc)}</span>
+
+              {/* Secondary: IDR Reference */}
+              <div className="text-sm text-[#888] font-mono pt-2 border-t border-[#1a1a1a]">
+                <span className="text-[10px]">Referensi IDR:</span>
+                <span className="text-white font-bold ml-2">
+                  Rp {listing.fiatEstimateIdr.toLocaleString("id-ID")}
+                </span>
               </div>
             </div>
 
@@ -346,76 +350,6 @@ export function ListingDetailView({
           </div>
         </div>
       </div>
-
-      {/* Negotiation Modal Drawer */}
-      {showNegoModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#141414] border border-[#333] max-w-md w-full p-6 space-y-5 shadow-2xl fade-up">
-            <div className="flex items-center justify-between border-b border-[#222] pb-3">
-              <h3 className="text-base font-bold text-white flex items-center gap-2">
-                <MessageSquare size={16} className="text-[#39FF14]" />
-                <span>Ajukan Tawaran Harga</span>
-              </h3>
-              <button
-                onClick={() => setShowNegoModal(false)}
-                className="text-[#888] hover:text-white font-mono text-sm cursor-pointer"
-              >
-                ✕
-              </button>
-            </div>
-
-            <form onSubmit={handleSubmitOffer} className="space-y-4">
-              <div>
-                <label className="text-xs font-mono text-[#888] block mb-1">
-                  Nominal Tawaran Kamu (IDR)
-                </label>
-                <input
-                  type="number"
-                  value={offerPrice}
-                  onChange={(e) => setOfferPrice(Number(e.target.value))}
-                  min={100000}
-                  step={50000}
-                  className="input-dark w-full py-2.5 px-3 text-sm font-mono font-bold text-[#39FF14]"
-                  required
-                />
-                <div className="text-[10px] font-mono text-[#666] mt-1">
-                  Harga katalog: Rp {listing.fiatEstimateIdr.toLocaleString("id-ID")}
-                </div>
-              </div>
-
-              <div>
-                <label className="text-xs font-mono text-[#888] block mb-1">
-                  Catatan untuk Penjual (Opsional)
-                </label>
-                <textarea
-                  value={negoNote}
-                  onChange={(e) => setNegoNote(e.target.value)}
-                  rows={3}
-                  className="input-dark w-full p-2.5 text-xs font-mono"
-                  placeholder="Contoh: Bisa ketemuan besok siang di M Bloc / Ciwalk?"
-                />
-              </div>
-
-              <div className="flex items-center gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setShowNegoModal(false)}
-                  className="btn-secondary flex-1 py-2.5 text-xs font-mono"
-                >
-                  Batal
-                </button>
-                <button
-                  type="submit"
-                  disabled={isPending}
-                  className="btn-primary flex-1 py-2.5 text-xs font-bold flex items-center justify-center gap-1.5"
-                >
-                  {isPending ? <Loader2 size={14} className="animate-spin" /> : "Kirim Tawaran"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

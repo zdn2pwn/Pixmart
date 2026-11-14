@@ -105,8 +105,8 @@ export function ListingForm({ session }: { session: any }) {
 
     startTransition(async () => {
       const res = await createListingAction(formData);
-      if (res.success && res.listingId) {
-        router.push(`/marketplace/${res.listingId}`);
+      if (res.success) {
+        // Success - will redirect automatically
       } else {
         setErrorMsg(res.error || "Gagal memasang iklan");
       }

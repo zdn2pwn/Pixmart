@@ -2,7 +2,7 @@
 
 import { useActionState } from "react";
 import Link from "next/link";
-import { registerAction } from "@/app/actions/auth";
+import { registerSimpleAction } from "@/app/actions/auth";
 import { Loader2, AlertCircle, Eye, EyeOff, MapPin } from "lucide-react";
 import { useState } from "react";
 
@@ -11,7 +11,7 @@ type State = { error?: string } | undefined;
 export default function RegisterPage() {
   const [showPass, setShowPass] = useState(false);
   const [state, formAction, isPending] = useActionState<State, FormData>(
-    registerAction,
+    registerSimpleAction,
     undefined
   );
 

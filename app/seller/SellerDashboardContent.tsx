@@ -198,9 +198,9 @@ export function SellerDashboardContent({
     });
   }
 
-  const incomingOffers = negotiations.filter((n) => n.sellerId === session?.userId && n.status !== "REJECTED");
-  const activeEscrows = escrowRooms.filter((r) => r.meetingStatus !== "COMPLETED" && r.meetingStatus !== "CANCELLED");
-  const completedDeals = escrowRooms.filter((r) => r.meetingStatus === "COMPLETED");
+  const incomingOffers = (negotiations || []).filter((n: any) => n.seller_id === session?.userId && n.status !== "REJECTED");
+  const activeEscrows = (escrowRooms || []).filter((r: any) => r.status !== "COMPLETED" && r.status !== "CANCELLED");
+  const completedDeals = (escrowRooms || []).filter((r: any) => r.status === "COMPLETED");
 
   const xmrIdrEstimate = Math.round(balanceXmr * 2500000);
   const btcIdrEstimate = Math.round(balanceBtc * 1400000000);

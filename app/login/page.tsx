@@ -2,7 +2,7 @@
 
 import { useActionState } from "react";
 import Link from "next/link";
-import { loginAction } from "@/app/actions/auth";
+import { loginSimpleAction } from "@/app/actions/auth";
 import { Loader2, AlertCircle, Eye, EyeOff, MapPin } from "lucide-react";
 import { useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
@@ -14,7 +14,7 @@ function LoginForm() {
   const from = searchParams.get("from") ?? "";
   const [showPass, setShowPass] = useState(false);
   const [state, formAction, isPending] = useActionState<State, FormData>(
-    loginAction,
+    loginSimpleAction,
     undefined
   );
 

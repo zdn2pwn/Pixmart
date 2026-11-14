@@ -1,154 +1,132 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { createServerClient } from "@supabase/ssr";
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const SESSION_COOKIE = "pixmart_session";
 
-/** Routes that require auth */
-const PROTECTED_ROUTES = [
+// Routes yang memerlukan authentication
+const protectedRoutes = [
   "/dashboard",
   "/seller",
+  "/admin",
   "/marketplace/new",
   "/negotiations",
   "/escrow",
   "/onboarding",
 ];
 
-/** Routes only for OWNER */
-const OWNER_ROUTES = ["/admin"];
+// Routes yang hanya bisa diakses kalau belum login
+const authRoutes = ["/login", "/register"];
 
-/** Public routes — always accessible */
-const PUBLIC_ROUTES = ["/", "/login", "/register", "/marketplace"];
-
-function isProtected(pathname: string) {
-  return PROTECTED_ROUTES.some((r) => pathname.startsWith(r));
-}
-
-function isOwnerOnly(pathname: string) {
-  return OWNER_ROUTES.some((r) => pathname.startsWith(r));
-}
+// Routes yang bisa diakses siapa saja (public)
+const publicRoutes = ["/", "/marketplace", "/products"];
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  let response = NextResponse.next({ request });
 
-  // Create Supabase client that can read/write cookies via middleware
-  const supabase = createServerClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    cookies: {
-      getAll() {
-        return request.cookies.getAll();
-      },
-      setAll(cookiesToSet) {
-        cookiesToSet.forEach(({ name, value }) =>
-          request.cookies.set(name, value)
-        );
-        response = NextResponse.next({ request });
-        cookiesToSet.forEach(({ name, value, options }) =>
-          response.cookies.set(name, value, options)
-        );
-      },
-    },
-  });
+  // Skip proxy logic for API routes and static files
+  if (pathname.startsWith('/api') || pathname.startsWith('/_next')) {
+    return NextResponse.next();
+  }
 
-  // Refresh session (keeps access token alive)
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // Get session from cookie
+  const sessionCookie = request.cookies.get(SESSION_COOKIE);
+  const isAuthenticated = !!sessionCookie?.value;
 
-  // --- OWNER legacy cookie fallback ---
-  const legacyCookie =
-    request.cookies.get("pixmart_session") ||
-    request.cookies.get("arcade_session");
-  let legacyRole: string | null = null;
-  if (legacyCookie?.value) {
+  let session = null;
+  if (isAuthenticated) {
     try {
-      const parsed = JSON.parse(
-        Buffer.from(legacyCookie.value, "base64").toString("utf-8")
-      );
-      legacyRole = parsed?.role ?? null;
-    } catch {
-      legacyRole = null;
+      const decoded = Buffer.from(sessionCookie.value, "base64").toString("utf-8");
+      session = JSON.parse(decoded);
+    } catch (err) {
+      // Invalid session, clear it
+      const response = NextResponse.redirect(new URL("/login", request.url));
+      response.cookies.delete(SESSION_COOKIE);
+      return response;
     }
   }
 
-  // Owner-only routes
-  if (isOwnerOnly(pathname)) {
-    const isOwner = legacyRole === "OWNER";
-    if (!isOwner) {
-      const url = request.nextUrl.clone();
-      url.pathname = "/login";
-      url.searchParams.set("from", pathname);
-      return NextResponse.redirect(url);
-    }
-    return response;
+  // Check if trying to access protected route
+  const isProtectedRoute = protectedRoutes.some((route) =>
+    pathname.startsWith(route)
+  );
+
+  // Check if trying to access auth route (login/register)
+  const isAuthRoute = authRoutes.some((route) => pathname.startsWith(route));
+
+  // ═══════════════════════════════════════════════════════════
+  // PROTECTED ROUTES - Require authentication
+  // ═══════════════════════════════════════════════════════════
+  if (isProtectedRoute && !isAuthenticated) {
+    // Redirect to login with return URL
+    const loginUrl = new URL("/login", request.url);
+    loginUrl.searchParams.set("from", pathname);
+    return NextResponse.redirect(loginUrl);
   }
 
-  // Protected routes — require Supabase auth
-  if (isProtected(pathname)) {
-    if (!user) {
-      const url = request.nextUrl.clone();
-      url.pathname = "/login";
-      url.searchParams.set("from", pathname);
-      return NextResponse.redirect(url);
-    }
-
-    // Check if user has a role; if not, redirect to onboarding
-    // (except if already going to /onboarding)
-    if (pathname !== "/onboarding") {
-      let role: string | null = (user.user_metadata?.role as string) || null;
-      if (!role) {
-        try {
-          const { data: profile } = await supabase
-            .from("profiles")
-            .select("role")
-            .eq("id", user.id)
-            .single();
-          role = profile?.role ?? null;
-        } catch {
-          // ignore
-        }
-      }
-
-      if (!role) {
-        const url = request.nextUrl.clone();
-        url.pathname = "/onboarding";
-        return NextResponse.redirect(url);
-      }
-    }
+  // ═══════════════════════════════════════════════════════════
+  // ONBOARDING CHECK - Redirect incomplete setup to onboarding
+  // ═══════════════════════════════════════════════════════════
+  // Only redirect TO onboarding if setup not completed (but not if already ON onboarding)
+  if (
+    isAuthenticated &&
+    session &&
+    !session.setupCompleted &&
+    pathname !== "/onboarding" &&
+    !isAuthRoute &&
+    isProtectedRoute // Only redirect protected routes
+  ) {
+    return NextResponse.redirect(new URL("/onboarding", request.url));
   }
 
-  // If logged in and visiting /login or /register → redirect to role destination
-  if ((pathname === "/login" || pathname === "/register") && user) {
-    let role: string | null = (user.user_metadata?.role as string) || null;
-    if (!role) {
-      try {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("role")
-          .eq("id", user.id)
-          .single();
-        role = profile?.role ?? null;
-      } catch {
-        // ignore
-      }
-    }
+  // Note: /onboarding page itself will handle the "already completed" redirect
+  // to avoid double-checking and potential redirect loops
 
-    if (!role) {
+  // ═══════════════════════════════════════════════════════════
+  // AUTH ROUTES - Redirect authenticated users away
+  // ═══════════════════════════════════════════════════════════
+  if (isAuthRoute && isAuthenticated && session) {
+    // If setup not completed, go to onboarding
+    if (!session.setupCompleted) {
       return NextResponse.redirect(new URL("/onboarding", request.url));
     }
 
-    const dest = role === "SELLER" ? "/seller" : "/dashboard";
-    return NextResponse.redirect(new URL(dest, request.url));
+    // Otherwise go to dashboard
+    const dashboardUrl = session.role === "SELLER" ? "/seller" : "/dashboard";
+    return NextResponse.redirect(new URL(dashboardUrl, request.url));
   }
 
-  return response;
+  // ═══════════════════════════════════════════════════════════
+  // ROLE-BASED ACCESS CONTROL
+  // ═══════════════════════════════════════════════════════════
+  if (isAuthenticated && session) {
+    // Admin routes - only OWNER can access
+    if (pathname.startsWith("/admin") && session.role !== "OWNER") {
+      return NextResponse.redirect(new URL("/dashboard", request.url));
+    }
+
+    // Seller routes - only SELLER can access
+    if (pathname.startsWith("/seller") && session.role !== "SELLER") {
+      return NextResponse.redirect(new URL("/dashboard", request.url));
+    }
+  }
+
+  // Allow the request to continue
+  return NextResponse.next();
 }
 
 export default proxy;
 
+// Configure which routes the proxy should run on
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    /*
+     * Match all request paths except for the ones starting with:
+     * - api (API routes)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - public files (public folder)
+     */
+    "/((?!api|_next/static|_next/image|favicon.ico|.*\\..*|public).*)",
   ],
 };

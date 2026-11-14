@@ -49,10 +49,10 @@ export function BuyerDashboardContent({
   const [customToast, setCustomToast] = useState<{ msg: string; type: "SUCCESS" | "INFO" } | null>(null);
   const [isPendingTopUp, startTopUp] = useTransition();
 
-  const activeNegs = negotiations.filter((n) => n.status !== "DEAL_AGREED" && n.status !== "REJECTED");
-  const activeEscrows = escrowRooms.filter((r) => r.meetingStatus !== "COMPLETED" && r.meetingStatus !== "CANCELLED");
-  const completedEscrows = escrowRooms.filter((r) => r.meetingStatus === "COMPLETED");
-  const upcomingMeetups = escrowRooms.filter((r) => r.meetingStatus === "MEETING_CONFIRMED");
+  const activeNegs = (negotiations || []).filter((n) => n.status !== "DEAL_AGREED" && n.status !== "REJECTED");
+  const activeEscrows = (escrowRooms || []).filter((r) => r.status !== "COMPLETED" && r.status !== "CANCELLED");
+  const completedEscrows = (escrowRooms || []).filter((r) => r.status === "COMPLETED");
+  const upcomingMeetups = (escrowRooms || []).filter((r) => r.status === "MEETING_CONFIRMED");
 
   function copyToClipboard(text: string, keyName: string) {
     if (!text) return;

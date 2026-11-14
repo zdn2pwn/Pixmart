@@ -1,24 +1,21 @@
-import { getSession } from "@/lib/auth";
+import { requireSimpleSession } from "@/app/actions/auth";
 import { redirect } from "next/navigation";
 import { PublicNav } from "@/components/layout/PublicNav";
 import { PublicFooter } from "@/components/layout/PublicFooter";
 import { ListingForm } from "./ListingForm";
 import type { Metadata } from "next";
 
-export const instant = false;
+export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
   title: "Pasang Listing Barang Baru — PIXMART",
 };
 
 export default async function NewListingPage() {
-  const session = await getSession();
-  if (!session) {
-    redirect("/login?from=/marketplace/new");
-  }
+  const session = await requireSimpleSession();
 
-  // If user is logged in as BUYER, redirect to onboarding or seller page
-  if (session.role === "BUYER") {
+  // Only SELLER can create listings
+  if (session.role !== "SELLER") {
     redirect("/seller");
   }
 

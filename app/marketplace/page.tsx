@@ -1,12 +1,12 @@
-import { store } from "@/lib/store";
-import { getSession } from "@/lib/auth";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getSimpleSession } from "@/app/actions/auth";
 import { PublicNav } from "@/components/layout/PublicNav";
 import { PublicFooter } from "@/components/layout/PublicFooter";
 import { RoleSwitcherHUD } from "@/components/layout/RoleSwitcherHUD";
 import { MarketplaceExplorer } from "./MarketplaceExplorer";
 import type { Metadata } from "next";
 
-export const instant = false;
+export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
   title: "Katalog Peer-to-Peer Bazaar",
@@ -19,17 +19,31 @@ export default async function MarketplacePage({
 }: {
   searchParams: Promise<{ city?: string; category?: string; q?: string }>;
 }) {
-  const session = await getSession();
+  const session = await getSimpleSession();
   const currentRole = session?.role || "BUYER";
+  const supabase = await createSupabaseServerClient();
 
   const { city, category, q } = await searchParams;
 
-  const listings = store.getListings({
-    city,
-    category,
-    search: q,
-    status: "ACTIVE",
-  });
+  // Fetch listings from database
+  let query = supabase
+    .from("marketplace_listings")
+    .select("*")
+    .eq("status", "ACTIVE")
+    .order("created_at", { ascending: false });
+
+  if (city) {
+    query = query.eq("location_city", city);
+  }
+  if (category) {
+    query = query.eq("category", category);
+  }
+  if (q) {
+    query = query.ilike("title", `%${q}%`);
+  }
+
+  const { data: listingsData } = await query;
+  const listings = listingsData || [];
 
   return (
     <div className="min-h-screen bg-[#090a0f] text-[#f4f5f8] flex flex-col">

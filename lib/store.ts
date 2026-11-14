@@ -170,7 +170,7 @@ class MarketplaceStore {
     id?: string;
     email: string;
     password?: string;
-    role: UserRole;
+    role?: UserRole;
     codename?: string;
     locationCity?: string;
     locationDistrict?: string;
@@ -182,16 +182,17 @@ class MarketplaceStore {
       (typeof crypto !== "undefined" && crypto.randomUUID
         ? crypto.randomUUID()
         : `usr_${Date.now()}`);
+    const tempRole = data.role || "BUYER"; // Temporary for codename generation
     const codename =
       data.codename ||
-      `Anonymous ${data.role === "SELLER" ? "Seller" : "Buyer"} #${userId.slice(-4).toUpperCase()}`;
+      `Anonymous ${tempRole === "SELLER" ? "Seller" : "Buyer"} #${userId.slice(-4).toUpperCase()}`;
     const passwordHash = data.password ? hashPassword(data.password) : undefined;
 
     const newUser: User = {
       id: userId,
       codename,
       email: data.email,
-      role: data.role,
+      role: data.role || "BUYER", // Will be properly set during onboarding
       reputation: 100,
       completedDeals: 0,
       locationCity: data.locationCity || "Jakarta",
@@ -199,12 +200,12 @@ class MarketplaceStore {
       avatarSeed: codename,
       walletBtc: data.walletBtc || "",
       walletXmr: data.walletXmr || "",
-      balanceBtc: data.role === "BUYER" ? 0.05 : 0.0,
-      balanceXmr: data.role === "BUYER" ? 3.5 : 0.0,
+      balanceBtc: 0.0, // Will be set after onboarding based on role
+      balanceXmr: 0.0,
       depositAddressBtc: generateBtcAddress(userId),
       depositAddressXmr: generateXmrAddress(userId),
       passwordHash,
-      setupCompleted: false,
+      setupCompleted: false, // CRITICAL: Must complete onboarding first
       createdAt: new Date(),
     };
 
@@ -361,6 +362,7 @@ class MarketplaceStore {
       if (data.email) existing.email = data.email;
       if (!existing.depositAddressBtc) existing.depositAddressBtc = generateBtcAddress(existing.id);
       if (!existing.depositAddressXmr) existing.depositAddressXmr = generateXmrAddress(existing.id);
+      // Keep existing setupCompleted status
       this.saveState();
       return existing;
     }
@@ -373,10 +375,11 @@ class MarketplaceStore {
       completedDeals: 0,
       locationCity: "Jakarta",
       avatarSeed: data.codename || data.id,
-      balanceBtc: data.role === "BUYER" ? 0.05 : 0.0,
-      balanceXmr: data.role === "BUYER" ? 3.5 : 0.0,
+      balanceBtc: 0.0, // Will be set after onboarding
+      balanceXmr: 0.0,
       depositAddressBtc: generateBtcAddress(data.id),
       depositAddressXmr: generateXmrAddress(data.id),
+      setupCompleted: false, // CRITICAL: Must complete onboarding
       createdAt: new Date(),
     };
     this.users.push(newUser);

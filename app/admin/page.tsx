@@ -1,9 +1,10 @@
-import { getSession } from "@/lib/auth";
+import { requireSimpleSession } from "@/app/actions/auth";
+import { redirect } from "next/navigation";
 import { store } from "@/lib/store";
 import { OwnerDashboardContent } from "./OwnerDashboardContent";
 import type { Metadata } from "next";
 
-export const instant = false;
+export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
   title: "Owner Radar & Network Monitor — PIXMART",
@@ -11,7 +12,12 @@ export const metadata: Metadata = {
 };
 
 export default async function AdminPage() {
-  const session = await getSession();
+  const session = await requireSimpleSession();
+  
+  // Only OWNER can access
+  if (session.role !== "OWNER") {
+    redirect("/dashboard");
+  }
   const metrics = store.getPlatformMetrics();
   const allRooms = store.getAllEscrowRooms();
   const users = store.getUsers();

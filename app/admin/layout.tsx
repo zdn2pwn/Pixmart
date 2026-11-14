@@ -3,8 +3,6 @@ import { getSession } from "@/lib/auth";
 import { store } from "@/lib/store";
 import { AdminShell } from "@/components/layout/AdminShell";
 
-export const instant = false;
-
 export default async function AdminLayout({
   children,
 }: {

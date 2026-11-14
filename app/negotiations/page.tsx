@@ -1,13 +1,13 @@
-import { store } from "@/lib/store";
-import { getSession } from "@/lib/auth";
+import { requireSimpleSession } from "@/app/actions/auth";
 import { redirect } from "next/navigation";
 import { PublicNav } from "@/components/layout/PublicNav";
 import { PublicFooter } from "@/components/layout/PublicFooter";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { MessageSquare, ArrowRight, Clock, CheckCircle2, XCircle, Package } from "lucide-react";
 import type { Metadata } from "next";
 
-export const instant = false;
+export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
   title: "Pusat Negosiasi & Tawaran — PIXMART",
@@ -15,15 +15,23 @@ export const metadata: Metadata = {
 };
 
 export default async function NegotiationsPage() {
-  const session = await getSession();
-  if (!session) {
-    redirect("/login?from=/negotiations");
-  }
+  const session = await requireSimpleSession();
+  const supabase = await createSupabaseServerClient();
 
   const currentRole = session.role;
   const userId = session.userId;
 
-  const negotiations = store.getNegotiationsByUser(userId);
+  // Fetch negotiations where user is buyer or seller
+  const { data: negotiations = [] } = await supabase
+    .from("negotiations")
+    .select(`
+      *,
+      buyer:profiles!negotiations_buyer_id_fkey(id, codename, email),
+      seller:profiles!negotiations_seller_id_fkey(id, codename, email),
+      listing:marketplace_listings(*)
+    `)
+    .or(`buyer_id.eq.${userId},seller_id.eq.${userId}`)
+    .order("created_at", { ascending: false });
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-[#e8e8e8] flex flex-col">
@@ -41,7 +49,7 @@ export default async function NegotiationsPage() {
               Daftar Negosiasi &amp; Tawaran Aktif
             </h1>
             <p className="text-xs font-mono text-[#888] mt-1">
-              Login sebagai: <span className="text-[#39FF14] font-bold">{session?.name}</span> ({currentRole})
+              Login sebagai: <span className="text-[#39FF14] font-bold">{session?.codename}</span> ({currentRole})
             </p>
           </div>
 
@@ -54,7 +62,7 @@ export default async function NegotiationsPage() {
         </div>
 
         {/* List of negotiations */}
-        {negotiations.length === 0 ? (
+        {!negotiations || negotiations.length === 0 ? (
           <div className="bg-[#121212] border border-[#222] p-12 text-center space-y-4">
             <MessageSquare size={40} className="mx-auto text-[#444]" />
             <h3 className="text-white font-bold text-base">Belum Ada Negosiasi Aktif</h3>
@@ -69,10 +77,10 @@ export default async function NegotiationsPage() {
           </div>
         ) : (
           <div className="space-y-4">
-            {negotiations.map((neg) => {
-              const hasImage = neg.listing.images && neg.listing.images.length > 0;
-              const isBuyer = neg.buyerId === userId;
-              const counterparty = isBuyer ? neg.seller.codename : neg.buyer.codename;
+            {negotiations.map((neg: any) => {
+              const hasImage = neg.listing?.images && neg.listing.images.length > 0;
+              const isBuyer = neg.buyer_id === userId;
+              const counterparty = isBuyer ? neg.seller?.codename : neg.buyer?.codename;
 
               return (
                 <Link
@@ -101,18 +109,18 @@ export default async function NegotiationsPage() {
                           <span>Lawan Bicara:</span>
                           <span className="text-[#39FF14] font-bold">{counterparty}</span>
                           <span>•</span>
-                          <span>{neg.listing.locationCity}</span>
+                          <span>{neg.listing?.location_city}</span>
                         </div>
                         <h3 className="text-sm font-bold text-white group-hover:text-[#39FF14] transition-colors line-clamp-1">
-                          {neg.listing.title}
+                          {neg.listing?.title || "Produk"}
                         </h3>
                         <div className="text-xs font-mono text-[#aaa]">
                           Tawaran Saat Ini:{" "}
                           <span className="text-white font-bold">
-                            Rp {neg.currentOfferPrice.toLocaleString("id-ID")}
+                            Rp {(neg.current_offer_price || 0).toLocaleString("id-ID")}
                           </span>{" "}
                           <span className="text-[#888]">
-                            (Harga Asli: Rp {neg.listing.fiatEstimateIdr.toLocaleString("id-ID")})
+                            (Harga Asli: Rp {(neg.listing?.fiat_estimate_idr || 0).toLocaleString("id-ID")})
                           </span>
                         </div>
                       </div>

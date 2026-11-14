@@ -16,6 +16,7 @@ import {
   LogOut,
   RefreshCw,
   ChevronDown,
+  User,
 } from "lucide-react";
 import { logoutAction } from "@/app/actions/auth";
 
@@ -58,13 +59,16 @@ export function PublicNav({
 
         {/* Center Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-7 text-xs font-mono font-medium text-[#888]">
-          <Link
-            href="/marketplace"
-            className="hover:text-white transition-colors flex items-center gap-1.5"
-          >
-            <Compass size={14} className="text-[#39FF14]" />
-            <span>Katalog Lokal</span>
-          </Link>
+          {/* Show Katalog Lokal only if NOT seller */}
+          {currentRole !== "SELLER" && (
+            <Link
+              href="/marketplace"
+              className="hover:text-white transition-colors flex items-center gap-1.5"
+            >
+              <Compass size={14} className="text-[#39FF14]" />
+              <span>Katalog Lokal</span>
+            </Link>
+          )}
 
           {isLoggedIn && (
             <>
@@ -160,6 +164,16 @@ export function PublicNav({
                         </div>
                       </div>
 
+                      {/* Profile Link */}
+                      <Link
+                        href="/profile"
+                        onClick={() => setUserMenuOpen(false)}
+                        className="w-full flex items-center gap-2 px-3 py-2.5 text-xs font-mono text-[#ccc] hover:bg-[#1a1a1a] hover:text-white transition-colors"
+                      >
+                        <User size={12} />
+                        Profile & Settings
+                      </Link>
+
                       {/* Logout */}
                       <button
                         onClick={handleLogout}
@@ -206,14 +220,17 @@ export function PublicNav({
       {/* Mobile Drawer */}
       {open && (
         <div className="md:hidden border-t border-[#222222] bg-[#111111] px-6 py-5 space-y-4 font-mono text-xs">
-          <Link
-            href="/marketplace"
-            onClick={() => setOpen(false)}
-            className="flex items-center gap-2 text-[#ccc] hover:text-white py-1 font-medium"
-          >
-            <Compass size={16} className="text-[#39FF14]" />
-            <span>Katalog Lokal Terdekat</span>
-          </Link>
+          {/* Show Katalog Lokal only if NOT seller */}
+          {currentRole !== "SELLER" && (
+            <Link
+              href="/marketplace"
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-2 text-[#ccc] hover:text-white py-1 font-medium"
+            >
+              <Compass size={16} className="text-[#39FF14]" />
+              <span>Katalog Lokal Terdekat</span>
+            </Link>
+          )}
 
           {isLoggedIn && (
             <>
