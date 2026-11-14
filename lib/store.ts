@@ -1264,7 +1264,7 @@ class MarketplaceStore {
           title: "Dual confirmation signed",
           amount: "Rp 2.100.000",
           city: "Bandung - Ciwalk",
-          timestamp: new Date(),
+          timestamp: "2026-11-14T10:00:00.000Z",
         },
         {
           id: "tf_02",
@@ -1272,7 +1272,7 @@ class MarketplaceStore {
           title: "Kesepakatan harga tercapai",
           amount: "Rp 4.200.000",
           city: "Jakarta Selatan",
-          timestamp: new Date(Date.now() - 1000 * 60 * 15),
+          timestamp: "2026-11-14T09:45:00.000Z",
         },
       ],
     };

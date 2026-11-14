@@ -4,20 +4,20 @@ import { PublicFooter } from "@/components/layout/PublicFooter";
 import { RoleSwitcherHUD } from "@/components/layout/RoleSwitcherHUD";
 import { store } from "@/lib/store";
 import { getSession } from "@/lib/auth";
-import { formatBtc, formatXmr, formatCurrency } from "@/lib/format";
+import { formatCurrency } from "@/lib/format";
 import { LiveTerminalWidget } from "@/components/landing/LiveTerminalWidget";
 import {
   MapPin,
   ArrowRight,
   ShieldCheck,
-  Zap,
+  MessageSquare,
   CheckCircle2,
-  Lock,
   Compass,
   Plus,
-  Coins,
-  Cpu,
-  Layers,
+  Users,
+  Package,
+  Handshake,
+  Clock,
   Check,
   X as XIcon,
 } from "lucide-react";
@@ -25,6 +25,33 @@ import {
 export const instant = false;
 
 const CITIES = ["Jakarta Selatan", "Bandung", "Surabaya", "Jakarta Pusat", "Yogyakarta", "Medan"];
+
+const HOW_IT_WORKS = [
+  {
+    step: "01",
+    icon: Compass,
+    title: "Temukan di Sekitar Kamu",
+    desc: "Aktifkan lokasi atau pilih area manual. Lihat barang terdekat lengkap dengan estimasi jarak dari kamu.",
+  },
+  {
+    step: "02",
+    icon: MessageSquare,
+    title: "Negosiasi Harga",
+    desc: "Chat langsung dengan seller. Ajukan penawaran, counter, dan capai kesepakatan harga terbaik.",
+  },
+  {
+    step: "03",
+    icon: ShieldCheck,
+    title: "Escrow Room Dibuat",
+    desc: "Setelah deal, sistem membuat Escrow Room. Tentukan titik pertemuan dan waktu meetup di area publik.",
+  },
+  {
+    step: "04",
+    icon: Handshake,
+    title: "COD & Konfirmasi",
+    desc: "Bertemu langsung. Cek barang di tempat. Buyer & Seller konfirmasi serah terima. Transaksi selesai.",
+  },
+];
 
 export default async function HomePage() {
   const session = await getSession();
@@ -37,26 +64,26 @@ export default async function HomePage() {
       <PublicNav currentRole={currentRole} />
       <RoleSwitcherHUD currentRole={currentRole} />
 
-      {/* HERO SECTION — SOVEREIGN MANIFESTO & INTERACTIVE TERMINAL */}
+      {/* HERO SECTION */}
       <section className="relative border-b border-[#1c1c1c] py-16 sm:py-24 px-4 sm:px-8 overflow-hidden">
-        {/* Subtle Ambient Radial Glow */}
+        {/* Ambient Glow */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-96 bg-[#39FF14]/5 blur-[120px] pointer-events-none rounded-full" />
 
         <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 items-center relative z-10">
-          {/* Left Column: Slogan & Sovereign Ethos */}
+          {/* Left Column */}
           <div className="lg:col-span-7 space-y-6">
             <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#141414] border border-[#2a2a2a] text-xs font-mono text-[#39FF14]">
               <span className="w-2 h-2 rounded-full bg-[#39FF14] pulse-green inline-block" />
-              <span className="font-bold tracking-wider">SOVEREIGN P2P ESCROW // DESENTRALISASI PENUH</span>
+              <span className="font-bold tracking-wider">LOCAL MARKETPLACE // JUAL BELI DI SEKITAR KAMU</span>
             </div>
 
             <div className="space-y-3">
               <h1 className="text-3xl sm:text-5xl font-bold tracking-tight text-white leading-[1.15]">
-                Jual Beli Bebas. <br />
-                <span className="text-[#39FF14]">Tanpa Bank. Tanpa Sensor.</span>
+                Jual Beli Apa Saja. <br />
+                <span className="text-[#39FF14]">Langsung. Lokal. Bebas.</span>
               </h1>
               <p className="text-base sm:text-lg text-[#aaa] font-sans leading-relaxed max-w-xl">
-                Pasar peer-to-peer independen untuk memperjualbelikan barang fisik apa saja langsung antar manusia. Tanpa campur tangan birokrasi, tanpa pelacakan rekening, dan tanpa perantara pihak ketiga.
+                Marketplace berbasis lokasi untuk jual beli barang fisik secara langsung. Tanpa kurir, tanpa biaya tersembunyi — cukup temukan penjual terdekat, sepakati harga, dan bertemu di area publik.
               </p>
             </div>
 
@@ -66,53 +93,53 @@ export default async function HomePage() {
                 href="/marketplace"
                 className="btn-primary text-sm px-6 py-3 font-bold flex items-center gap-2 shadow-[0_0_20px_rgba(57,255,20,0.35)]"
               >
-                <span>Buka Pasar Terbuka</span>
+                <span>Lihat Produk Terdekat</span>
                 <ArrowRight size={15} />
               </Link>
               <Link
                 href="/marketplace/new"
                 className="btn-ghost text-sm px-5 py-3 font-medium"
               >
-                + Pasang Iklan Bebas
+                + Pasang Iklan
               </Link>
             </div>
 
-            {/* Sovereign Core Guarantees */}
+            {/* Core Guarantees */}
             <div className="pt-2 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs font-mono text-[#888]">
               <div className="p-2.5 bg-[#111111] border border-[#222]">
-                <div className="text-[#39FF14] font-bold mb-0.5">Nol KYC</div>
-                <div className="text-[11px] text-[#666]">Tanpa KTP / Data Pribadi</div>
+                <div className="text-[#39FF14] font-bold mb-0.5">Zero Kurir</div>
+                <div className="text-[11px] text-[#666]">COD Langsung</div>
               </div>
               <div className="p-2.5 bg-[#111111] border border-[#222]">
-                <div className="text-[#39FF14] font-bold mb-0.5">Multisig 2-of-2</div>
-                <div className="text-[11px] text-[#666]">BTC &amp; XMR Vault</div>
+                <div className="text-[#39FF14] font-bold mb-0.5">Anonim</div>
+                <div className="text-[11px] text-[#666]">Tanpa Data Pribadi</div>
               </div>
               <div className="p-2.5 bg-[#111111] border border-[#222]">
-                <div className="text-[#39FF14] font-bold mb-0.5">Tatap Muka</div>
-                <div className="text-[11px] text-[#666]">Bebas Risiko Kurir</div>
+                <div className="text-[#39FF14] font-bold mb-0.5">Escrow Room</div>
+                <div className="text-[11px] text-[#666]">Transaksi Aman</div>
               </div>
               <div className="p-2.5 bg-[#111111] border border-[#222]">
-                <div className="text-[#39FF14] font-bold mb-0.5">Anti-Sita</div>
-                <div className="text-[11px] text-[#666]">Tanpa Blokir Rekening</div>
+                <div className="text-[#39FF14] font-bold mb-0.5">Bebas Potongan</div>
+                <div className="text-[11px] text-[#666]">0% Platform Fee</div>
               </div>
             </div>
           </div>
 
-          {/* Right Column: Interactive Handshake Simulator */}
+          {/* Right Column: Live Demo Widget */}
           <div className="lg:col-span-5">
             <LiveTerminalWidget />
           </div>
         </div>
       </section>
 
-      {/* LIVE VOLUME & SETTLEMENT STRIP */}
+      {/* STATS STRIP */}
       <section className="border-b border-[#1c1c1c] bg-[#0c0c0c] py-6 px-4 sm:px-8">
         <div className="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6">
           {[
-            { label: "Volume Bitcoin Transaksi", value: formatBtc(metrics.totalVolumeBtc), color: "#F7931A", note: "Tersirkulasi di multisig" },
-            { label: "Volume Monero Anonim", value: formatXmr(metrics.totalVolumeXmr), color: "#FF6600", note: "Stealth ring transactions" },
-            { label: "Deals Sedang Berlangsung", value: `${metrics.activeEscrowsCount} Transaksi`, color: "#39FF14", note: "Menunggu serah terima" },
-            { label: "Deals Sukses Terverifikasi", value: `${metrics.completedDealsCount} Transaksi`, color: "#39FF14", note: "100% tanpa sengketa" },
+            { label: "Produk Aktif", value: `${listings.length} Listing`, color: "#39FF14", note: "Siap dinegosiasi" },
+            { label: "Kota Aktif", value: `${CITIES.length} Kota`, color: "#39FF14", note: "Jabodetabek & sekitar" },
+            { label: "Transaksi Berjalan", value: `${metrics.activeEscrowsCount} Escrow`, color: "#39FF14", note: "Menunggu serah terima" },
+            { label: "Deal Selesai", value: `${metrics.completedDealsCount} Transaksi`, color: "#39FF14", note: "100% meetup sukses" },
           ].map((s) => (
             <div key={s.label} className="space-y-1">
               <div className="text-xs font-mono text-[#666] uppercase tracking-wider">{s.label}</div>
@@ -125,7 +152,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* OPEN MARKETPLACE DIRECTORY FRONT & CENTER */}
+      {/* PRODUK TERDEKAT */}
       <section className="py-16 px-4 sm:px-8 border-b border-[#1c1c1c]">
         <div className="max-w-6xl mx-auto space-y-8">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
@@ -134,10 +161,10 @@ export default async function HomePage() {
                 PAPAN PENAWARAN TERBUKA
               </div>
               <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
-                Barang Siap Ditransaksikan di Kota Anda
+                Barang Siap Ditransaksikan di Kotamu
               </h2>
               <p className="text-xs sm:text-sm text-[#777] mt-1 font-sans">
-                Hubungi penjual, kunci escrow, dan sepakati pertemuan tatap muka di area publik.
+                Temukan penjual terdekat, buat penawaran, dan sepakati titik pertemuan.
               </p>
             </div>
 
@@ -145,7 +172,7 @@ export default async function HomePage() {
               href="/marketplace"
               className="btn-ghost text-xs font-mono font-bold px-4 py-2.5 hover:border-[#39FF14] self-start sm:self-auto"
             >
-              Lihat Seluruh Barang ({listings.length}) →
+              Lihat Semua ({listings.length}) →
             </Link>
           </div>
 
@@ -175,7 +202,7 @@ export default async function HomePage() {
                   href={`/marketplace/${listing.id}`}
                   className="group bg-[#111111] border border-[#222222] hover:border-[#39FF14] transition-all flex flex-col overflow-hidden hover:shadow-[0_0_20px_rgba(57,255,20,0.12)] cursor-pointer"
                 >
-                  {/* Photo with aspect ratio */}
+                  {/* Photo */}
                   <div className="relative aspect-[16/10] bg-[#161616] overflow-hidden border-b border-[#222222]">
                     {hasImage && (
                       <img
@@ -185,12 +212,16 @@ export default async function HomePage() {
                         loading="lazy"
                       />
                     )}
+                    {!hasImage && (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <Package size={32} className="text-[#333]" />
+                      </div>
+                    )}
                     <div className="absolute top-3 left-3">
                       <span className="badge-muted text-[11px] bg-black/85">
                         {listing.category.replace(/_/g, " ")}
                       </span>
                     </div>
-
                     <div className="absolute top-3 right-3">
                       <span className="badge-green text-[11px] bg-black/85">
                         {listing.condition}
@@ -205,7 +236,7 @@ export default async function HomePage() {
                         {listing.title}
                       </h3>
                       <div className="flex items-center gap-2 text-xs font-mono text-[#777]">
-                        <span>{listing.seller.codename}</span>
+                        <span>{listing.seller?.codename ?? "Seller"}</span>
                         <span>·</span>
                         <span className="flex items-center gap-1 text-[#aaa]">
                           <MapPin size={11} className="text-[#39FF14]" /> {listing.locationCity}
@@ -214,16 +245,12 @@ export default async function HomePage() {
                     </div>
 
                     <div className="pt-2.5 border-t border-[#1c1c1c] flex items-center justify-between font-mono">
-                      <div>
-                        <div className="text-sm font-bold text-[#FF6600]">
-                          {formatXmr(listing.priceXmr)}
-                        </div>
-                        <div className="text-[11px] text-[#F7931A]">
-                          {formatBtc(listing.priceBtc)}
-                        </div>
+                      <div className="text-sm font-bold text-[#39FF14]">
+                        {formatCurrency(listing.fiatEstimateIdr)}
                       </div>
-                      <div className="text-xs text-[#777]">
-                        ≈ {formatCurrency(listing.fiatEstimateIdr)}
+                      <div className="text-xs text-[#555] flex items-center gap-1">
+                        <Clock size={10} />
+                        <span>COD</span>
                       </div>
                     </div>
                   </div>
@@ -234,73 +261,136 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* COMPARISON: PIXMART VS TRADITIONAL FINANCIAL SYSTEM */}
+      {/* HOW IT WORKS */}
       <section className="py-16 px-4 sm:px-8 border-b border-[#1c1c1c] bg-[#0c0c0c]">
+        <div className="max-w-5xl mx-auto space-y-10">
+          <div>
+            <div className="text-xs font-mono text-[#39FF14] uppercase tracking-wider mb-1.5 font-bold">
+              CARA KERJA
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+              Dari Penemuan hingga Serah Terima
+            </h2>
+            <p className="text-sm text-[#888] font-sans mt-1">
+              Empat langkah sederhana — semuanya lokal, langsung, dan tanpa perantara.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {HOW_IT_WORKS.map(({ step, icon: Icon, title, desc }) => (
+              <div key={step} className="bg-[#111111] border border-[#222] p-5 space-y-3 hover:border-[#39FF14]/40 transition-colors">
+                <div className="flex items-center justify-between">
+                  <span className="text-3xl font-bold font-mono text-[#1e1e1e]">{step}</span>
+                  <Icon size={20} className="text-[#39FF14]" />
+                </div>
+                <div>
+                  <div className="text-sm font-bold text-white mb-1">{title}</div>
+                  <p className="text-xs text-[#777] font-sans leading-relaxed">{desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* PIXMART VS MARKETPLACE KONVENSIONAL */}
+      <section className="py-16 px-4 sm:px-8 border-b border-[#1c1c1c]">
         <div className="max-w-5xl mx-auto space-y-8">
           <div>
             <div className="text-xs font-mono text-[#39FF14] uppercase tracking-wider mb-1.5 font-bold">
-              PERBANDINGAN PROTOKOL
+              PERBANDINGAN
             </div>
             <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
-              Mengapa Bertransaksi Tanpa Perantara Terpusat?
+              Kenapa Pilih Pixmart?
             </h2>
             <p className="text-sm text-[#888] font-sans mt-1">
-              Bandingkan pasar bebas terdesentralisasi dengan platform e-commerce konvensional yang diawasi lembaga perbankan.
+              Berbeda dari marketplace konvensional — kami fokus pada transaksi lokal langsung antar individu.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 font-sans">
-            {/* Traditional Platform Card */}
+            {/* Traditional */}
             <div className="bg-[#111111] border border-[#262626] p-6 space-y-4">
               <div className="flex items-center gap-2 text-sm font-bold text-[#FF4444] font-mono uppercase">
                 <XIcon size={16} />
-                <span>Marketplace / Bank Konvensional</span>
+                <span>Marketplace Konvensional</span>
               </div>
               <ul className="space-y-3 text-xs text-[#888] leading-relaxed">
                 <li className="flex items-start gap-2.5">
                   <span className="text-[#FF4444] font-bold">✕</span>
-                  <span>Wajib upload KTP, foto selfie, dan verifikasi rekening bank terpusat.</span>
+                  <span>Biaya admin, komisi seller, dan ongkos kirim yang sering tidak transparan.</span>
                 </li>
                 <li className="flex items-start gap-2.5">
                   <span className="text-[#FF4444] font-bold">✕</span>
-                  <span>Rekening dan dana bisa dibekukan sepihak sewaktu-waktu oleh pihak ketiga.</span>
+                  <span>Risiko kurir: paket ditukar, hilang, atau rusak dalam pengiriman.</span>
                 </li>
                 <li className="flex items-start gap-2.5">
                   <span className="text-[#FF4444] font-bold">✕</span>
-                  <span>Potongan biaya admin, pajak transaksi, dan biaya penanganan yang tinggi.</span>
+                  <span>Proses refund yang lambat dan sering bermasalah.</span>
                 </li>
                 <li className="flex items-start gap-2.5">
                   <span className="text-[#FF4444] font-bold">✕</span>
-                  <span>Ketergantungan kurir ekspedisi dengan risiko paket ditukar atau hilang.</span>
+                  <span>Tidak bisa cek kondisi barang sebelum bayar.</span>
                 </li>
               </ul>
             </div>
 
-            {/* PIXMART Card */}
+            {/* PIXMART */}
             <div className="bg-[#121212] border border-[#39FF14]/50 p-6 space-y-4 shadow-[0_0_20px_rgba(57,255,20,0.08)]">
               <div className="flex items-center gap-2 text-sm font-bold text-[#39FF14] font-mono uppercase">
                 <Check size={16} />
-                <span>PIXMART Sovereign Protocol</span>
+                <span>PIXMART Local COD</span>
               </div>
               <ul className="space-y-3 text-xs text-[#ddd] leading-relaxed">
                 <li className="flex items-start gap-2.5">
                   <span className="text-[#39FF14] font-bold">✓</span>
-                  <span><strong>100% Anonim:</strong> Tanpa KYC, tanpa verifikasi identitas, tanpa birokrasi.</span>
+                  <span><strong>0% Biaya Platform:</strong> Kesepakatan harga murni antara buyer dan seller.</span>
                 </li>
                 <li className="flex items-start gap-2.5">
                   <span className="text-[#39FF14] font-bold">✓</span>
-                  <span><strong>Multisig Vault:</strong> Koin disimpan di blockchain, mustahil disita siapa pun.</span>
+                  <span><strong>Cek Fisik di Tempat:</strong> Bertemu langsung, periksa barang, baru bayar.</span>
                 </li>
                 <li className="flex items-start gap-2.5">
                   <span className="text-[#39FF14] font-bold">✓</span>
-                  <span><strong>Bebas Potongan Pajak:</strong> Kesepakatan harga langsung murni antar individu.</span>
+                  <span><strong>Escrow COD Room:</strong> Proses terstruktur — meeting point, waktu, konfirmasi dua pihak.</span>
                 </li>
                 <li className="flex items-start gap-2.5">
                   <span className="text-[#39FF14] font-bold">✓</span>
-                  <span><strong>Serah Terima Fisik (COD):</strong> Cek barang di tempat, setuju baru cair.</span>
+                  <span><strong>Privasi Terjaga:</strong> Anonim default, lokasi detail tidak dipublikasikan.</span>
                 </li>
               </ul>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA BOTTOM */}
+      <section className="py-16 px-4 sm:px-8">
+        <div className="max-w-3xl mx-auto text-center space-y-6">
+          <div className="text-xs font-mono text-[#39FF14] uppercase tracking-wider font-bold">
+            MULAI SEKARANG
+          </div>
+          <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+            Siap jual atau beli di sekitar kamu?
+          </h2>
+          <p className="text-sm text-[#888] font-sans leading-relaxed">
+            Daftar anonim, pasang iklan gratis, atau langsung cari produk terdekat dari lokasimu sekarang.
+          </p>
+          <div className="flex flex-wrap justify-center items-center gap-4 pt-2">
+            <Link
+              href="/marketplace"
+              className="btn-primary text-sm px-7 py-3 font-bold flex items-center gap-2 shadow-[0_0_20px_rgba(57,255,20,0.3)]"
+            >
+              <Compass size={15} />
+              <span>Jelajahi Produk Lokal</span>
+            </Link>
+            <Link
+              href="/marketplace/new"
+              className="btn-ghost text-sm px-6 py-3 font-medium flex items-center gap-2"
+            >
+              <Plus size={15} />
+              <span>Pasang Iklan Gratis</span>
+            </Link>
           </div>
         </div>
       </section>
