@@ -177,7 +177,11 @@ class MarketplaceStore {
     walletBtc?: string;
     walletXmr?: string;
   }): User {
-    const userId = data.id || `usr_${Date.now()}`;
+    const userId =
+      data.id ||
+      (typeof crypto !== "undefined" && crypto.randomUUID
+        ? crypto.randomUUID()
+        : `usr_${Date.now()}`);
     const codename =
       data.codename ||
       `Anonymous ${data.role === "SELLER" ? "Seller" : "Buyer"} #${userId.slice(-4).toUpperCase()}`;
@@ -1472,7 +1476,14 @@ class MarketplaceStore {
   }
 }
 
-// Global Singleton
-const globalForStore = globalThis as unknown as { arcadeMarketplace: MarketplaceStore };
-export const store = globalForStore.arcadeMarketplace ?? new MarketplaceStore();
-if (process.env.NODE_ENV !== "production") globalForStore.arcadeMarketplace = store;
+// Global Singleton with prototype refresh for Turbopack HMR
+const globalForStore = globalThis as unknown as { arcadeMarketplace?: MarketplaceStore };
+let storeInstance = globalForStore.arcadeMarketplace;
+if (!storeInstance || typeof (storeInstance as any).createUser !== "function") {
+  storeInstance = new MarketplaceStore();
+  globalForStore.arcadeMarketplace = storeInstance;
+} else {
+  // Ensure prototype is always updated on HMR
+  Object.setPrototypeOf(storeInstance, MarketplaceStore.prototype);
+}
+export const store = storeInstance;

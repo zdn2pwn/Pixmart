@@ -26,7 +26,7 @@ export async function registerAction(_prev: unknown, formData: FormData) {
 
   // 1. Check if email already registered in store
   const existingInStore = store.getUserByEmail(email);
-  if (existingInStore) {
+  if (existingInStore && existingInStore.passwordHash) {
     return { error: "Email sudah terdaftar. Silakan langsung masuk (login)." };
   }
 
@@ -42,10 +42,10 @@ export async function registerAction(_prev: unknown, formData: FormData) {
 
     if (error) {
       if (error.message.includes("already registered") || error.message.includes("User already registered")) {
-        return { error: "Email sudah terdaftar di database. Silakan login." };
+        console.warn("Supabase user already exists in auth. Continuing to sync profile and login.");
+      } else {
+        console.warn("Supabase auth signUp warning (falling back to store):", error.message);
       }
-      // If error is rate limit or email confirmation issue, we fallback smoothly to store auth
-      console.warn("Supabase auth signUp warning (falling back to store):", error.message);
     } else if (data?.user?.id) {
       supabaseUserId = data.user.id;
     }
@@ -53,15 +53,32 @@ export async function registerAction(_prev: unknown, formData: FormData) {
     console.warn("Supabase auth exception, continuing with local store:", err);
   }
 
-  // 3. Create user in store (guarantees registration never fails due to email rate limits)
+  // 3. Create or update user in authoritative store with password hash
   const user = store.createUser({
-    id: supabaseUserId || `usr_${Date.now()}`,
+    id: supabaseUserId || existingInStore?.id || `usr_${Date.now()}`,
     email,
     password,
     role: "BUYER", // temporary until onboarding
   });
 
-  // 4. Set session immediately
+  // 4. Synchronize immediately to Supabase `profiles` table
+  try {
+    const supabase = await createSupabaseServerClient();
+    await supabase.from("profiles").upsert({
+      id: user.id,
+      email: user.email,
+      codename: user.codename,
+      role: user.role,
+      reputation: 100,
+      completed_deals: 0,
+      location_city: user.locationCity || "Jakarta",
+      updated_at: new Date().toISOString(),
+    });
+  } catch (err) {
+    console.warn("Failed to sync profile to Supabase:", err);
+  }
+
+  // 5. Set session immediately (No OTP required!)
   await setSession({
     userId: user.id,
     name: user.codename,
@@ -75,7 +92,7 @@ export async function registerAction(_prev: unknown, formData: FormData) {
     locationCity: user.locationCity,
   });
 
-  // 5. Redirect to onboarding to complete biodata & wallet
+  // 6. Redirect to onboarding to complete biodata & wallet
   redirect("/onboarding");
 }
 
@@ -96,7 +113,7 @@ export async function loginAction(_prev: unknown, formData: FormData) {
     const supabase = await createSupabaseServerClient();
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (!error && data?.user) {
-      matchedUser = store.getUserById(data.user.id);
+      matchedUser = store.getUserById(data.user.id) || store.getUserByEmail(email);
       if (!matchedUser) {
         matchedUser = store.ensureUser({
           id: data.user.id,
@@ -105,21 +122,51 @@ export async function loginAction(_prev: unknown, formData: FormData) {
           role: (data.user.user_metadata?.role as UserRole) || "BUYER",
         });
       }
+    } else if (error) {
+      // Supabase may return "Email not confirmed" or rate limit. Log warning and proceed to store auth!
+      console.warn("Supabase signIn returned:", error.message, "- falling back to store auth");
     }
   } catch (err) {
     console.warn("Supabase signIn exception:", err);
   }
 
-  // 2. If Supabase Auth failed (e.g. rate limit, unconfirmed email, or offline), check authoritative store
+  // 2. If Supabase Auth failed (e.g. rate limit, "Email not confirmed", or offline), verify against store
   if (!matchedUser) {
     matchedUser = store.authenticateUser(email, password);
+  }
+
+  // 3. Fallback: Check if user exists in Supabase `profiles` table (e.g. registered before restart)
+  if (!matchedUser) {
+    try {
+      const supabase = await createSupabaseServerClient();
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("email", email)
+        .maybeSingle();
+
+      if (profile) {
+        // User exists in Supabase profiles! Provision into store with their password hash
+        matchedUser = store.createUser({
+          id: profile.id,
+          email: profile.email,
+          password: password,
+          role: (profile.role as UserRole) || "BUYER",
+          codename: profile.codename || `Anon_#${profile.id.slice(0, 4).toUpperCase()}`,
+          locationCity: profile.location_city || "Jakarta",
+          locationDistrict: profile.location_district || "Pusat",
+        });
+      }
+    } catch (err) {
+      console.warn("Error querying Supabase profile fallback:", err);
+    }
   }
 
   if (!matchedUser) {
     return { error: "Email atau password salah. Pastikan kredensial sudah benar." };
   }
 
-  // 3. Set authenticated session
+  // 4. Set authenticated session
   await setSession({
     userId: matchedUser.id,
     name: matchedUser.codename,
@@ -135,7 +182,7 @@ export async function loginAction(_prev: unknown, formData: FormData) {
     locationCity: matchedUser.locationCity,
   });
 
-  // 4. If onboarding not yet completed, redirect to onboarding
+  // 5. If onboarding not yet completed, redirect to onboarding
   if (!matchedUser.setupCompleted) {
     redirect("/onboarding");
   }
