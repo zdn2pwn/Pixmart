@@ -1,9 +1,8 @@
 import { store } from "@/lib/store";
 import { getSession } from "@/lib/auth";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { PublicNav } from "@/components/layout/PublicNav";
 import { PublicFooter } from "@/components/layout/PublicFooter";
-import { RoleSwitcherHUD } from "@/components/layout/RoleSwitcherHUD";
 import { NegotiationRoomView } from "./NegotiationRoomView";
 import type { Metadata } from "next";
 
@@ -27,18 +26,30 @@ export default async function NegotiationDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const session = await getSession();
-  const currentRole = session?.role || "BUYER";
   const { id } = await params;
+
+  if (!session) {
+    redirect(`/login?from=/negotiations/${id}`);
+  }
 
   const negotiation = store.getNegotiationById(id);
   if (!negotiation) {
     notFound();
   }
 
+  // Authorization check: must be buyer, seller, or owner
+  const isParticipant =
+    session.role === "OWNER" ||
+    negotiation.buyerId === session.userId ||
+    negotiation.sellerId === session.userId;
+
+  if (!isParticipant) {
+    redirect("/negotiations");
+  }
+
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-[#e8e8e8] flex flex-col">
-      <PublicNav currentRole={currentRole} />
-      <RoleSwitcherHUD currentRole={currentRole} />
+      <PublicNav currentRole={session.role} codename={session.codename} isLoggedIn={true} />
       <NegotiationRoomView initialNegotiation={negotiation} session={session} />
       <PublicFooter />
     </div>

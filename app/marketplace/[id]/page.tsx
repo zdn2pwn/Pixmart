@@ -3,7 +3,6 @@ import { getSession } from "@/lib/auth";
 import { notFound } from "next/navigation";
 import { PublicNav } from "@/components/layout/PublicNav";
 import { PublicFooter } from "@/components/layout/PublicFooter";
-import { RoleSwitcherHUD } from "@/components/layout/RoleSwitcherHUD";
 import { ListingDetailView } from "./ListingDetailView";
 import type { Metadata } from "next";
 
@@ -29,7 +28,7 @@ export default async function ListingPage({
   params: Promise<{ id: string }>;
 }) {
   const session = await getSession();
-  const currentRole = session?.role || "OWNER";
+  const currentRole = session?.role || "BUYER";
 
   const { id } = await params;
   const listing = store.getListingById(id);
@@ -40,8 +39,7 @@ export default async function ListingPage({
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-[#e8e8e8] flex flex-col">
-      <PublicNav currentRole={currentRole} />
-      <RoleSwitcherHUD currentRole={currentRole} />
+      <PublicNav currentRole={currentRole} codename={session?.codename} isLoggedIn={!!session} />
       <ListingDetailView listing={listing} session={session} />
       <PublicFooter />
     </div>

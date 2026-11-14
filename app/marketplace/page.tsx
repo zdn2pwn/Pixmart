@@ -20,7 +20,7 @@ export default async function MarketplacePage({
   searchParams: Promise<{ city?: string; category?: string; q?: string }>;
 }) {
   const session = await getSession();
-  const currentRole = session?.role || "OWNER";
+  const currentRole = session?.role || "BUYER";
 
   const { city, category, q } = await searchParams;
 
@@ -33,8 +33,7 @@ export default async function MarketplacePage({
 
   return (
     <div className="min-h-screen bg-[#090a0f] text-[#f4f5f8] flex flex-col">
-      <PublicNav currentRole={currentRole} />
-      <RoleSwitcherHUD currentRole={currentRole} />
+      <PublicNav currentRole={currentRole} codename={session?.codename} isLoggedIn={!!session} />
       <MarketplaceExplorer
         initialListings={listings}
         initialCity={city || "ALL"}

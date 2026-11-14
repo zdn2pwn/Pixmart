@@ -11,8 +11,8 @@ export default async function AdminLayout({
   children: React.ReactNode;
 }) {
   const session = await getSession();
-  if (!session) {
-    redirect("/login");
+  if (!session || session.role !== "OWNER") {
+    redirect("/login?from=/admin");
   }
 
   const activeEscrowCount = store.getPlatformMetrics().activeEscrowsCount;

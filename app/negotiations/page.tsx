@@ -1,8 +1,8 @@
 import { store } from "@/lib/store";
 import { getSession } from "@/lib/auth";
+import { redirect } from "next/navigation";
 import { PublicNav } from "@/components/layout/PublicNav";
 import { PublicFooter } from "@/components/layout/PublicFooter";
-import { RoleSwitcherHUD } from "@/components/layout/RoleSwitcherHUD";
 import Link from "next/link";
 import { MessageSquare, ArrowRight, Clock, CheckCircle2, XCircle, Package } from "lucide-react";
 import type { Metadata } from "next";
@@ -16,15 +16,18 @@ export const metadata: Metadata = {
 
 export default async function NegotiationsPage() {
   const session = await getSession();
-  const currentRole = session?.role || "BUYER";
-  const userId = session?.userId || "usr_buyer_01";
+  if (!session) {
+    redirect("/login?from=/negotiations");
+  }
+
+  const currentRole = session.role;
+  const userId = session.userId;
 
   const negotiations = store.getNegotiationsByUser(userId);
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-[#e8e8e8] flex flex-col">
-      <PublicNav currentRole={currentRole} />
-      <RoleSwitcherHUD currentRole={currentRole} />
+      <PublicNav currentRole={currentRole} codename={session.codename} isLoggedIn={true} />
 
       <main className="flex-1 max-w-5xl mx-auto w-full px-4 sm:px-8 py-8 space-y-6">
         {/* Header */}

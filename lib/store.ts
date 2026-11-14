@@ -191,6 +191,31 @@ class MarketplaceStore {
     return u || this.users[0];
   }
 
+  ensureUser(data: { id: string; codename: string; email: string; role: UserRole }): User {
+    const existing = this.users.find((u) => u.id === data.id);
+    if (existing) {
+      existing.role = data.role;
+      if (data.codename) existing.codename = data.codename;
+      if (data.email) existing.email = data.email;
+      this.saveState();
+      return existing;
+    }
+    const newUser: User = {
+      id: data.id,
+      codename: data.codename || `Anon_${data.role === "SELLER" ? "Seller" : "Buyer"}_#${data.id.slice(0, 4).toUpperCase()}`,
+      email: data.email,
+      role: data.role,
+      reputation: 100,
+      completedDeals: 0,
+      locationCity: "Jakarta",
+      avatarSeed: data.codename || data.id,
+      createdAt: new Date(),
+    };
+    this.users.push(newUser);
+    this.saveState();
+    return newUser;
+  }
+
   // ============================================================
   // LISTINGS & LOCATION-BASED SEARCH
   // ============================================================

@@ -68,12 +68,28 @@ export function ListingDetailView({
   }
 
   async function handleToggleWishlist() {
+    if (!session) {
+      router.push(`/login?from=/marketplace/${listing.id}`);
+      return;
+    }
     setIsWishlisted(!isWishlisted);
     await toggleWishlistAction(listing.id);
   }
 
+  function handleOpenNego() {
+    if (!session) {
+      router.push(`/login?from=/marketplace/${listing.id}`);
+      return;
+    }
+    setShowNegoModal(true);
+  }
+
   async function handleSubmitOffer(e: React.FormEvent) {
     e.preventDefault();
+    if (!session) {
+      router.push(`/login?from=/marketplace/${listing.id}`);
+      return;
+    }
     setErrorMsg(null);
     const fd = new FormData();
     fd.append("listingId", listing.id);
@@ -91,6 +107,10 @@ export function ListingDetailView({
   }
 
   async function handleDirectBuy() {
+    if (!session) {
+      router.push(`/login?from=/marketplace/${listing.id}`);
+      return;
+    }
     if (!confirm(`Konfirmasi pembelian langsung sesuai harga katalog Rp ${listing.fiatEstimateIdr.toLocaleString("id-ID")}? Sistem akan membuat Escrow Room untuk serah terima COD.`)) {
       return;
     }
@@ -270,7 +290,7 @@ export function ListingDetailView({
             {/* Action Buttons: Nego vs Direct Buy */}
             <div className="space-y-3 pt-2">
               <button
-                onClick={() => setShowNegoModal(true)}
+                onClick={handleOpenNego}
                 disabled={isPending}
                 className="w-full py-3 px-4 bg-[#1a1a1a] hover:bg-[#252525] border border-[#39FF14]/50 hover:border-[#39FF14] text-[#39FF14] text-sm font-mono font-bold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-[0_0_10px_rgba(57,255,20,0.1)]"
               >

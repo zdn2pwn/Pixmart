@@ -1,8 +1,8 @@
 import { store } from "@/lib/store";
 import { getSession } from "@/lib/auth";
+import { redirect } from "next/navigation";
 import { PublicNav } from "@/components/layout/PublicNav";
 import { PublicFooter } from "@/components/layout/PublicFooter";
-import { RoleSwitcherHUD } from "@/components/layout/RoleSwitcherHUD";
 import { BuyerDashboardContent } from "./BuyerDashboardContent";
 import type { Metadata } from "next";
 
@@ -15,7 +15,15 @@ export const metadata: Metadata = {
 
 export default async function BuyerDashboardPage() {
   const session = await getSession();
-  const userId = session?.userId || "usr_buyer_01";
+  if (!session) {
+    redirect("/login?from=/dashboard");
+  }
+
+  if (session.role === "SELLER") {
+    redirect("/seller");
+  }
+
+  const userId = session.userId;
 
   const negotiations = store.getNegotiationsByUser(userId);
   const escrowRooms = store.getEscrowRoomsByUser(userId);
@@ -24,8 +32,7 @@ export default async function BuyerDashboardPage() {
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-[#e8e8e8] flex flex-col">
-      <PublicNav currentRole={session?.role || "BUYER"} />
-      <RoleSwitcherHUD currentRole={session?.role || "BUYER"} />
+      <PublicNav currentRole={session.role} codename={session.codename} isLoggedIn={true} />
       <BuyerDashboardContent
         session={session}
         negotiations={negotiations}

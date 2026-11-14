@@ -1,193 +1,140 @@
 "use client";
 
-import { useActionState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useActionState } from "react";
 import Link from "next/link";
 import { loginAction } from "@/app/actions/auth";
-import { switchRoleAction } from "@/lib/auth";
-import type { UserRole } from "@/lib/types";
-import {
-  ShieldCheck,
-  Store,
-  ShoppingBag,
-  Loader2,
-  AlertCircle,
-  ArrowLeft,
-  Terminal,
-  Lock,
-} from "lucide-react";
+import { Loader2, AlertCircle, Eye, EyeOff, MapPin } from "lucide-react";
+import { useState, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 
-type LoginState = { error?: string } | undefined;
+type State = { error?: string } | undefined;
 
-export default function LoginPage() {
-  const router = useRouter();
-  const [isPendingRole, startTransition] = useTransition();
-
-  const [state, formAction, isPendingForm] = useActionState<LoginState, FormData>(
+function LoginForm() {
+  const searchParams = useSearchParams();
+  const from = searchParams.get("from") ?? "";
+  const [showPass, setShowPass] = useState(false);
+  const [state, formAction, isPending] = useActionState<State, FormData>(
     loginAction,
     undefined
   );
 
-  function handleFastPersona(role: UserRole) {
-    startTransition(async () => {
-      await switchRoleAction(role);
-      if (role === "OWNER") {
-        router.push("/admin");
-      } else {
-        router.push("/marketplace");
-      }
-    });
-  }
-
-  const isPending = isPendingForm || isPendingRole;
-
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-[#e8e8e8] flex flex-col justify-center items-center p-4">
-      {/* Back button */}
-      <div className="w-full max-w-md mb-4 flex items-center justify-between">
-        <Link
-          href="/marketplace"
-          className="inline-flex items-center gap-1.5 text-[11px] font-mono text-[#666] hover:text-[#39FF14] transition-colors"
-        >
-          <ArrowLeft size={13} /> Kembali ke Marketplace
-        </Link>
-        <span className="text-[10px] font-mono text-[#444]">ESCROW PROTOCOL</span>
+    <form action={formAction} className="space-y-4">
+      <input type="hidden" name="from" value={from} />
+
+      {state?.error && (
+        <div className="flex items-start gap-2 bg-[#1a0a0a] border border-[#FF4444]/40 p-3 text-xs text-[#FF6666] font-mono">
+          <AlertCircle size={14} className="mt-0.5 shrink-0 text-[#FF4444]" />
+          <span>{state.error}</span>
+        </div>
+      )}
+
+      <div className="space-y-1.5">
+        <label className="text-xs font-mono text-[#888] uppercase tracking-wider">
+          Email
+        </label>
+        <input
+          name="email"
+          type="email"
+          required
+          autoComplete="email"
+          placeholder="kamu@email.com"
+          className="w-full bg-[#111] border border-[#2a2a2a] text-sm text-white px-4 py-3 font-mono focus:outline-none focus:border-[#39FF14] transition-colors placeholder:text-[#444]"
+        />
       </div>
 
-      <div className="w-full max-w-md space-y-6">
-        {/* Terminal Header */}
-        <div className="text-center space-y-2">
-          <div
-            className="text-2xl font-bold tracking-tight inline-block"
+      <div className="space-y-1.5">
+        <label className="text-xs font-mono text-[#888] uppercase tracking-wider">
+          Password
+        </label>
+        <div className="relative">
+          <input
+            name="password"
+            type={showPass ? "text" : "password"}
+            required
+            autoComplete="current-password"
+            placeholder="••••••••"
+            className="w-full bg-[#111] border border-[#2a2a2a] text-sm text-white px-4 py-3 pr-12 font-mono focus:outline-none focus:border-[#39FF14] transition-colors placeholder:text-[#444]"
+          />
+          <button
+            type="button"
+            onClick={() => setShowPass((p) => !p)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-[#555] hover:text-[#aaa] transition-colors"
+          >
+            {showPass ? <EyeOff size={15} /> : <Eye size={15} />}
+          </button>
+        </div>
+      </div>
+
+      <button
+        type="submit"
+        disabled={isPending}
+        className="w-full btn-primary py-3 text-sm font-bold font-mono flex items-center justify-center gap-2 disabled:opacity-50"
+      >
+        {isPending ? (
+          <>
+            <Loader2 size={15} className="animate-spin" />
+            Masuk...
+          </>
+        ) : (
+          "MASUK"
+        )}
+      </button>
+    </form>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <div className="min-h-screen bg-[#0a0a0a] text-[#e8e8e8] flex flex-col">
+      {/* Top Bar */}
+      <div className="border-b border-[#1a1a1a] px-6 py-4 flex items-center justify-between">
+        <Link href="/" className="flex items-center gap-1 select-none">
+          <span
+            className="text-lg font-bold"
             style={{ fontFamily: "'Press Start 2P', monospace" }}
           >
-            <span className="text-[#e8e8e8]">PIX</span>
+            <span className="text-white">PIX</span>
             <span className="text-[#39FF14]">MART</span>
-          </div>
-          <div className="text-[11px] font-mono text-[#555] tracking-widest uppercase">
-            P2P Escrow Terminal
-          </div>
+          </span>
+        </Link>
+        <div className="flex items-center gap-1.5 text-xs font-mono text-[#555]">
+          <MapPin size={12} className="text-[#39FF14]" />
+          <span>Local COD Marketplace</span>
         </div>
+      </div>
 
-        {/* Main Card */}
-        <div className="bg-[#111111] border border-[#262626] p-6 space-y-6">
-          {/* Status Bar */}
-          <div className="flex items-center justify-between pb-3 border-b border-[#1e1e1e] font-mono text-[10px]">
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-[#39FF14] pulse-green inline-block" />
-              <span className="text-[#39FF14] font-semibold">AUTH_GATEWAY_ONLINE</span>
-            </div>
-            <span className="text-[#444]">PORT: 443 / TLS</span>
-          </div>
-
-          {state?.error && (
-            <div className="flex items-center gap-2 bg-[#FF4444]/10 border border-[#FF4444]/30 text-[#FF4444] text-[11px] font-mono p-3">
-              <AlertCircle size={14} className="shrink-0" />
-              <span>{state.error}</span>
-            </div>
-          )}
-
-          {/* Quick 1-Click Persona Simulator */}
-          <div className="space-y-3">
-            <div className="text-[10px] font-mono text-[#666] uppercase tracking-wider flex items-center justify-between">
-              <span>Quick Demo Switcher</span>
-              <span className="text-[#39FF14]">Instant Role</span>
-            </div>
-
-            <div className="grid grid-cols-3 gap-2 font-mono text-xs">
-              <button
-                type="button"
-                disabled={isPending}
-                onClick={() => handleFastPersona("OWNER")}
-                className="p-3 bg-[#161616] hover:bg-[#1f1f1f] border border-[#2a2a2a] hover:border-[#39FF14] text-[#e8e8e8] font-bold text-center transition-all flex flex-col items-center gap-1.5 group cursor-pointer"
-              >
-                <ShieldCheck size={16} className="text-[#39FF14] group-hover:scale-110 transition-transform" />
-                <span className="text-[10px] tracking-wide">1. OWNER</span>
-                <span className="text-[8px] text-[#555]">Superuser</span>
-              </button>
-
-              <button
-                type="button"
-                disabled={isPending}
-                onClick={() => handleFastPersona("SELLER")}
-                className="p-3 bg-[#161616] hover:bg-[#1f1f1f] border border-[#2a2a2a] hover:border-[#39FF14] text-[#e8e8e8] font-bold text-center transition-all flex flex-col items-center gap-1.5 group cursor-pointer"
-              >
-                <Store size={16} className="text-[#39FF14] group-hover:scale-110 transition-transform" />
-                <span className="text-[10px] tracking-wide">2. SELLER</span>
-                <span className="text-[8px] text-[#555]">Merchant</span>
-              </button>
-
-              <button
-                type="button"
-                disabled={isPending}
-                onClick={() => handleFastPersona("BUYER")}
-                className="p-3 bg-[#161616] hover:bg-[#1f1f1f] border border-[#2a2a2a] hover:border-[#39FF14] text-[#e8e8e8] font-bold text-center transition-all flex flex-col items-center gap-1.5 group cursor-pointer"
-              >
-                <ShoppingBag size={16} className="text-[#39FF14] group-hover:scale-110 transition-transform" />
-                <span className="text-[10px] tracking-wide">3. BUYER</span>
-                <span className="text-[8px] text-[#555]">Customer</span>
-              </button>
-            </div>
-          </div>
-
-          <div className="relative flex py-1 items-center">
-            <div className="flex-grow border-t border-[#1e1e1e]" />
-            <span className="flex-shrink mx-3 text-[10px] font-mono text-[#444] uppercase tracking-wider">
-              atau login node manual
-            </span>
-            <div className="flex-grow border-t border-[#1e1e1e]" />
-          </div>
-
-          {/* Manual Form */}
-          <form action={formAction} className="space-y-4 font-mono text-xs">
-            <div className="space-y-1.5">
-              <label className="block text-[10px] text-[#666] uppercase tracking-wider">Email Node</label>
-              <input
-                type="email"
-                name="email"
-                required
-                defaultValue="owner@arcadeprotocol.net"
-                className="input-dark w-full text-xs font-mono"
-                placeholder="node@pixmart.net"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="block text-[10px] text-[#666] uppercase tracking-wider">Passphrase</label>
-              <input
-                type="password"
-                name="password"
-                required
-                defaultValue="admin123"
-                className="input-dark w-full text-xs font-mono"
-                placeholder="••••••••"
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={isPending}
-              className="btn-primary w-full py-3 text-xs tracking-wider flex items-center justify-center gap-2 cursor-pointer mt-2"
+      {/* Content */}
+      <div className="flex-1 flex items-center justify-center p-4">
+        <div className="w-full max-w-sm space-y-6">
+          {/* Header */}
+          <div className="space-y-1">
+            <h1
+              className="text-xl font-bold text-white"
+              style={{ fontFamily: "'Press Start 2P', monospace" }}
             >
-              {isPending ? (
-                <>
-                  <Loader2 size={14} className="animate-spin" />
-                  AUTHENTICATING...
-                </>
-              ) : (
-                <>
-                  <Lock size={13} />
-                  CONNECT NODE
-                </>
-              )}
-            </button>
-          </form>
-        </div>
+              LOGIN
+            </h1>
+            <p className="text-xs text-[#666] font-mono">
+              Masuk untuk mulai jual atau beli di sekitar kamu
+            </p>
+          </div>
 
-        {/* Footer info */}
-        <div className="text-center font-mono text-[10px] text-[#444] space-y-1">
-          <p>STRICTLY LEGAL PHYSICAL GOODS ESCROW</p>
-          <p className="text-[#333]">PEER-TO-PEER · ZERO INTERMEDIARY · NO COURIER</p>
+          {/* Form */}
+          <Suspense fallback={<div className="text-xs text-[#666] font-mono">Loading...</div>}>
+            <LoginForm />
+          </Suspense>
+
+          {/* Register link */}
+          <p className="text-center text-xs font-mono text-[#555]">
+            Belum punya akun?{" "}
+            <Link
+              href="/register"
+              className="text-[#39FF14] hover:underline"
+            >
+              Daftar gratis
+            </Link>
+          </p>
         </div>
       </div>
     </div>

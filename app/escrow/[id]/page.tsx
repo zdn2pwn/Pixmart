@@ -3,7 +3,6 @@ import { getSession } from "@/lib/auth";
 import { notFound, redirect } from "next/navigation";
 import { PublicNav } from "@/components/layout/PublicNav";
 import { PublicFooter } from "@/components/layout/PublicFooter";
-import { RoleSwitcherHUD } from "@/components/layout/RoleSwitcherHUD";
 import { EscrowHandshakeRoom } from "./EscrowHandshakeRoom";
 import type { Metadata } from "next";
 
@@ -27,8 +26,11 @@ export default async function EscrowRoomPage({
   params: Promise<{ id: string }>;
 }) {
   const session = await getSession();
-  const currentRole = session?.role || "BUYER";
   const { id } = await params;
+
+  if (!session) {
+    redirect(`/login?from=/escrow/${id}`);
+  }
 
   const room = store.getEscrowRoomById(id);
 
@@ -38,19 +40,21 @@ export default async function EscrowRoomPage({
 
   // Authorization Check: Only Buyer, Seller, or Owner can access
   const isParticipant =
-    session &&
-    (session.role === "OWNER" ||
-      session.userId === room.buyerId ||
-      session.userId === room.sellerId);
+    session.role === "OWNER" ||
+    session.userId === room.buyerId ||
+    session.userId === room.sellerId;
+
+  if (!isParticipant) {
+    redirect("/escrow");
+  }
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-[#e8e8e8] flex flex-col">
-      <PublicNav currentRole={currentRole} />
-      <RoleSwitcherHUD currentRole={currentRole} />
+      <PublicNav currentRole={session.role} codename={session.codename} isLoggedIn={true} />
       <EscrowHandshakeRoom
         room={room}
         session={session}
-        isAuthorized={!!isParticipant}
+        isAuthorized={true}
       />
       <PublicFooter />
     </div>

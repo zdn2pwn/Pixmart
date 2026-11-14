@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { PublicNav } from "@/components/layout/PublicNav";
 import { PublicFooter } from "@/components/layout/PublicFooter";
-import { RoleSwitcherHUD } from "@/components/layout/RoleSwitcherHUD";
 import { store } from "@/lib/store";
 import { getSession } from "@/lib/auth";
 import { formatCurrency } from "@/lib/format";
@@ -11,10 +10,8 @@ import {
   ArrowRight,
   ShieldCheck,
   MessageSquare,
-  CheckCircle2,
   Compass,
   Plus,
-  Users,
   Package,
   Handshake,
   Clock,
@@ -55,14 +52,13 @@ const HOW_IT_WORKS = [
 
 export default async function HomePage() {
   const session = await getSession();
-  const currentRole = session?.role || "OWNER";
+  const currentRole = session?.role || "BUYER";
   const listings = store.getActiveListings();
   const metrics = store.getPlatformMetrics();
 
   return (
     <div className="min-h-screen flex flex-col bg-[#0a0a0a] text-[#f0f0f0]">
-      <PublicNav currentRole={currentRole} />
-      <RoleSwitcherHUD currentRole={currentRole} />
+      <PublicNav currentRole={currentRole} codename={session?.codename} isLoggedIn={!!session} />
 
       {/* HERO SECTION */}
       <section className="relative border-b border-[#1c1c1c] py-16 sm:py-24 px-4 sm:px-8 overflow-hidden">
