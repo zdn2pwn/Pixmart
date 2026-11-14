@@ -1,26 +1,229 @@
+@import url("https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap");
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/* ============================================================
+   PIXMART — Minimal Clean Retro-Arcade Design System
+   Sleek dark mode, crisp typography, single terminal green accent.
+   Clean, to-the-point, no unnecessary visual clutter.
+   ============================================================ */
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: "Space Grotesk", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+  --font-arcade: "Press Start 2P", monospace;
+
+  /* Neutral Surface Palette */
+  --color-bg:        #0a0a0a;
+  --color-bg-1:      #111111;
+  --color-bg-2:      #171717;
+  --color-bg-3:      #1f1f1f;
+  --color-border:    #262626;
+  --color-border-2:  #333333;
+  --color-fg:        #f0f0f0;
+  --color-muted:     #888888;
+  --color-muted-2:   #555555;
+
+  /* Primary Accent — Terminal Green */
+  --color-primary:        #39FF14;
+  --color-primary-dim:    rgba(57, 255, 20, 0.08);
+
+  /* Semantic */
+  --color-warn:    #FFB800;
+  --color-danger:  #FF4444;
+
+  /* Crypto Brand */
+  --color-btc:  #F7931A;
+  --color-xmr:  #FF6600;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+:root {
+  color-scheme: dark;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: #0a0a0a;
+  color: #f0f0f0;
+  font-family: "Space Grotesk", system-ui, -apple-system, sans-serif;
+  font-size: 15px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ============================================================
+   Typography Helpers
+   ============================================================ */
+
+.font-arcade {
+  font-family: "Press Start 2P", monospace;
+}
+
+.font-mono {
+  font-family: "JetBrains Mono", monospace;
+}
+
+/* ============================================================
+   Buttons & Interactive Elements — Clean & Tactile
+   ============================================================ */
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background-color: #39FF14;
+  color: #000000;
+  font-weight: 700;
+  font-size: 0.8125rem;
+  letter-spacing: 0.03em;
+  padding: 0.55rem 1.15rem;
+  border: 1px solid #39FF14;
+  transition: all 0.15s ease-in-out;
+  cursor: pointer;
+}
+
+.btn-primary:hover {
+  background-color: #48ff26;
+  border-color: #48ff26;
+  transform: translateY(-1px);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background-color: #141414;
+  color: #d4d4d4;
+  font-weight: 600;
+  font-size: 0.8125rem;
+  letter-spacing: 0.02em;
+  padding: 0.55rem 1.15rem;
+  border: 1px solid #282828;
+  transition: all 0.15s ease-in-out;
+  cursor: pointer;
+}
+
+.btn-ghost:hover {
+  border-color: #39FF14;
+  color: #39FF14;
+  background-color: rgba(57, 255, 20, 0.04);
+}
+
+/* ============================================================
+   Inputs
+   ============================================================ */
+
+.input-dark {
+  background-color: #121212;
+  border: 1px solid #262626;
+  color: #f0f0f0;
+  font-family: "Space Grotesk", system-ui, sans-serif;
+  font-size: 0.875rem;
+  padding: 0.6rem 0.875rem;
+  transition: all 0.15s ease-in-out;
+  outline: none;
+}
+
+.input-dark:focus {
+  border-color: #39FF14;
+}
+
+.input-dark::placeholder {
+  color: #666666;
+}
+
+/* ============================================================
+   Badges — Subtle & Clean
+   ============================================================ */
+
+.badge-green {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 0.2rem 0.55rem;
+  background-color: rgba(57, 255, 20, 0.08);
+  color: #39FF14;
+  border: 1px solid rgba(57, 255, 20, 0.3);
+}
+
+.badge-warn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 0.2rem 0.55rem;
+  background-color: rgba(255, 184, 0, 0.08);
+  color: #FFB800;
+  border: 1px solid rgba(255, 184, 0, 0.3);
+}
+
+.badge-muted {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 0.2rem 0.55rem;
+  background-color: #1a1a1a;
+  color: #999999;
+  border: 1px solid #2e2e2e;
+}
+
+/* ============================================================
+   Cards
+   ============================================================ */
+
+.card {
+  background-color: #121212;
+  border: 1px solid #222222;
+  transition: border-color 0.15s ease-in-out;
+}
+
+.card:hover {
+  border-color: #333333;
+}
+
+/* Status indicator pulse */
+@keyframes pulse-green {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
+.pulse-green {
+  animation: pulse-green 2s infinite ease-in-out;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0a0a0a;
+}
+::-webkit-scrollbar-thumb {
+  background: #222222;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #39FF14;
 }
