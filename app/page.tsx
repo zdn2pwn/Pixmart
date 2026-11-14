@@ -166,7 +166,7 @@ export default async function HomePage() {
 
           {/* Product Cards Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {listings.slice(0, 6).map((listing) => {
+            {listings.slice(0, 6).map((listing: any) => {
               const hasImage = listing.images && listing.images.length > 0 && listing.images[0];
 
               return (

@@ -2,9 +2,19 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Menu, X, Plus, Radio, Compass, Lock } from "lucide-react";
+import {
+  Menu,
+  X,
+  Plus,
+  Radio,
+  Compass,
+  MessageSquare,
+  ShieldCheck,
+  User,
+  LayoutDashboard,
+} from "lucide-react";
 
-export function PublicNav({ currentRole = "OWNER" }: { currentRole?: string }) {
+export function PublicNav({ currentRole = "BUYER" }: { currentRole?: string }) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -22,37 +32,70 @@ export function PublicNav({ currentRole = "OWNER" }: { currentRole?: string }) {
         </Link>
 
         {/* Center Desktop Navigation */}
-        <nav className="hidden md:flex items-center gap-8 text-sm font-sans font-medium text-[#888]">
+        <nav className="hidden md:flex items-center gap-7 text-xs font-mono font-medium text-[#888]">
           <Link
             href="/marketplace"
             className="hover:text-white transition-colors flex items-center gap-1.5"
           >
-            <Compass size={15} className="text-[#39FF14]" />
-            <span>Katalog Bazaar</span>
+            <Compass size={14} className="text-[#39FF14]" />
+            <span>Katalog Lokal</span>
           </Link>
+
           <Link
-            href="/marketplace/new"
+            href="/negotiations"
             className="hover:text-white transition-colors flex items-center gap-1.5"
           >
-            <Plus size={15} className="text-[#39FF14]" />
-            <span>Pasang Iklan</span>
+            <MessageSquare size={14} className="text-[#39FF14]" />
+            <span>Negosiasi</span>
           </Link>
+
           <Link
-            href="/admin"
+            href="/escrow"
             className="hover:text-white transition-colors flex items-center gap-1.5"
           >
-            <Radio size={14} className="text-[#39FF14]" />
-            <span>Owner Radar</span>
+            <ShieldCheck size={14} className="text-[#39FF14]" />
+            <span>Escrow COD</span>
           </Link>
+
+          {currentRole === "SELLER" && (
+            <Link
+              href="/seller"
+              className="hover:text-white transition-colors flex items-center gap-1.5 text-[#39FF14]"
+            >
+              <LayoutDashboard size={14} />
+              <span>Seller Hub</span>
+            </Link>
+          )}
+
+          {currentRole === "BUYER" && (
+            <Link
+              href="/dashboard"
+              className="hover:text-white transition-colors flex items-center gap-1.5 text-[#39FF14]"
+            >
+              <LayoutDashboard size={14} />
+              <span>Buyer Hub</span>
+            </Link>
+          )}
+
+          {currentRole === "OWNER" && (
+            <Link
+              href="/admin"
+              className="hover:text-white transition-colors flex items-center gap-1.5 text-[#FFB800]"
+            >
+              <Radio size={14} />
+              <span>Owner Radar</span>
+            </Link>
+          )}
         </nav>
 
         {/* Right Desktop Actions */}
         <div className="hidden md:flex items-center gap-4">
           <Link
-            href="/marketplace"
+            href="/marketplace/new"
             className="btn-primary text-xs font-bold px-4 py-2 flex items-center gap-1.5 shadow-[0_0_12px_rgba(57,255,20,0.3)]"
           >
-            <span>Mulai Transaksi</span>
+            <Plus size={14} />
+            <span>Pasang Iklan</span>
           </Link>
         </div>
 
@@ -68,39 +111,74 @@ export function PublicNav({ currentRole = "OWNER" }: { currentRole?: string }) {
 
       {/* Mobile Drawer */}
       {open && (
-        <div className="md:hidden border-t border-[#222222] bg-[#111111] px-6 py-5 space-y-4 font-sans text-sm">
+        <div className="md:hidden border-t border-[#222222] bg-[#111111] px-6 py-5 space-y-4 font-mono text-xs">
           <Link
             href="/marketplace"
             onClick={() => setOpen(false)}
             className="flex items-center gap-2 text-[#ccc] hover:text-white py-1 font-medium"
           >
             <Compass size={16} className="text-[#39FF14]" />
-            <span>Katalog Bazaar P2P</span>
+            <span>Katalog Lokal Terdekat</span>
           </Link>
+
           <Link
-            href="/marketplace/new"
+            href="/negotiations"
             onClick={() => setOpen(false)}
-            className="flex items-center gap-2 text-[#39FF14] hover:underline py-1 font-medium"
+            className="flex items-center gap-2 text-[#ccc] hover:text-white py-1 font-medium"
           >
-            <Plus size={16} />
-            <span>Pasang Iklan Baru</span>
+            <MessageSquare size={16} className="text-[#39FF14]" />
+            <span>Pusat Negosiasi</span>
           </Link>
+
           <Link
-            href="/admin"
+            href="/escrow"
             onClick={() => setOpen(false)}
-            className="flex items-center gap-2 text-[#888] hover:text-white py-1 font-mono text-xs"
+            className="flex items-center gap-2 text-[#ccc] hover:text-white py-1 font-medium"
           >
-            <Radio size={15} className="text-[#FFB800]" />
-            <span>Owner Radar &amp; Ledger</span>
+            <ShieldCheck size={16} className="text-[#39FF14]" />
+            <span>Ruang Escrow COD</span>
           </Link>
+
+          {currentRole === "SELLER" && (
+            <Link
+              href="/seller"
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-2 text-[#39FF14] py-1 font-bold"
+            >
+              <LayoutDashboard size={16} />
+              <span>Seller Dashboard</span>
+            </Link>
+          )}
+
+          {currentRole === "BUYER" && (
+            <Link
+              href="/dashboard"
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-2 text-[#39FF14] py-1 font-bold"
+            >
+              <LayoutDashboard size={16} />
+              <span>Buyer Dashboard</span>
+            </Link>
+          )}
+
+          {currentRole === "OWNER" && (
+            <Link
+              href="/admin"
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-2 text-[#FFB800] py-1 font-bold"
+            >
+              <Radio size={16} />
+              <span>Owner Radar &amp; Dispute</span>
+            </Link>
+          )}
 
           <div className="pt-2">
             <Link
-              href="/marketplace"
+              href="/marketplace/new"
               onClick={() => setOpen(false)}
-              className="btn-primary w-full py-2.5 text-center text-xs font-bold"
+              className="btn-primary w-full py-2.5 text-center text-xs font-bold block"
             >
-              Mulai Transaksi Sekarang
+              + Pasang Iklan Sekarang
             </Link>
           </div>
         </div>

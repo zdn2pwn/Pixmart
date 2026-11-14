@@ -36,11 +36,11 @@ export function SalesListContent({ initialOrders, session }: SalesListContentPro
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
         const match =
-          order.orderNumber.toLowerCase().includes(q) ||
+          (order.orderNumber || order.id).toLowerCase().includes(q) ||
           order.listing.title.toLowerCase().includes(q) ||
           order.seller.codename.toLowerCase().includes(q) ||
           order.buyer.codename.toLowerCase().includes(q) ||
-          order.meetupLocation.toLowerCase().includes(q);
+          (order.meetupLocation || "").toLowerCase().includes(q);
         if (!match) return false;
       }
       return true;

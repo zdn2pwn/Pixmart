@@ -3,10 +3,10 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { createListingAction } from "@/app/actions/escrow";
+import { createListingAction } from "@/app/actions/marketplace";
+import { INDONESIAN_LOCATIONS } from "@/lib/location";
 import {
   ArrowLeft,
-  Coins,
   MapPin,
   ShieldCheck,
   Plus,
@@ -16,12 +16,17 @@ import {
   ImageIcon,
   Sparkles,
   X,
+  Calendar,
 } from "lucide-react";
 
 const IMAGE_PRESETS = [
   {
     name: "ThinkPad Laptop",
     url: "https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?w=800&auto=format&fit=crop&q=80",
+  },
+  {
+    name: "iPhone / Smartphone",
+    url: "https://images.unsplash.com/photo-1592750475338-74b7b21085ab?w=800&auto=format&fit=crop&q=80",
   },
   {
     name: "Game Boy Retro",
@@ -36,12 +41,8 @@ const IMAGE_PRESETS = [
     url: "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=800&auto=format&fit=crop&q=80",
   },
   {
-    name: "Casio Titanium Watch",
-    url: "https://images.unsplash.com/photo-1524805444758-089113d48a6d?w=800&auto=format&fit=crop&q=80",
-  },
-  {
-    name: "Cyber Hardware Tool",
-    url: "https://images.unsplash.com/photo-1518770660439-4636190af475?w=800&auto=format&fit=crop&q=80",
+    name: "Monitor Gaming",
+    url: "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=800&auto=format&fit=crop&q=80",
   },
 ];
 
@@ -52,186 +53,123 @@ export function ListingForm({ session }: { session: any }) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("HARDWARE_GADGETS");
-  const [priceBtc, setPriceBtc] = useState("0.0025");
-  const [priceXmr, setPriceXmr] = useState("1.6");
   const [fiatEstimateIdr, setFiatEstimateIdr] = useState("3500000");
-  const [locationCity, setLocationCity] = useState("Jakarta Selatan");
-  const [meetupZone, setMeetupZone] = useState("");
+
+  // Location preset
+  const [selectedPresetIdx, setSelectedPresetIdx] = useState(0);
+  const selectedPreset = INDONESIAN_LOCATIONS[selectedPresetIdx] || INDONESIAN_LOCATIONS[0];
+
+  const [locationCity, setLocationCity] = useState(selectedPreset.city);
+  const [locationDistrict, setLocationDistrict] = useState(selectedPreset.district);
+  const [approxLatitude, setApproxLatitude] = useState(selectedPreset.latitude);
+  const [approxLongitude, setApproxLongitude] = useState(selectedPreset.longitude);
+  const [meetupZone, setMeetupZone] = useState(`Area Publik Sekitar ${selectedPreset.district}`);
+  const [meetingAvailability, setMeetingAvailability] = useState("Senin-Jumat sore atau akhir pekan bebas");
+
   const [condition, setCondition] = useState("MINT / NEW");
   const [imageUrl, setImageUrl] = useState("");
-  const [legalConfirmed, setLegalConfirmed] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  function handlePresetChange(idx: number) {
+    setSelectedPresetIdx(idx);
+    const p = INDONESIAN_LOCATIONS[idx];
+    if (p) {
+      setLocationCity(p.city);
+      setLocationDistrict(p.district);
+      setApproxLatitude(p.latitude);
+      setApproxLongitude(p.longitude);
+      setMeetupZone(`Area Publik Sekitar ${p.district}`);
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setErrorMsg(null);
 
-    if (!legalConfirmed) {
-      setErrorMsg("Wajib menyetujui pernyataan barang 100% legal");
-      return;
-    }
-
     const formData = new FormData();
     formData.append("title", title.trim());
     formData.append("description", description.trim());
     formData.append("category", category);
-    formData.append("priceBtc", priceBtc);
-    formData.append("priceXmr", priceXmr);
     formData.append("fiatEstimateIdr", fiatEstimateIdr);
     formData.append("locationCity", locationCity);
+    formData.append("locationDistrict", locationDistrict);
+    formData.append("locationRegion", selectedPreset.region);
+    formData.append("approxLatitude", String(approxLatitude));
+    formData.append("approxLongitude", String(approxLongitude));
     formData.append("meetupZone", meetupZone.trim());
+    formData.append("meetingAvailability", meetingAvailability.trim());
     formData.append("condition", condition);
     if (imageUrl.trim()) {
       formData.append("imageUrl", imageUrl.trim());
     }
 
     startTransition(async () => {
-      try {
-        const res = await createListingAction(formData);
-        if (res && !res.success) {
-          setErrorMsg(res.error || "Gagal memasang listing");
-        }
-      } catch (err: any) {
-        if (err?.digest?.startsWith("NEXT_REDIRECT")) {
-          throw err;
-        }
-        setErrorMsg(err?.message || "Terjadi kesalahan saat memproses");
+      const res = await createListingAction(formData);
+      if (res.success && res.listingId) {
+        router.push(`/marketplace/${res.listingId}`);
+      } else {
+        setErrorMsg(res.error || "Gagal memasang iklan");
       }
     });
   }
 
   return (
-    <div className="flex-1 max-w-4xl mx-auto w-full p-4 sm:p-8 space-y-6">
+    <div className="flex-1 max-w-4xl mx-auto w-full px-4 sm:px-8 py-8 space-y-6">
       <Link
         href="/marketplace"
         className="inline-flex items-center gap-2 text-sm font-mono text-[#888] hover:text-[#39FF14] transition-colors"
       >
-        <ArrowLeft size={16} /> KEMBALI KE BAZAAR
+        <ArrowLeft size={16} /> Kembali ke Katalog
       </Link>
 
-      <div className="bg-[#121212] border border-[#2a2a2a] p-6 sm:p-10 space-y-8">
-        {/* Title Header */}
-        <div className="border-b border-[#222222] pb-6">
-          <div className="flex items-center gap-2 mb-2">
-            <span className="w-2 h-2 rounded-full bg-[#39FF14] pulse-green inline-block" />
-            <span
-              className="text-xs text-[#39FF14] tracking-widest uppercase font-bold"
-              style={{ fontFamily: "'Press Start 2P', monospace" }}
-            >
-              NEW MERCHANT LISTING PROTOCOL
-            </span>
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
-            Pasang Iklan Barang Fisik P2P
-          </h1>
-          <p className="text-sm text-[#888] font-sans mt-1.5 leading-relaxed">
-            Daftarkan hardware, konsol retro, atau gadget legal Anda untuk transaksi COD tatap muka dengan proteksi Escrow BTC &amp; Monero.
-          </p>
+      <div className="border-b border-[#222222] pb-4">
+        <div className="text-xs font-mono text-[#39FF14] uppercase tracking-wider mb-1 font-bold flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-[#39FF14] pulse-green" />
+          <span>SELLER LISTING PROTOCOL</span>
         </div>
+        <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+          Pasang Iklan Produk Lokal (COD)
+        </h1>
+        <p className="text-xs font-mono text-[#888] mt-1">
+          Barang akan dicari oleh pembeli berdasarkan jarak lokasi terdekat.
+        </p>
+      </div>
 
-        {errorMsg && (
-          <div className="flex items-center gap-3 bg-[#FF4444]/10 border border-[#FF4444]/40 text-[#FF4444] text-sm font-mono p-4">
-            <AlertCircle size={16} className="shrink-0" />
-            <span>{errorMsg}</span>
-          </div>
-        )}
+      {errorMsg && (
+        <div className="p-4 bg-red-950/40 border border-red-500/50 text-red-300 text-xs font-mono flex items-center gap-2">
+          <AlertCircle size={16} className="shrink-0" />
+          <span>{errorMsg}</span>
+        </div>
+      )}
 
-        <form onSubmit={handleSubmit} className="space-y-6 text-sm">
-          {/* Title */}
-          <div className="space-y-2">
-            <label className="block text-xs font-mono font-bold text-[#bbb] uppercase tracking-wider">
-              Judul Barang *
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Step 1: Info Dasar */}
+        <div className="bg-[#121212] border border-[#262626] p-6 space-y-4">
+          <h2 className="text-sm font-bold text-white font-mono uppercase tracking-wider border-b border-[#222] pb-2">
+            1. Informasi Barang
+          </h2>
+
+          <div>
+            <label className="text-xs font-mono text-[#aaa] block mb-1">
+              Nama Produk / Hardware <span className="text-[#39FF14]">*</span>
             </label>
             <input
               type="text"
-              required
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Contoh: ThinkPad X230 Libreboot IPS Mod / Keychron Q1 Custom"
-              className="input-dark w-full text-base py-3 px-4 font-sans"
+              placeholder="Contoh: ThinkPad X230 Libreboot / iPhone 13 128GB"
+              className="input-dark w-full px-4 py-2.5 text-sm"
+              required
             />
           </div>
 
-          {/* Product Image Section */}
-          <div className="bg-[#161616] border border-[#2a2a2a] p-5 space-y-4">
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-mono font-bold text-[#39FF14] uppercase tracking-wider flex items-center gap-2">
-                <ImageIcon size={15} />
-                <span>Foto Fisik Barang (URL / Gambar) *</span>
-              </label>
-              <span className="text-xs text-[#777] font-mono">Live Preview Didukung</span>
-            </div>
-
-            <div className="space-y-2">
-              <input
-                type="url"
-                value={imageUrl}
-                onChange={(e) => setImageUrl(e.target.value)}
-                placeholder="Masukkan link gambar (https://... / Unsplash / Imgur)"
-                className="input-dark w-full text-sm py-2.5 px-4 font-mono text-[#ddd]"
-              />
-            </div>
-
-            {/* Quick 1-click Preset Chips */}
-            <div className="space-y-2">
-              <div className="text-[11px] font-mono text-[#888] uppercase tracking-wider">
-                Atau pilih preset foto sampel hardware:
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {IMAGE_PRESETS.map((p) => (
-                  <button
-                    key={p.name}
-                    type="button"
-                    onClick={() => setImageUrl(p.url)}
-                    className={`px-3 py-1.5 text-xs font-mono font-semibold border transition-all cursor-pointer ${
-                      imageUrl === p.url
-                        ? "border-[#39FF14] text-[#39FF14] bg-[#39FF14]/15 font-bold"
-                        : "border-[#333] text-[#888] hover:border-[#555] hover:text-white bg-[#121212]"
-                    }`}
-                  >
-                    + {p.name}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Live Preview Box */}
-            {imageUrl && (
-              <div className="mt-3 relative rounded-none border border-[#39FF14]/40 bg-black/60 p-2 overflow-hidden">
-                <div className="flex items-center justify-between px-2 py-1 mb-2 border-b border-[#222] text-xs font-mono text-[#aaa]">
-                  <span>PREVIEW FOTO PRODUK:</span>
-                  <button
-                    type="button"
-                    onClick={() => setImageUrl("")}
-                    className="text-[#FF4444] hover:underline flex items-center gap-1 cursor-pointer"
-                  >
-                    <X size={12} /> Hapus Foto
-                  </button>
-                </div>
-                <div className="aspect-[16/9] max-h-56 w-full overflow-hidden bg-[#0d0d0d] flex items-center justify-center">
-                  <img
-                    src={imageUrl}
-                    alt="Preview Barang"
-                    className="w-full h-full object-cover object-center"
-                    onError={(e) => {
-                      (e.target as any).style.display = "none";
-                    }}
-                  />
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Category & Condition */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            <div className="space-y-2">
-              <label className="block text-xs font-mono font-bold text-[#bbb] uppercase tracking-wider">
-                Kategori Barang *
-              </label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs font-mono text-[#aaa] block mb-1">Kategori</label>
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="input-dark w-full text-sm py-3 px-4 font-sans bg-[#161616]"
+                className="input-dark w-full py-2.5 px-3 text-xs font-mono"
               >
                 <option value="HARDWARE_GADGETS">Hardware &amp; Gadget</option>
                 <option value="RETRO_CONSOLES">Konsol Retro</option>
@@ -242,162 +180,212 @@ export function ListingForm({ session }: { session: any }) {
               </select>
             </div>
 
-            <div className="space-y-2">
-              <label className="block text-xs font-mono font-bold text-[#bbb] uppercase tracking-wider">
-                Kondisi Fisik *
-              </label>
+            <div>
+              <label className="text-xs font-mono text-[#aaa] block mb-1">Kondisi</label>
               <select
                 value={condition}
                 onChange={(e) => setCondition(e.target.value)}
-                className="input-dark w-full text-sm py-3 px-4 font-sans bg-[#161616]"
+                className="input-dark w-full py-2.5 px-3 text-xs font-mono"
               >
-                <option value="MINT / NEW">MINT / SEPERTI BARU (100% MULUS)</option>
-                <option value="EXCELLENT">EXCELLENT (TERAWAT, NORMAL)</option>
-                <option value="USED_TESTED">BEKAS (TESTED &amp; BERFUNGSI NORMAL)</option>
+                <option value="MINT / NEW">MINT / NEW (Koleksi / Mulus)</option>
+                <option value="EXCELLENT">EXCELLENT (Terawat Normal)</option>
+                <option value="USED_TESTED">USED_TESTED (Bekas Normal)</option>
               </select>
             </div>
           </div>
 
-          {/* Crypto Prices Section */}
-          <div className="bg-[#161616] border border-[#2a2a2a] p-5 space-y-4">
-            <div className="text-xs font-mono font-bold text-[#ccc] uppercase tracking-wider flex items-center justify-between">
-              <span>Penetapan Nilai Tukar Escrow</span>
-              <span className="text-[#39FF14]">BTC / XMR Direct Lock</span>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-              <div className="space-y-2">
-                <label className="block text-xs font-mono font-bold uppercase" style={{ color: "#FF6600" }}>
-                  Harga Monero (XMR) *
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  required
-                  value={priceXmr}
-                  onChange={(e) => setPriceXmr(e.target.value)}
-                  className="input-dark w-full text-base font-mono font-bold py-2.5 px-3.5"
-                  style={{ color: "#FF6600" }}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="block text-xs font-mono font-bold uppercase" style={{ color: "#F7931A" }}>
-                  Harga Bitcoin (BTC) *
-                </label>
-                <input
-                  type="number"
-                  step="0.0001"
-                  required
-                  value={priceBtc}
-                  onChange={(e) => setPriceBtc(e.target.value)}
-                  className="input-dark w-full text-base font-mono font-bold py-2.5 px-3.5"
-                  style={{ color: "#F7931A" }}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="block text-xs font-mono font-bold text-[#aaa] uppercase">
-                  Estimasi Rupiah (IDR)
-                </label>
-                <input
-                  type="number"
-                  step="50000"
-                  required
-                  value={fiatEstimateIdr}
-                  onChange={(e) => setFiatEstimateIdr(e.target.value)}
-                  className="input-dark w-full text-base font-mono py-2.5 px-3.5 text-[#ddd]"
-                />
-              </div>
-            </div>
+          <div>
+            <label className="text-xs font-mono text-[#aaa] block mb-1">
+              Deskripsi Fisik &amp; Kelengkapan <span className="text-[#39FF14]">*</span>
+            </label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={4}
+              placeholder="Jelaskan kondisi fisik barang, riwayat pemakaian, kelengkapan aksesoris, dan kesiapan untuk dicek saat ketemuan COD..."
+              className="input-dark w-full p-3 text-xs font-mono leading-relaxed"
+              required
+            />
           </div>
 
-          {/* Location & Meetup Zone */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            <div className="space-y-2">
-              <label className="block text-xs font-mono font-bold text-[#bbb] uppercase tracking-wider">
-                Kota Lokasi *
-              </label>
-              <select
-                value={locationCity}
-                onChange={(e) => setLocationCity(e.target.value)}
-                className="input-dark w-full text-sm py-3 px-4 font-sans bg-[#161616]"
-              >
-                <option value="Jakarta Selatan">Jakarta Selatan</option>
-                <option value="Jakarta Pusat">Jakarta Pusat</option>
-                <option value="Bandung">Bandung</option>
-                <option value="Surabaya">Surabaya</option>
-                <option value="Yogyakarta">Yogyakarta</option>
-                <option value="Medan">Medan</option>
-              </select>
-            </div>
+          <div>
+            <label className="text-xs font-mono text-[#aaa] block mb-1">
+              Harga Jual Patokan (IDR) <span className="text-[#39FF14]">*</span>
+            </label>
+            <input
+              type="number"
+              value={fiatEstimateIdr}
+              onChange={(e) => setFiatEstimateIdr(e.target.value)}
+              min={50000}
+              step={50000}
+              className="input-dark w-full py-2.5 px-3 text-sm font-mono font-bold text-[#39FF14]"
+              required
+            />
+          </div>
+        </div>
 
-            <div className="space-y-2">
-              <label className="block text-xs font-mono font-bold text-[#bbb] uppercase tracking-wider">
-                Titik Temu Publik (Meetup Zone COD) *
+        {/* Step 2: Lokasi Produk & Privasi */}
+        <div className="bg-[#121212] border border-[#262626] p-6 space-y-4">
+          <div className="flex items-center justify-between border-b border-[#222] pb-2">
+            <h2 className="text-sm font-bold text-white font-mono uppercase tracking-wider flex items-center gap-2">
+              <MapPin size={16} className="text-[#39FF14]" />
+              <span>2. Lokasi Produk (Untuk Hitungan Jarak ke Pembeli)</span>
+            </h2>
+            <span className="text-[10px] font-mono text-[#39FF14] bg-[#39FF14]/10 border border-[#39FF14]/30 px-2 py-0.5">
+              PRIVASI AMAN
+            </span>
+          </div>
+
+          <div>
+            <label className="text-xs font-mono text-[#aaa] block mb-1">
+              Pilih Wilayah / Kota / Kabupaten
+            </label>
+            <select
+              value={selectedPresetIdx}
+              onChange={(e) => handlePresetChange(Number(e.target.value))}
+              className="input-dark w-full py-2.5 px-3 text-xs font-mono"
+            >
+              {INDONESIAN_LOCATIONS.map((loc, idx) => (
+                <option key={`${loc.city}-${loc.district}`} value={idx}>
+                  {loc.district}, {loc.city} ({loc.region})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs font-mono text-[#aaa] block mb-1">
+                Kecamatan / Area (District)
               </label>
               <input
                 type="text"
+                value={locationDistrict}
+                onChange={(e) => setLocationDistrict(e.target.value)}
+                placeholder="Contoh: Gerokgak / Kebayoran Baru"
+                className="input-dark w-full py-2.5 px-3 text-xs font-mono"
                 required
-                value={meetupZone}
-                onChange={(e) => setMeetupZone(e.target.value)}
-                placeholder="Contoh: Lobby Utama Mall Blok M / Starbucks Dago"
-                className="input-dark w-full text-sm py-3 px-4 font-sans"
+              />
+            </div>
+
+            <div>
+              <label className="text-xs font-mono text-[#aaa] block mb-1">
+                Kota / Kabupaten
+              </label>
+              <input
+                type="text"
+                value={locationCity}
+                onChange={(e) => setLocationCity(e.target.value)}
+                placeholder="Contoh: Buleleng / Jakarta Selatan"
+                className="input-dark w-full py-2.5 px-3 text-xs font-mono"
+                required
               />
             </div>
           </div>
 
-          {/* Description */}
-          <div className="space-y-2">
-            <label className="block text-xs font-mono font-bold text-[#bbb] uppercase tracking-wider">
-              Deskripsi Barang, Riwayat &amp; Kelengkapan *
+          <div>
+            <label className="text-xs font-mono text-[#aaa] block mb-1">
+              Rekomendasi Area Publik untuk Titik Temu (Zone)
             </label>
-            <textarea
-              rows={5}
-              required
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Jelaskan kondisi kelengkapan, fungsi, port, baterai, riwayat pemakaian, dan catatan saat serah terima fisik..."
-              className="input-dark w-full text-sm p-4 font-sans leading-relaxed"
-            />
-          </div>
-
-          {/* Legal Compliance Check */}
-          <div className="p-4 bg-[#161616] border border-[#2e2e2e] flex items-start gap-3">
             <input
-              type="checkbox"
-              id="legalCheck"
-              checked={legalConfirmed}
-              onChange={(e) => setLegalConfirmed(e.target.checked)}
-              className="mt-1 w-4 h-4 accent-[#39FF14] cursor-pointer"
+              type="text"
+              value={meetupZone}
+              onChange={(e) => setMeetupZone(e.target.value)}
+              placeholder="Contoh: Sekitar Area Pertokoan Gerokgak / Mall Blok M Square"
+              className="input-dark w-full py-2.5 px-3 text-xs font-mono"
+              required
             />
-            <label htmlFor="legalCheck" className="text-xs text-[#aaa] cursor-pointer leading-relaxed">
-              Saya menyatakan bahwa barang ini <strong className="text-white">100% legal</strong> (bukan barang ilegal/terlarang/curian), milik pribadi secara sah, dan bersedia melakukan verifikasi fisik langsung di tempat bersama pembeli sebelum dana dicairkan.
-            </label>
+            <p className="text-[10px] font-mono text-[#666] mt-1">
+              🔒 <strong>JANGAN masukkan alamat rumah pribadi.</strong> Cukup sebutkan area publik umum.
+            </p>
           </div>
 
-          {/* Submit */}
-          <div className="pt-2">
-            <button
-              type="submit"
-              disabled={isPending}
-              className="btn-primary w-full py-4 text-sm font-bold tracking-wider flex items-center justify-center gap-2 cursor-pointer shadow-[0_0_20px_rgba(57,255,20,0.4)]"
-            >
-              {isPending ? (
-                <>
-                  <Loader2 size={16} className="animate-spin" />
-                  MEMASANG LISTING KE JARINGAN...
-                </>
-              ) : (
-                <>
-                  <Plus size={16} />
-                  PUBLIKASIKAN LISTING KE PIXMART
-                </>
-              )}
-            </button>
+          <div>
+            <label className="text-xs font-mono text-[#aaa] block mb-1">
+              Ketersediaan Waktu Ketemuan (Availability Notes)
+            </label>
+            <input
+              type="text"
+              value={meetingAvailability}
+              onChange={(e) => setMeetingAvailability(e.target.value)}
+              placeholder="Contoh: Sore jam 16:00 - 19:00 WIB atau Weekend bebas"
+              className="input-dark w-full py-2.5 px-3 text-xs font-mono"
+            />
           </div>
-        </form>
-      </div>
+        </div>
+
+        {/* Step 3: Foto Barang */}
+        <div className="bg-[#121212] border border-[#262626] p-6 space-y-4">
+          <h2 className="text-sm font-bold text-white font-mono uppercase tracking-wider border-b border-[#222] pb-2">
+            3. Foto Fisik Produk
+          </h2>
+
+          <div>
+            <label className="text-xs font-mono text-[#aaa] block mb-1">
+              URL Foto Produk (Bisa masukkan tautan gambar langsung)
+            </label>
+            <input
+              type="url"
+              value={imageUrl}
+              onChange={(e) => setImageUrl(e.target.value)}
+              placeholder="https://images.unsplash.com/photo-..."
+              className="input-dark w-full py-2.5 px-3 text-xs font-mono"
+            />
+          </div>
+
+          {/* Preset Hardware Photos */}
+          <div>
+            <div className="text-[10px] font-mono text-[#888] uppercase mb-2 flex items-center gap-1.5">
+              <Sparkles size={12} className="text-[#39FF14]" />
+              <span>Pilihan Cepat Foto Hardware (1-Click Preset):</span>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {IMAGE_PRESETS.map((preset) => (
+                <button
+                  type="button"
+                  key={preset.name}
+                  onClick={() => setImageUrl(preset.url)}
+                  className={`p-2 text-left border text-xs font-mono flex items-center gap-2 transition-all cursor-pointer ${
+                    imageUrl === preset.url
+                      ? "bg-[#39FF14]/10 border-[#39FF14] text-[#39FF14] font-bold"
+                      : "bg-[#161616] border-[#333] text-[#aaa] hover:text-white hover:bg-[#202020]"
+                  }`}
+                >
+                  <img src={preset.url} alt={preset.name} className="w-8 h-8 object-cover shrink-0" />
+                  <span className="truncate">{preset.name}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {imageUrl && (
+            <div className="pt-2">
+              <div className="text-[10px] font-mono text-[#888] mb-1">Preview Foto:</div>
+              <div className="w-48 h-32 bg-[#181818] border border-[#333] overflow-hidden">
+                <img src={imageUrl} alt="Preview" className="w-full h-full object-cover" />
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Submit Button */}
+        <div className="pt-2">
+          <button
+            type="submit"
+            disabled={isPending}
+            className="btn-primary w-full py-3.5 text-xs font-bold flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(57,255,20,0.3)]"
+          >
+            {isPending ? (
+              <Loader2 size={16} className="animate-spin" />
+            ) : (
+              <>
+                <Plus size={16} />
+                <span>Publikasikan Iklan Produk Lokal</span>
+              </>
+            )}
+          </button>
+        </div>
+      </form>
     </div>
   );
 }

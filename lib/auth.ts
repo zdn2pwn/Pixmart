@@ -10,18 +10,18 @@ export interface Session {
   role: UserRole;
 }
 
-const SESSION_COOKIE = "arcade_session";
+const SESSION_COOKIE = "pixmart_session";
 
 export async function getSession(): Promise<Session | null> {
   const cookieStore = await cookies();
   const cookie = cookieStore.get(SESSION_COOKIE);
   if (!cookie?.value) {
-    // Default fallback to OWNER session for seamless demo experience
+    // Default fallback to BUYER session for seamless decentralized experience
     return {
-      userId: "usr_owner_01",
-      name: "OPERATOR_00",
-      email: "owner@arcadeprotocol.net",
-      role: "OWNER",
+      userId: "usr_buyer_01",
+      name: "Anonymous Buyer #8821",
+      email: "buyer@pixmart.local",
+      role: "BUYER",
     };
   }
 
@@ -32,10 +32,10 @@ export async function getSession(): Promise<Session | null> {
     return session;
   } catch {
     return {
-      userId: "usr_owner_01",
-      name: "OPERATOR_00",
-      email: "owner@arcadeprotocol.net",
-      role: "OWNER",
+      userId: "usr_buyer_01",
+      name: "Anonymous Buyer #8821",
+      email: "buyer@pixmart.local",
+      role: "BUYER",
     };
   }
 }
@@ -77,20 +77,20 @@ export async function switchRoleAction(role: UserRole) {
   const roleMap: Record<UserRole, Session> = {
     OWNER: {
       userId: "usr_owner_01",
-      name: "OPERATOR_00",
-      email: "owner@arcadeprotocol.net",
+      name: "System Operator",
+      email: "owner@pixmart.local",
       role: "OWNER",
     },
     SELLER: {
       userId: "usr_seller_02",
-      name: "RetroGhost_BDG",
-      email: "retro@arcadeprotocol.net",
+      name: "Anonymous Seller #2088",
+      email: "seller2@pixmart.local",
       role: "SELLER",
     },
     BUYER: {
       userId: "usr_buyer_01",
-      name: "NeonNomad",
-      email: "buyer@arcadeprotocol.net",
+      name: "Anonymous Buyer #8821",
+      email: "buyer@pixmart.local",
       role: "BUYER",
     },
   };
