@@ -54,6 +54,7 @@ export function ListingForm({ session }: { session: any }) {
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("HARDWARE_GADGETS");
   const [fiatEstimateIdr, setFiatEstimateIdr] = useState("3500000");
+  const [stock, setStock] = useState("1");
 
   // Location preset
   const [selectedPresetIdx, setSelectedPresetIdx] = useState(0);
@@ -91,6 +92,7 @@ export function ListingForm({ session }: { session: any }) {
     formData.append("description", description.trim());
     formData.append("category", category);
     formData.append("fiatEstimateIdr", fiatEstimateIdr);
+    formData.append("stock", stock);
     formData.append("locationCity", locationCity);
     formData.append("locationDistrict", locationDistrict);
     formData.append("locationRegion", selectedPreset.region);
@@ -208,19 +210,39 @@ export function ListingForm({ session }: { session: any }) {
             />
           </div>
 
-          <div>
-            <label className="text-xs font-mono text-[#aaa] block mb-1">
-              Harga Jual Patokan (IDR) <span className="text-[#39FF14]">*</span>
-            </label>
-            <input
-              type="number"
-              value={fiatEstimateIdr}
-              onChange={(e) => setFiatEstimateIdr(e.target.value)}
-              min={50000}
-              step={50000}
-              className="input-dark w-full py-2.5 px-3 text-sm font-mono font-bold text-[#39FF14]"
-              required
-            />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs font-mono text-[#aaa] block mb-1">
+                Harga Jual Patokan (IDR) <span className="text-[#39FF14]">*</span>
+              </label>
+              <input
+                type="number"
+                value={fiatEstimateIdr}
+                onChange={(e) => setFiatEstimateIdr(e.target.value)}
+                min={50000}
+                step={50000}
+                className="input-dark w-full py-2.5 px-3 text-sm font-mono font-bold text-[#39FF14]"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="text-xs font-mono text-[#aaa] block mb-1">
+                Jumlah Stok Tersedia <span className="text-[#39FF14]">*</span>
+              </label>
+              <input
+                type="number"
+                value={stock}
+                onChange={(e) => setStock(e.target.value)}
+                min={1}
+                step={1}
+                className="input-dark w-full py-2.5 px-3 text-sm font-mono font-bold text-[#39FF14]"
+                required
+              />
+              <p className="text-[10px] font-mono text-[#666] mt-1">
+                Jumlah unit yang tersedia. Set 0 untuk SOLD OUT.
+              </p>
+            </div>
           </div>
         </div>
 

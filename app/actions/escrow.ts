@@ -474,3 +474,45 @@ export async function sendEscrowMessageAction(formData: FormData) {
 
   return { success: true, message };
 }
+
+/**
+ * Delete escrow session (soft delete - hanya hide dari daftar user)
+ * Hanya bisa delete jika user adalah buyer atau seller
+ */
+export async function deleteEscrowSessionAction(roomId: string) {
+  const session = await requireSimpleSession();
+  const supabase = await createSupabaseServerClient();
+  
+  // Verify ownership
+  const { data: room } = await supabase
+    .from("escrow_sessions")
+    .select("buyer_id, seller_id")
+    .eq("id", roomId)
+    .single();
+    
+  if (!room) {
+    return { success: false, error: "Escrow session tidak ditemukan" };
+  }
+  
+  if (room.buyer_id !== session.userId && room.seller_id !== session.userId && session.role !== "OWNER") {
+    return { success: false, error: "Anda tidak memiliki akses untuk menghapus escrow ini" };
+  }
+  
+  // Hard delete (bisa diganti soft delete kalau mau)
+  const { error } = await supabase
+    .from("escrow_sessions")
+    .delete()
+    .eq("id", roomId);
+    
+  if (error) {
+    console.error("[DeleteEscrow] Error:", error);
+    return { success: false, error: "Gagal menghapus escrow session" };
+  }
+  
+  revalidatePath("/escrow");
+  revalidatePath("/dashboard");
+  revalidatePath("/seller");
+  revalidatePath("/owner");
+  
+  return { success: true };
+}

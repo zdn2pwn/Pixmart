@@ -3,7 +3,9 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { topUpBalanceAction } from "@/app/actions/auth";
-import { withdrawSellerPayoutAction, deleteListingAction, toggleListingStatusAction } from "@/app/actions/seller";
+import { withdrawSellerPayoutAction } from "@/app/actions/seller";
+import { SellerListingCard } from "@/components/seller/SellerListingCard";
+import { customAlert } from "@/components/ui/CustomAlert";
 import {
   Package,
   Plus,
@@ -12,15 +14,13 @@ import {
   CheckCircle2,
   Clock,
   ArrowRight,
-  MapPin,
   TrendingUp,
-  Trash2,
-  PauseCircle,
-  PlayCircle,
-  ExternalLink,
-  XCircle,
   Wallet,
   ArrowUpRight,
+  MapPin,
+  ExternalLink,
+  PauseCircle,
+  PlayCircle,
 } from "lucide-react";
 
 export function SellerDashboardContentImproved({
@@ -55,16 +55,14 @@ export function SellerDashboardContentImproved({
     .filter((e: any) => e.crypto_type === "XMR")
     .reduce((sum: number, e: any) => sum + (e.agreed_price_xmr || 0), 0);
 
-  function handleToggleStatus(listing: any) {
-    const nextStatus = listing.status === "ACTIVE" ? "PAUSED" : "ACTIVE";
-    startTransition(async () => {
-      const res = await toggleListingStatusAction(listing.id, nextStatus as any);
-      if (res.success) {
-        setListingsList((prev: any) =>
-          prev.map((item: any) => (item.id === listing.id ? { ...item, status: nextStatus } : item))
-        );
-      }
-    });
+  function handleListingDelete(listingId: string) {
+    setListingsList((prev: any) => prev.filter((item: any) => item.id !== listingId));
+  }
+
+  function handleListingUpdate(listingId: string, data: any) {
+    setListingsList((prev: any) =>
+      prev.map((item: any) => (item.id === listingId ? { ...item, ...data } : item))
+    );
   }
 
   const incomingOffers = (negotiations || []).filter(
@@ -231,69 +229,12 @@ export function SellerDashboardContentImproved({
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {listingsList.map((l: any) => (
-                <div
+                <SellerListingCard
                   key={l.id}
-                  className="bg-[#121212] border border-[#282828] p-4 flex flex-col gap-4"
-                >
-                  <div className="flex gap-4 items-start">
-                    <div className="w-24 h-24 bg-[#181818] border border-[#333] shrink-0 overflow-hidden flex items-center justify-center">
-                      {l.images && l.images[0] ? (
-                        <img src={l.images[0]} alt={l.title} className="w-full h-full object-cover" />
-                      ) : (
-                        <Package size={28} className="text-[#555]" />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0 space-y-1">
-                      <div className="flex items-center justify-between">
-                        <span
-                          className={`text-xs px-2 py-0.5 border ${
-                            l.status === "ACTIVE"
-                              ? "bg-[#39FF14]/10 text-[#39FF14] border-[#39FF14]/30"
-                              : "bg-[#FFB800]/10 text-[#FFB800] border-[#FFB800]/30"
-                          }`}
-                        >
-                          {l.status}
-                        </span>
-                      </div>
-                      <h4 className="text-sm font-bold text-white truncate">{l.title}</h4>
-                      <div className="text-sm font-bold text-[#39FF14]">
-                        Rp {(l.fiat_estimate_idr || l.fiatEstimateIdr || 0).toLocaleString("id-ID")}
-                      </div>
-                      <div className="text-xs text-[#666] flex items-center gap-1 truncate">
-                        <MapPin size={10} />
-                        <span>{l.location_city || l.locationCity}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between pt-3 border-t border-[#1e1e1e] text-xs">
-                    <Link
-                      href={`/marketplace/${l.id}`}
-                      className="text-[#888] hover:text-[#39FF14] flex items-center gap-1"
-                    >
-                      <ExternalLink size={12} />
-                      <span>Lihat</span>
-                    </Link>
-
-                    <button
-                      type="button"
-                      onClick={() => handleToggleStatus(l)}
-                      className="text-[#aaa] hover:text-white flex items-center gap-1 p-1"
-                    >
-                      {l.status === "ACTIVE" ? (
-                        <>
-                          <PauseCircle size={14} />
-                          <span>Jeda</span>
-                        </>
-                      ) : (
-                        <>
-                          <PlayCircle size={14} />
-                          <span>Aktifkan</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
-                </div>
+                  listing={l}
+                  onDelete={handleListingDelete}
+                  onUpdate={handleListingUpdate}
+                />
               ))}
             </div>
           )}

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState, useTransition } from "react";
+import { usePathname } from "next/navigation";
 import {
   Menu,
   X,
@@ -34,12 +35,22 @@ export function PublicNav({
   const [open, setOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [isPendingLogout, startLogout] = useTransition();
+  const pathname = usePathname();
 
   function handleLogout() {
     startLogout(async () => {
       await logoutAction();
     });
   }
+
+  function isActive(path: string) {
+    return pathname === path || pathname.startsWith(path + "/");
+  }
+
+  // Color scheme based on role
+  const activeColor = currentRole === "OWNER" ? "text-[#FFB800]" : "text-[#39FF14]";
+  const activeBorder = currentRole === "OWNER" ? "border-[#FFB800]" : "border-[#39FF14]";
+  const activeIconColor = currentRole === "OWNER" ? "#FFB800" : "#39FF14";
 
   const displayName = codename || (currentRole === "BUYER" ? "Buyer" : currentRole === "SELLER" ? "Seller" : "Owner");
 
@@ -64,16 +75,21 @@ export function PublicNav({
             <>
               <Link
                 href="/marketplace"
-                className="hover:text-white transition-colors flex items-center gap-1.5"
+                className={`hover:text-white transition-colors flex items-center gap-1.5 ${
+                  isActive("/marketplace") ? activeColor : ""
+                }`}
               >
-                <Compass size={14} className="text-[#39FF14]" />
+                <Compass size={14} className={isActive("/marketplace") ? "" : "text-[#FFB800]"} 
+                  style={{ color: isActive("/marketplace") ? activeIconColor : undefined }} />
                 <span>Katalog Lokal</span>
               </Link>
               <Link
                 href="/owner"
-                className="hover:text-white transition-colors flex items-center gap-1.5 text-[#FFB800]"
+                className={`hover:text-white transition-colors flex items-center gap-1.5 ${
+                  isActive("/owner") ? "text-[#FFB800] font-bold" : "text-[#888]"
+                }`}
               >
-                <Radio size={14} />
+                <Radio size={14} style={{ color: isActive("/owner") ? "#FFB800" : undefined }} />
                 <span>Midman Dashboard</span>
               </Link>
             </>
@@ -86,9 +102,11 @@ export function PublicNav({
               {currentRole !== "SELLER" && (
                 <Link
                   href="/marketplace"
-                  className="hover:text-white transition-colors flex items-center gap-1.5"
+                  className={`hover:text-white transition-colors flex items-center gap-1.5 ${
+                    isActive("/marketplace") ? "text-[#39FF14] font-bold" : ""
+                  }`}
                 >
-                  <Compass size={14} className="text-[#39FF14]" />
+                  <Compass size={14} style={{ color: isActive("/marketplace") ? "#39FF14" : undefined }} />
                   <span>Katalog Lokal</span>
                 </Link>
               )}
@@ -97,26 +115,32 @@ export function PublicNav({
                 <>
                   <Link
                     href="/negotiations"
-                    className="hover:text-white transition-colors flex items-center gap-1.5"
+                    className={`hover:text-white transition-colors flex items-center gap-1.5 ${
+                      isActive("/negotiations") ? "text-[#39FF14] font-bold" : ""
+                    }`}
                   >
-                    <MessageSquare size={14} className="text-[#39FF14]" />
+                    <MessageSquare size={14} style={{ color: isActive("/negotiations") ? "#39FF14" : undefined }} />
                     <span>Negosiasi</span>
                   </Link>
 
                   <Link
                     href="/escrow"
-                    className="hover:text-white transition-colors flex items-center gap-1.5"
+                    className={`hover:text-white transition-colors flex items-center gap-1.5 ${
+                      isActive("/escrow") ? "text-[#39FF14] font-bold" : ""
+                    }`}
                   >
-                    <ShieldCheck size={14} className="text-[#39FF14]" />
+                    <ShieldCheck size={14} style={{ color: isActive("/escrow") ? "#39FF14" : undefined }} />
                     <span>Escrow</span>
                   </Link>
 
                   {currentRole === "SELLER" && (
                     <Link
                       href="/seller"
-                      className="hover:text-white transition-colors flex items-center gap-1.5 text-[#39FF14]"
+                      className={`hover:text-white transition-colors flex items-center gap-1.5 ${
+                        isActive("/seller") ? "text-[#39FF14] font-bold" : ""
+                      }`}
                     >
-                      <Store size={14} />
+                      <Store size={14} style={{ color: isActive("/seller") ? "#39FF14" : undefined }} />
                       <span>Seller Hub</span>
                     </Link>
                   )}
@@ -124,9 +148,11 @@ export function PublicNav({
                   {currentRole === "BUYER" && (
                     <Link
                       href="/dashboard"
-                      className="hover:text-white transition-colors flex items-center gap-1.5 text-[#39FF14]"
+                      className={`hover:text-white transition-colors flex items-center gap-1.5 ${
+                        isActive("/dashboard") ? "text-[#39FF14] font-bold" : ""
+                      }`}
                     >
-                      <ShoppingBag size={14} />
+                      <ShoppingBag size={14} style={{ color: isActive("/dashboard") ? "#39FF14" : undefined }} />
                       <span>Buyer Hub</span>
                     </Link>
                   )}

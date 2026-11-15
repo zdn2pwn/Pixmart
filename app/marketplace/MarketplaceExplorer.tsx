@@ -467,6 +467,25 @@ export function MarketplaceExplorer({
                   <div className="absolute bottom-3 left-3 bg-black/80 backdrop-blur-sm border border-[#333] px-2 py-0.5 text-[10px] font-mono text-[#aaa]">
                     {item.condition}
                   </div>
+
+                  {/* SOLD OUT Overlay */}
+                  {item.stock === 0 && (
+                    <div className="absolute inset-0 bg-black/85 backdrop-blur-sm flex items-center justify-center">
+                      <div className="text-center transform -rotate-12">
+                        <div className="text-4xl font-black text-[#FF3B30] font-mono tracking-widest mb-2 drop-shadow-[0_0_8px_rgba(255,59,48,0.6)]">
+                          SOLD OUT
+                        </div>
+                        <div className="text-xs text-[#888] font-mono">STOK HABIS</div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Low Stock Warning */}
+                  {item.stock > 0 && item.stock <= 3 && (
+                    <div className="absolute bottom-3 right-3 bg-[#FFB800]/90 backdrop-blur-sm border border-[#FFB800] px-2 py-1 text-[10px] font-mono font-bold text-black animate-pulse">
+                      Tersisa {item.stock}
+                    </div>
+                  )}
                 </div>
 
                 {/* Content */}

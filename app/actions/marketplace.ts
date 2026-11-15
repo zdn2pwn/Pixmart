@@ -39,6 +39,10 @@ export async function createListingAction(formData: FormData) {
 
   const imageUrl = formData.get("imageUrl") as string;
   const images = imageUrl && imageUrl.trim() ? [imageUrl.trim()] : [];
+  
+  // Parse stock from form
+  const stockStr = formData.get("stock") as string;
+  const stock = parseInt(stockStr) || 1;
 
   if (!title || !description || fiatEstimateIdr <= 0) {
     return { success: false, error: "Judul, deskripsi, dan harga harus diisi." };
@@ -57,7 +61,7 @@ export async function createListingAction(formData: FormData) {
         fiat_estimate_idr: fiatEstimateIdr,
         price_btc: priceBtc,
         price_xmr: priceXmr,
-        stock: 1,
+        stock: stock,
         location_city: locationCity,
         location_district: locationDistrict,
         approx_latitude: approxLatitude,
@@ -89,6 +93,94 @@ export async function createListingAction(formData: FormData) {
     console.error("[CreateListing] Exception:", err);
     return { success: false, error: "Terjadi kesalahan." };
   }
+}
+
+export async function updateListingAction(formData: FormData) {
+  const session = await requireSimpleSession();
+  
+  if (session.role !== "SELLER" && session.role !== "OWNER") {
+    return { success: false, error: "Tidak memiliki hak akses." };
+  }
+
+  const supabase = await createSupabaseServerClient();
+  
+  const listingId = formData.get("listingId") as string;
+  const title = formData.get("title") as string;
+  const description = formData.get("description") as string;
+  const category = formData.get("category") as any;
+  const condition = formData.get("condition") as any;
+  
+  const fiatEstimateStr = formData.get("fiatEstimateIdr") as string;
+  const fiatEstimateIdr = parseFloat(fiatEstimateStr) || 1000000;
+  
+  const priceBtc = fiatEstimateIdr / 1472500000;
+  const priceXmr = fiatEstimateIdr / 2480000;
+
+  const locationCity = formData.get("locationCity") as string;
+  const locationDistrict = formData.get("locationDistrict") as string;
+  const approxLatitude = Number(formData.get("approxLatitude"));
+  const approxLongitude = Number(formData.get("approxLongitude"));
+  const meetupZone = formData.get("meetupZone") as string;
+  const meetingAvailability = formData.get("meetingAvailability") as string;
+
+  const imageUrl = formData.get("imageUrl") as string;
+  const images = imageUrl && imageUrl.trim() ? [imageUrl.trim()] : [];
+  
+  const stockStr = formData.get("stock") as string;
+  const stock = parseInt(stockStr) || 0;
+
+  if (!listingId) {
+    return { success: false, error: "Listing ID diperlukan." };
+  }
+
+  // Verify ownership
+  const { data: existing } = await supabase
+    .from("marketplace_listings")
+    .select("seller_id")
+    .eq("id", listingId)
+    .single();
+
+  if (!existing) {
+    return { success: false, error: "Listing tidak ditemukan." };
+  }
+
+  if (existing.seller_id !== session.userId && session.role !== "OWNER") {
+    return { success: false, error: "Anda tidak memiliki hak untuk mengedit listing ini." };
+  }
+
+  // Update listing
+  const { error } = await supabase
+    .from("marketplace_listings")
+    .update({
+      title,
+      description,
+      category,
+      condition,
+      fiat_estimate_idr: fiatEstimateIdr,
+      price_btc: priceBtc,
+      price_xmr: priceXmr,
+      stock,
+      location_city: locationCity,
+      location_district: locationDistrict,
+      approx_latitude: approxLatitude,
+      approx_longitude: approxLongitude,
+      meetup_zone: meetupZone,
+      meeting_availability: meetingAvailability,
+      images,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", listingId);
+
+  if (error) {
+    console.error("[UpdateListing] Error:", error);
+    return { success: false, error: "Gagal mengupdate listing." };
+  }
+
+  revalidatePath("/marketplace");
+  revalidatePath("/seller");
+  revalidatePath(`/marketplace/${listingId}`);
+  
+  return { success: true };
 }
 
 export async function toggleWishlistAction(listingId: string) {

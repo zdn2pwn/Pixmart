@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import Link from "next/link";
 import { customAlert } from "@/components/ui/CustomAlert";
+import { deleteEscrowSessionAction } from "@/app/actions/escrow";
 import {
   ArrowRight,
   Clock,
@@ -38,6 +39,7 @@ export function EscrowListClient({
   const [rooms, setRooms] = useState(initialRooms);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [filter, setFilter] = useState<FilterType>("ALL");
+  const [isPending, startTransition] = useTransition();
 
   // Filter rooms
   const filteredRooms = rooms.filter((room) => {
@@ -48,7 +50,7 @@ export function EscrowListClient({
     return true;
   });
 
-  // Group by counterparty
+  // Group by counterparty (NOT stacking same person!)
   const grouped: { [key: string]: any[] } = {};
   
   filteredRooms.forEach((room) => {
@@ -92,16 +94,30 @@ export function EscrowListClient({
     e.stopPropagation();
 
     customAlert.confirm(
-      "Yakin ingin menghapus escrow ini dari daftar?",
+      "Yakin ingin menghapus escrow ini? Data escrow akan dihapus permanen dari database.",
       async () => {
+        console.log("[EscrowList] Deleting room:", roomId);
         setDeletingId(roomId);
         
-        // TODO: Implement deleteEscrowAction
-        // For now, just remove from UI
-        setRooms((prev) => prev.filter((room) => room.id !== roomId));
-        
-        setDeletingId(null);
-        customAlert.success("Escrow berhasil dihapus dari daftar.");
+        startTransition(async () => {
+          try {
+            const result = await deleteEscrowSessionAction(roomId);
+            console.log("[EscrowList] Delete result:", result);
+            
+            if (result.success) {
+              // Remove from state
+              setRooms((prev) => prev.filter((room) => room.id !== roomId));
+              customAlert.success("Escrow berhasil dihapus dari database.");
+            } else {
+              customAlert.error(result.error || "Gagal menghapus escrow");
+            }
+          } catch (err) {
+            console.error("[EscrowList] Delete error:", err);
+            customAlert.error("Terjadi kesalahan saat menghapus escrow");
+          } finally {
+            setDeletingId(null);
+          }
+        });
       },
       "Hapus Escrow?"
     );
