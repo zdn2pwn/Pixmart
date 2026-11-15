@@ -333,10 +333,10 @@ export function BuyerDashboardContent({
                       <span className="text-[#39FF14] font-bold">{r.meetingStatus}</span>
                     </div>
                     <div className="text-sm font-bold text-white group-hover:text-[#39FF14] transition-colors line-clamp-1">
-                      {r.listing.title}
+                      {r.listing?.title || (r as any).item_title || "Produk"}
                     </div>
                     <div className="text-xs font-mono text-[#aaa] mt-2 flex items-center justify-between">
-                      <span>Rp {r.finalPriceIdr.toLocaleString("id-ID")}</span>
+                      <span>Rp {((r as any).agreed_price_idr || r.finalPriceIdr || 0).toLocaleString("id-ID")}</span>
                       <span className="text-[#39FF14] flex items-center gap-1 font-bold">
                         Buka Ruang COD →
                       </span>
@@ -364,11 +364,11 @@ export function BuyerDashboardContent({
                     <div className="flex items-center justify-between text-xs font-mono text-[#888] mb-1">
                       <span>Tawaran: {n.lastOfferBy === "BUYER" ? "Kamu" : "Penjual"}</span>
                       <span className="text-[#FFB800] font-bold">
-                        Rp {n.currentOfferPrice.toLocaleString("id-ID")}
+                        Rp {(n.currentOfferPrice || 0).toLocaleString("id-ID")}
                       </span>
                     </div>
                     <div className="text-sm font-bold text-white group-hover:text-[#39FF14] transition-colors line-clamp-1">
-                      {n.listing.title}
+                      {n.listing?.title || "Produk"}
                     </div>
                     <div className="text-xs font-mono text-[#39FF14] mt-2 text-right">
                       Buka Ephemeral Chat →
@@ -453,9 +453,9 @@ export function BuyerDashboardContent({
               {negotiations.map((n) => (
                 <div key={n.id} className="p-4 bg-[#121212] border border-[#262626] flex items-center justify-between gap-4">
                   <div>
-                    <div className="text-sm font-bold text-white">{n.listing.title}</div>
+                    <div className="text-sm font-bold text-white">{n.listing?.title || "Produk"}</div>
                     <div className="text-xs font-mono text-[#888] mt-1">
-                      Penjual: {n.seller.codename} • Tawaran Terakhir: Rp {n.currentOfferPrice.toLocaleString("id-ID")}
+                      Penjual: {n.seller?.codename || "Unknown"} • Tawaran Terakhir: Rp {(n.currentOfferPrice || 0).toLocaleString("id-ID")}
                     </div>
                   </div>
                   <Link href={`/negotiations/${n.id}`} className="btn-ghost text-xs font-bold px-3 py-1.5 shrink-0">
@@ -483,9 +483,9 @@ export function BuyerDashboardContent({
                 <div key={r.id} className="p-4 bg-[#121212] border border-[#262626] flex items-center justify-between gap-4">
                   <div>
                     <div className="text-xs font-mono text-[#39FF14] font-bold">Room #{r.id} • {r.meetingStatus}</div>
-                    <div className="text-sm font-bold text-white mt-0.5">{r.listing.title}</div>
+                    <div className="text-sm font-bold text-white mt-0.5">{r.listing?.title || (r as any).item_title || "Produk"}</div>
                     <div className="text-xs font-mono text-[#888] mt-1">
-                      Harga COD: Rp {r.finalPriceIdr.toLocaleString("id-ID")} ({r.cryptoAmount} {r.cryptoCurrency})
+                      Harga COD: Rp {((r as any).agreed_price_idr || r.finalPriceIdr || 0).toLocaleString("id-ID")} ({(r as any).agreed_price_btc || r.cryptoAmount || 0} {(r as any).crypto_type || r.cryptoCurrency || "BTC"})
                     </div>
                   </div>
                   <Link href={`/escrow/${r.id}`} className="btn-primary text-xs font-bold px-4 py-2 shrink-0">
@@ -561,9 +561,9 @@ export function BuyerDashboardContent({
                 <div key={r.id} className="p-4 bg-[#121212] border border-[#222] flex items-center justify-between">
                   <div>
                     <span className="badge-green text-[10px]">SELESAI (COD DUAL CONFIRMED)</span>
-                    <div className="text-sm font-bold text-white mt-1">{r.listing.title}</div>
+                    <div className="text-sm font-bold text-white mt-1">{r.listing?.title || (r as any).item_title || "Produk"}</div>
                     <div className="text-xs font-mono text-[#888] mt-0.5">
-                      Nilai Transaksi: Rp {r.finalPriceIdr.toLocaleString("id-ID")} • Penjual: {r.seller.codename}
+                      Nilai Transaksi: Rp {((r as any).agreed_price_idr || r.finalPriceIdr || 0).toLocaleString("id-ID")} • Penjual: {r.seller?.codename || "Unknown"}
                     </div>
                   </div>
                   <Link href={`/escrow/${r.id}`} className="btn-ghost text-xs font-mono px-3 py-1.5">

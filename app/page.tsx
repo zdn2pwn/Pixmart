@@ -27,26 +27,26 @@ const HOW_IT_WORKS = [
   {
     step: "01",
     icon: Compass,
-    title: "Temukan di Sekitar Kamu",
-    desc: "Aktifkan lokasi atau pilih area manual. Lihat barang terdekat lengkap dengan estimasi jarak dari kamu.",
+    title: "Cari Produk Terdekat",
+    desc: "Lihat barang yang dijual di sekitar kamu. Pilih kota atau aktifkan lokasi untuk hasil lebih akurat.",
   },
   {
     step: "02",
     icon: MessageSquare,
-    title: "Negosiasi Harga",
-    desc: "Chat langsung dengan seller. Ajukan penawaran, counter, dan capai kesepakatan harga terbaik.",
+    title: "Nego via Chat",
+    desc: "Hubungi penjual langsung. Tawar harga, tanya kondisi barang, sampai kalian sepakat.",
   },
   {
     step: "03",
     icon: ShieldCheck,
-    title: "Escrow Room Dibuat",
-    desc: "Setelah deal, sistem membuat Escrow Room. Tentukan titik pertemuan dan waktu meetup di area publik.",
+    title: "Tentukan Tempat COD",
+    desc: "Setelah deal, sistem buat Escrow Room. Kalian tentukan tempat dan waktu ketemu yang aman.",
   },
   {
     step: "04",
     icon: Handshake,
-    title: "COD & Konfirmasi",
-    desc: "Bertemu langsung. Cek barang di tempat. Buyer & Seller konfirmasi serah terima. Transaksi selesai.",
+    title: "Ketemu & Transaksi",
+    desc: "Cek barang di tempat. Kalau cocok, bayar dan ambil. Konfirmasi selesai dari kedua pihak.",
   },
 ];
 
@@ -91,11 +91,11 @@ export default async function HomePage() {
 
             <div className="space-y-3">
               <h1 className="text-3xl sm:text-5xl font-bold tracking-tight text-white leading-[1.15]">
-                Jual Beli Apa Saja. <br />
-                <span className="text-[#39FF14]">Langsung. Lokal. Bebas.</span>
+                Beli & Jual Barang Langsung <br />
+                <span className="text-[#39FF14]">di Kotamu. COD. Aman.</span>
               </h1>
               <p className="text-base sm:text-lg text-[#aaa] font-sans leading-relaxed max-w-xl">
-                Marketplace berbasis lokasi untuk jual beli barang fisik secara langsung. Tanpa kurir, tanpa biaya tersembunyi — cukup temukan penjual terdekat, sepakati harga, dan bertemu di area publik.
+                Marketplace lokal untuk transaksi fisik langsung. Temukan penjual terdekat, nego harga, ketemu di tempat aman, dan selesai. Tanpa kurir, tanpa biaya platform.
               </p>
             </div>
 
@@ -119,20 +119,20 @@ export default async function HomePage() {
             {/* Core Guarantees */}
             <div className="pt-2 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs font-mono text-[#888]">
               <div className="p-2.5 bg-[#111111] border border-[#222]">
-                <div className="text-[#39FF14] font-bold mb-0.5">Zero Kurir</div>
-                <div className="text-[11px] text-[#666]">COD Langsung</div>
+                <div className="text-[#39FF14] font-bold mb-0.5">COD Lokal</div>
+                <div className="text-[11px] text-[#666]">Ketemu Langsung</div>
               </div>
               <div className="p-2.5 bg-[#111111] border border-[#222]">
-                <div className="text-[#39FF14] font-bold mb-0.5">Anonim</div>
-                <div className="text-[11px] text-[#666]">Tanpa Data Pribadi</div>
+                <div className="text-[#39FF14] font-bold mb-0.5">Privasi</div>
+                <div className="text-[11px] text-[#666]">Pakai Codename</div>
               </div>
               <div className="p-2.5 bg-[#111111] border border-[#222]">
-                <div className="text-[#39FF14] font-bold mb-0.5">Escrow Room</div>
+                <div className="text-[#39FF14] font-bold mb-0.5">Escrow</div>
                 <div className="text-[11px] text-[#666]">Transaksi Aman</div>
               </div>
               <div className="p-2.5 bg-[#111111] border border-[#222]">
-                <div className="text-[#39FF14] font-bold mb-0.5">Bebas Potongan</div>
-                <div className="text-[11px] text-[#666]">0% Platform Fee</div>
+                <div className="text-[#39FF14] font-bold mb-0.5">Gratis</div>
+                <div className="text-[11px] text-[#666]">0% Fee</div>
               </div>
             </div>
           </div>
@@ -169,14 +169,14 @@ export default async function HomePage() {
         <div className="max-w-6xl mx-auto space-y-8">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
             <div>
-              <div className="text-xs font-mono text-[#39FF14] uppercase tracking-wider font-bold mb-1">
-                PAPAN PENAWARAN TERBUKA
+              <div className="text-xs font-mono text-white uppercase tracking-wider font-bold mb-1">
+                PAPAN IKLAN
               </div>
               <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
-                Barang Siap Ditransaksikan di Kotamu
+                Barang yang Lagi Dijual di Kotamu
               </h2>
               <p className="text-xs sm:text-sm text-[#777] mt-1 font-sans">
-                Temukan penjual terdekat, buat penawaran, dan sepakati titik pertemuan.
+                Cari yang kamu butuhin, nego harga, deal, terus ketemu.
               </p>
             </div>
 
@@ -295,13 +295,13 @@ export default async function HomePage() {
         <div className="max-w-5xl mx-auto space-y-10">
           <div>
             <div className="text-xs font-mono text-[#39FF14] uppercase tracking-wider mb-1.5 font-bold">
-              CARA KERJA
+              CARA PAKAI
             </div>
             <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
-              Dari Penemuan hingga Serah Terima
+              Gampang Banget, 4 Langkah Doang
             </h2>
             <p className="text-sm text-[#888] font-sans mt-1">
-              Empat langkah sederhana — semuanya lokal, langsung, dan tanpa perantara.
+              Dari cari barang sampai transaksi selesai — prosesnya simpel dan jelas.
             </p>
           </div>
 
@@ -330,10 +330,10 @@ export default async function HomePage() {
               PERBANDINGAN
             </div>
             <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
-              Kenapa Pilih Pixmart?
+              Bedanya Apa Sama Marketplace Biasa?
             </h2>
             <p className="text-sm text-[#888] font-sans mt-1">
-              Berbeda dari marketplace konvensional — kami fokus pada transaksi lokal langsung antar individu.
+              Kami bukan e-commerce. Ini marketplace khusus COD lokal — langsung, transparan, tanpa perantara.
             </p>
           </div>
 
@@ -347,19 +347,19 @@ export default async function HomePage() {
               <ul className="space-y-3 text-xs text-[#888] leading-relaxed">
                 <li className="flex items-start gap-2.5">
                   <span className="text-[#FF4444] font-bold">✕</span>
-                  <span>Biaya admin, komisi seller, dan ongkos kirim yang sering tidak transparan.</span>
+                  <span>Biaya admin, komisi, ongkir — sering bikin harga jadi mahal.</span>
                 </li>
                 <li className="flex items-start gap-2.5">
                   <span className="text-[#FF4444] font-bold">✕</span>
-                  <span>Risiko kurir: paket ditukar, hilang, atau rusak dalam pengiriman.</span>
+                  <span>Risiko kurir: paket hilang, rusak, atau ditukar.</span>
                 </li>
                 <li className="flex items-start gap-2.5">
                   <span className="text-[#FF4444] font-bold">✕</span>
-                  <span>Proses refund yang lambat dan sering bermasalah.</span>
+                  <span>Proses refund ribet dan lama.</span>
                 </li>
                 <li className="flex items-start gap-2.5">
                   <span className="text-[#FF4444] font-bold">✕</span>
-                  <span>Tidak bisa cek kondisi barang sebelum bayar.</span>
+                  <span>Gabisa liat barang dulu sebelum bayar.</span>
                 </li>
               </ul>
             </div>
@@ -373,19 +373,19 @@ export default async function HomePage() {
               <ul className="space-y-3 text-xs text-[#ddd] leading-relaxed">
                 <li className="flex items-start gap-2.5">
                   <span className="text-[#39FF14] font-bold">✓</span>
-                  <span><strong>0% Biaya Platform:</strong> Kesepakatan harga murni antara buyer dan seller.</span>
+                  <span><strong>Gratis Total:</strong> 0% biaya platform. Harga yang disepakati ya itu yang dibayar.</span>
                 </li>
                 <li className="flex items-start gap-2.5">
                   <span className="text-[#39FF14] font-bold">✓</span>
-                  <span><strong>Cek Fisik di Tempat:</strong> Bertemu langsung, periksa barang, baru bayar.</span>
+                  <span><strong>Cek Langsung:</strong> Ketemu, liat barang, tes kalau perlu. Baru bayar kalau oke.</span>
                 </li>
                 <li className="flex items-start gap-2.5">
                   <span className="text-[#39FF14] font-bold">✓</span>
-                  <span><strong>Escrow COD Room:</strong> Proses terstruktur — meeting point, waktu, konfirmasi dua pihak.</span>
+                  <span><strong>Escrow Room:</strong> Sistem bantu atur tempat & waktu ketemu. Kedua pihak harus konfirmasi.</span>
                 </li>
                 <li className="flex items-start gap-2.5">
                   <span className="text-[#39FF14] font-bold">✓</span>
-                  <span><strong>Privasi Terjaga:</strong> Anonim default, lokasi detail tidak dipublikasikan.</span>
+                  <span><strong>Privasi Dijaga:</strong> Pakai codename, lokasi detail ga dipublikasi ke umum.</span>
                 </li>
               </ul>
             </div>
@@ -400,10 +400,10 @@ export default async function HomePage() {
             MULAI SEKARANG
           </div>
           <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
-            Siap jual atau beli di sekitar kamu?
+            Mau jual atau beli barang di sekitarmu?
           </h2>
           <p className="text-sm text-[#888] font-sans leading-relaxed">
-            Daftar anonim, pasang iklan gratis, atau langsung cari produk terdekat dari lokasimu sekarang.
+            Daftar gratis, pasang iklan, atau langsung cari produk yang kamu butuhin. Semua lokal, semua COD.
           </p>
           <div className="flex flex-wrap justify-center items-center gap-4 pt-2">
             <Link
