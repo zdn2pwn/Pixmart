@@ -1,26 +1,27 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import type { Metadata, Viewport } from "next";
 import { CustomAlertProvider } from "@/components/ui/CustomAlert";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
 export const metadata: Metadata = {
   title: {
-    default: "PIXMART — P2P Escrow Hardware Marketplace",
+    default: "PIXMART — Pasar COD Lokal",
     template: "%s | PIXMART",
   },
   description:
-    "Marketplace peer-to-peer barang fisik legal dengan proteksi dual-handshake escrow Bitcoin & Monero.",
-  keywords: ["P2P", "marketplace", "escrow", "bitcoin", "monero", "hardware"],
+    "Pasar langsung untuk barang fisik di kotamu. Nego, ketemu, cek barang, lalu selesaikan deal dengan escrow demo.",
+  keywords: [
+    "marketplace lokal",
+    "COD",
+    "barang fisik",
+    "escrow",
+    "jual beli",
+    "PIXMART",
+  ],
+};
+
+export const viewport: Viewport = {
+  themeColor: "#0a0812",
+  colorScheme: "dark",
 };
 
 export default function RootLayout({
@@ -29,15 +30,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html
-      lang="id"
-      data-scroll-behavior="smooth"
-      className={`${geistSans.variable} ${geistMono.variable} h-full`}
-    >
-      <body className="min-h-full bg-[#0a0a0a] text-[#f0f0f0] antialiased">
-        <CustomAlertProvider>
-          {children}
-        </CustomAlertProvider>
+    <html lang="id" data-scroll-behavior="smooth" className="dark h-full">
+      <body className="min-h-full antialiased">
+        <CustomAlertProvider>{children}</CustomAlertProvider>
       </body>
     </html>
   );

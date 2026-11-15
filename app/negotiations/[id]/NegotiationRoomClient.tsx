@@ -7,8 +7,16 @@ import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { MessageThread } from "@/components/chat/MessageThread";
 import { LiveBidBar } from "@/components/nego/LiveBidBar";
 import { sendNegotiationMessageAction } from "@/app/actions/messaging";
-import { acceptOfferAction, rejectOfferAction, counterOfferAction, cancelNegotiationAction } from "@/app/actions/negotiation";
-import { markNegoMessageAsReadAction, deleteNegoMessageAction } from "@/app/actions/messages";
+import {
+  acceptOfferAction,
+  rejectOfferAction,
+  counterOfferAction,
+  cancelNegotiationAction,
+} from "@/app/actions/negotiation";
+import {
+  markNegoMessageAsReadAction,
+  deleteNegoMessageAction,
+} from "@/app/actions/messages";
 import { customAlert } from "@/components/ui/CustomAlert";
 import {
   ArrowLeft,
@@ -21,12 +29,37 @@ import {
   AlertTriangle,
   ShieldCheck,
   Loader2,
+  Tag,
+  Lightbulb,
+  Handshake,
+  LockKeyhole,
+  User,
 } from "lucide-react";
 
 interface NegotiationRoomClientProps {
   negotiation: any;
   messages: any[];
   session: any;
+}
+
+function formatIdr(value: number) {
+  return `Rp ${Number(value || 0).toLocaleString("id-ID")}`;
+}
+
+function formatCrypto(amount: number, method: "BTC" | "XMR") {
+  if (!amount) return "-";
+  return `${Number(amount).toFixed(method === "BTC" ? 8 : 4)} ${method}`;
+}
+
+function statusLabel(status: string) {
+  const labels: Record<string, string> = {
+    PENDING: "Menunggu balasan",
+    COUNTER_OFFER: "Ada counter offer",
+    ACCEPTED: "Deal disepakati",
+    REJECTED: "Tawaran ditolak",
+    CANCELLED: "Nego dibatalkan",
+  };
+  return labels[status] ?? status.replace(/_/g, " ").toLowerCase();
 }
 
 export function NegotiationRoomClient({
@@ -38,138 +71,155 @@ export function NegotiationRoomClient({
   const [negotiation, setNegotiation] = useState(initialNegotiation);
   const [messages, setMessages] = useState(initialMessages);
   const [isPending, startTransition] = useTransition();
-  const [showAcceptConfirm, setShowAcceptConfirm] = useState(false);
 
   const isBuyer = session.userId === negotiation.buyer_id;
   const isSeller = session.userId === negotiation.seller_id;
   const counterparty = isBuyer ? negotiation.seller : negotiation.buyer;
-  const canAcceptOffer = isSeller && (negotiation.status === "PENDING" || negotiation.status === "COUNTER_OFFER");
+  const listing = negotiation.listing;
+  const status = negotiation.status || "PENDING";
+  const isOpen = status === "PENDING" || status === "COUNTER_OFFER";
 
-  // Handle accepting offer and creating escrow
+  const offerBTC = Number(negotiation.current_offer_btc || 0);
+  const offerXMR = Number(negotiation.current_offer_xmr || 0);
+  const offerMethod: "BTC" | "XMR" | null =
+    offerBTC > 0 ? "BTC" : offerXMR > 0 ? "XMR" : null;
+  const offerAmount = offerBTC > 0 ? offerBTC : offerXMR;
+
   async function handleAcceptOffer() {
     startTransition(async () => {
       const formData = new FormData();
       formData.append("negotiationId", negotiation.id);
-      
+
       const result = await acceptOfferAction(formData);
-      
+
       if (result.success) {
         if (result.bothAgreed && result.escrowRoomId) {
-          // Both agreed (2/2) - Redirect to escrow
-          customAlert.success(result.message || "Escrow room berhasil dibuat!", "Deal 2/2!");
+          customAlert.success(
+            result.message || "Ruang escrow berhasil dibuat.",
+            "Deal 2/2"
+          );
           setTimeout(() => {
             router.push(`/escrow/${result.escrowRoomId}`);
-          }, 1500);
+          }, 1200);
         } else {
-          // Only one agreed (1/2). Realtime/polling updates the local state.
-          customAlert.info(result.message || "Deal agreement updated. Menunggu pihak lain...");
+          customAlert.info(
+            result.message || "Kamu sudah setuju. Menunggu pihak lain.",
+            "Deal 1/2"
+          );
         }
       } else {
-        customAlert.error(result.error || "Gagal update agreement");
+        customAlert.error(result.error || "Gagal memperbarui kesepakatan");
       }
     });
   }
 
-  // Handle rejecting offer
   async function handleRejectOffer() {
     startTransition(async () => {
       const formData = new FormData();
       formData.append("negotiationId", negotiation.id);
-      
+
       const result = await rejectOfferAction(formData);
-      
+
       if (result.success) {
-        customAlert.info(result.message || "Offer ditolak. Silakan counter offer lagi.", "Offer Ditolak");
+        customAlert.info(
+          result.message || "Penawaran direset. Nego masih terbuka.",
+          "Tawaran direset"
+        );
       } else {
-        customAlert.error(result.error || "Gagal menolak penawaran");
+        customAlert.error(result.error || "Gagal mereset penawaran");
       }
     });
   }
 
-  // Handle canceling entire negotiation
   async function handleCancelNegotiation() {
     customAlert.confirm(
-      "Yakin ingin MEMBATALKAN negosiasi ini secara permanen? Negosiasi akan ditutup dan tidak bisa dilanjutkan.",
+      "Tutup negosiasi ini permanen? Setelah ditutup, ruang nego tidak bisa dipakai lagi.",
       () => {
         startTransition(async () => {
           const formData = new FormData();
           formData.append("negotiationId", negotiation.id);
-          
+
           const result = await cancelNegotiationAction(formData);
-          
+
           if (result.success) {
-            customAlert.success(result.message || "Negosiasi dibatalkan.", "Negosiasi Dibatalkan");
+            customAlert.success(
+              result.message || "Negosiasi ditutup.",
+              "Nego dibatalkan"
+            );
             setTimeout(() => {
               router.push("/negotiations");
-            }, 1500);
+            }, 1200);
           } else {
             customAlert.error(result.error || "Gagal membatalkan negosiasi");
           }
         });
       },
-      "Batalkan Negosiasi?"
+      "Batalkan negosiasi?"
     );
   }
 
-  // Handle counter offer from Live Bid Bar
-  async function handleCounterOffer(method: 'BTC' | 'XMR', amount: number) {
-    // Validation
-    if (isNaN(amount) || amount <= 0) {
-      customAlert.error("Masukkan jumlah yang valid!", "Input Tidak Valid");
+  async function handleCounterOffer(method: "BTC" | "XMR", amount: number) {
+    if (Number.isNaN(amount) || amount <= 0) {
+      customAlert.error("Masukkan nominal yang valid.", "Input tidak valid");
       return;
     }
 
-    // Buyer validation: can't bid higher than listing
     if (isBuyer) {
-      const listingPrice = method === 'BTC' ? negotiation.listing?.price_btc : negotiation.listing?.price_xmr;
+      const listingPrice =
+        method === "BTC"
+          ? Number(negotiation.listing?.price_btc || 0)
+          : Number(negotiation.listing?.price_xmr || 0);
       if (amount > listingPrice) {
         customAlert.error(
-          `Counter offer tidak boleh lebih tinggi dari harga listing! (Max: ${listingPrice.toFixed(method === 'BTC' ? 8 : 4)} ${method})`,
-          "Tawaran Terlalu Tinggi"
+          `Tawaran tidak boleh di atas harga listing (maksimal ${formatCrypto(
+            listingPrice,
+            method
+          )}).`,
+          "Nominal terlalu tinggi"
         );
         return;
       }
     }
 
     startTransition(async () => {
-      // Calculate fiat estimate
-      const btcToIdr = 1400000000;
-      const xmrToIdr = 3500000;
-      const fiatEstimate = method === 'BTC' ? Math.round(amount * btcToIdr) : Math.round(amount * xmrToIdr);
-      
-      // Send formatted message to chat
-      const messageContent = `💰 ${isBuyer ? 'Tawaran' : 'Counter Offer'}:\n${amount.toFixed(method === 'BTC' ? 8 : 4)} ${method}\n≈ Rp ${fiatEstimate.toLocaleString("id-ID")}`;
-      
+      const btcToIdr = 1_400_000_000;
+      const xmrToIdr = 3_500_000;
+      const fiatEstimate =
+        method === "BTC"
+          ? Math.round(amount * btcToIdr)
+          : Math.round(amount * xmrToIdr);
+      const decimals = method === "BTC" ? 8 : 4;
+
+      const messageContent = `${
+        isBuyer ? "Tawaran" : "Counter offer"
+      }: ${amount.toFixed(decimals)} ${method}\n≈ Rp ${fiatEstimate.toLocaleString(
+        "id-ID"
+      )}`;
+
       const msgFormData = new FormData();
       msgFormData.append("negotiationId", negotiation.id);
       msgFormData.append("content", messageContent);
-      
-      // Send message
+
       await sendNegotiationMessageAction(msgFormData);
 
-      // UPDATE NEGOTIATION TABLE - Pass method and amount directly!
       const counterFormData = new FormData();
       counterFormData.append("negotiationId", negotiation.id);
-      counterFormData.append("method", method); // 'BTC' or 'XMR'
-      counterFormData.append("amount", amount.toString()); // The actual amount
-      
+      counterFormData.append("method", method);
+      counterFormData.append("amount", amount.toString());
+
       const result = await counterOfferAction(counterFormData);
-      
-      if (result.success) {
-        // Realtime/polling refreshes the bid bar with the new offer.
-      } else {
-        customAlert.error(result.error || "Gagal update offer");
+
+      if (!result.success) {
+        customAlert.error(result.error || "Gagal mengirim penawaran");
       }
     });
   }
 
-  // Handle sending messages
   async function handleSendMessage(content: string) {
     const formData = new FormData();
     formData.append("negotiationId", negotiation.id);
     formData.append("content", content);
 
-    // Optimistic update - add message immediately to UI
     const tempMessage = {
       id: `temp_${Date.now()}`,
       negotiation_id: negotiation.id,
@@ -180,100 +230,87 @@ export function NegotiationRoomClient({
       read_at: null,
       is_deleted: false,
     };
-    
+
     setMessages((prev) => [...prev, tempMessage]);
 
     const result = await sendNegotiationMessageAction(formData);
 
-    if (result.success) {
-      // Realtime/polling replaces the optimistic message with the saved row.
-    } else {
-      // Remove temp message on error
+    if (!result.success) {
       setMessages((prev) => prev.filter((m) => m.id !== tempMessage.id));
     }
 
     return result;
   }
 
-  // Handle marking message as read (triggers self-destruct)
   async function handleMarkAsRead(messageId: string) {
     await markNegoMessageAsReadAction(messageId, negotiation.id);
-    // Realtime will update read_at automatically
   }
 
-  // Handle message self-destruct
   async function handleDeleteMessage(messageId: string) {
     await deleteNegoMessageAction(messageId, negotiation.id);
-    // Realtime will handle removal
   }
 
-  // Setup Supabase Realtime + Auto-refresh polling
   useEffect(() => {
     const supabase = createSupabaseBrowserClient();
 
-    // Function to fetch latest messages
     const fetchMessages = async () => {
       const { data } = await supabase
         .from("negotiation_messages")
         .select("*")
         .eq("negotiation_id", negotiation.id)
         .order("created_at", { ascending: true });
-      
+
       if (data) {
         setMessages(data);
       }
     };
 
-    // Function to fetch latest negotiation data
     const fetchNegotiation = async () => {
       const { data } = await supabase
         .from("negotiations")
-        .select(`
+        .select(
+          `
           *,
           listing:marketplace_listings(*),
           buyer:profiles!negotiations_buyer_id_fkey(id, codename),
           seller:profiles!negotiations_seller_id_fkey(id, codename)
-        `)
+        `
+        )
         .eq("id", negotiation.id)
         .single();
-      
+
       if (data) {
         setNegotiation(data);
       }
     };
 
-    // Subscribe to negotiation_messages table for this negotiation
     const messagesChannel = supabase
       .channel(`negotiation_messages:${negotiation.id}`)
       .on(
         "postgres_changes",
         {
-          event: "*", // Listen to INSERT, UPDATE, DELETE
+          event: "*",
           schema: "public",
           table: "negotiation_messages",
           filter: `negotiation_id=eq.${negotiation.id}`,
         },
         (payload) => {
-          console.log("Realtime message event:", payload);
-
           if (payload.eventType === "INSERT") {
-            // New message received
             const newMessage = payload.new;
             setMessages((prev) => {
-              // Avoid duplicates
               if (prev.some((m) => m.id === newMessage.id)) {
                 return prev;
               }
               return [...prev, newMessage];
             });
           } else if (payload.eventType === "UPDATE") {
-            // Message updated (e.g., marked as read)
             const updatedMessage = payload.new;
             setMessages((prev) =>
-              prev.map((m) => (m.id === updatedMessage.id ? updatedMessage : m))
+              prev.map((m) =>
+                m.id === updatedMessage.id ? updatedMessage : m
+              )
             );
           } else if (payload.eventType === "DELETE") {
-            // Message deleted (self-destruct)
             const deletedId = payload.old.id;
             setMessages((prev) => prev.filter((m) => m.id !== deletedId));
           }
@@ -281,7 +318,6 @@ export function NegotiationRoomClient({
       )
       .subscribe();
 
-    // Subscribe to negotiations table for price updates (FIX BUG #1 & #2)
     const negotiationChannel = supabase
       .channel(`negotiation:${negotiation.id}`)
       .on(
@@ -292,21 +328,17 @@ export function NegotiationRoomClient({
           table: "negotiations",
           filter: `id=eq.${negotiation.id}`,
         },
-        (payload) => {
-          console.log("Realtime negotiation update:", payload);
-          // Update negotiation state immediately for live bid bar
+        () => {
           fetchNegotiation();
         }
       )
       .subscribe();
 
-    // POLLING: Fetch messages every 2 seconds as fallback
     const pollInterval = setInterval(() => {
       fetchMessages();
       fetchNegotiation();
-    }, 2000); // 2 seconds
+    }, 2000);
 
-    // Cleanup on unmount
     return () => {
       supabase.removeChannel(messagesChannel);
       supabase.removeChannel(negotiationChannel);
@@ -314,270 +346,259 @@ export function NegotiationRoomClient({
     };
   }, [negotiation.id]);
 
-  const statusBadge = () => {
-    const status = negotiation.status || "PENDING";
-    
+  function StatusPill() {
     if (status === "ACCEPTED") {
       return (
-        <span className="badge-green text-xs font-bold px-3 py-1 flex items-center gap-1.5">
-          <CheckCircle2 size={13} /> DEAL DISEPAKATI
+        <span className="badge-green !text-[11px]">
+          <CheckCircle2 size={13} />
+          Deal disepakati
         </span>
       );
     }
     if (status === "REJECTED" || status === "CANCELLED") {
       return (
-        <span className="badge-danger text-xs font-bold px-3 py-1 flex items-center gap-1.5">
-          <XCircle size={13} /> {status}
+        <span className="badge-danger !text-[11px]">
+          <XCircle size={13} />
+          {statusLabel(status)}
         </span>
       );
     }
     return (
-      <span className="badge-warn text-xs font-bold px-3 py-1 flex items-center gap-1.5 animate-pulse">
-        <Clock size={13} /> {status.replace(/_/g, " ")}
+      <span className="badge-warn !text-[11px]">
+        <Clock size={13} />
+        {statusLabel(status)}
       </span>
     );
-  };
+  }
 
   return (
-    <main className="flex-1 max-w-6xl mx-auto w-full px-4 sm:px-8 py-8">
-      {/* Header */}
-      <div className="mb-6 space-y-4">
+    <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col px-4 py-6 sm:px-6 lg:px-8">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <Link
           href="/negotiations"
-          className="inline-flex items-center gap-2 text-xs font-mono text-[#888] hover:text-[#39FF14] transition-colors"
+          className="group inline-flex items-center gap-2 font-mono text-[11px] font-bold uppercase tracking-[0.14em] text-muted-ink transition-colors hover:text-lime"
         >
           <ArrowLeft size={14} />
-          <span>Kembali ke Daftar Negosiasi</span>
+          Negotiations
         </Link>
-
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#222]">
-          <div>
-            <div className="flex items-center gap-2 text-xs font-mono text-[#39FF14] uppercase tracking-wider mb-1 font-bold">
-              <span className="w-2 h-2 rounded-full bg-[#39FF14] pulse-green" />
-              <span>RUANG NEGOSIASI #{negotiation.id.slice(0, 8)}</span>
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
-              {negotiation.listing?.title || "Produk"}
-            </h1>
-            <div className="flex items-center gap-3 mt-2 text-xs font-mono text-[#888]">
-              <span>
-                {isBuyer ? "Seller" : "Buyer"}: <span className="text-[#39FF14] font-bold">{counterparty?.codename}</span>
-              </span>
-              <span>•</span>
-              <span>
-                Harga Awal: <span className="text-white font-bold">
-                  Rp {(negotiation.listing?.fiat_estimate_idr || 0).toLocaleString("id-ID")}
-                </span>
-              </span>
-            </div>
-          </div>
-
-          {statusBadge()}
-        </div>
+        <StatusPill />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column - Product Info */}
-        <div className="lg:col-span-1 space-y-4">
-          {/* Product Card */}
-          <div className="bg-[#121212] border border-[#262626] p-4 space-y-3">
-            <h3 className="text-xs font-mono text-[#888] uppercase tracking-wider font-bold">Detail Produk</h3>
+      <header className="pixel-panel pop-in p-4 sm:p-5">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0">
+            <h1 className="text-xl font-bold leading-tight tracking-tight text-cream sm:text-2xl">
+              {listing?.title || "Produk tanpa judul"}
+            </h1>
+            <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-[11px] text-muted-ink">
+              <span>
+                Counterparty:{" "}
+                <span className="font-bold text-cream">
+                  {counterparty?.codename || "Tanpa codename"}
+                </span>
+              </span>
+              <span>
+                {listing?.location_city || "Lokasi belum diisi"}
+                {listing?.location_district
+                  ? `, ${listing.location_district}`
+                  : ""}
+              </span>
+              {listing?.category && (
+                <span>{String(listing.category).replace(/_/g, " ")}</span>
+              )}
+            </div>
+          </div>
+          <div className="flex shrink-0 items-center gap-3">
+            <StatusPill />
+          </div>
+        </div>
+      </header>
 
-            <div className="aspect-square bg-[#181818] border border-[#333] flex items-center justify-center overflow-hidden">
-              {negotiation.listing?.images && negotiation.listing.images[0] ? (
+      <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-[minmax(260px,320px)_minmax(0,1fr)]">
+        <aside
+          className="pop-in space-y-4"
+          style={{ animationDelay: "110ms" }}
+        >
+          <section className="pixel-panel overflow-hidden">
+            <div className="relative aspect-[4/3] overflow-hidden border-b-2 border-line bg-ink">
+              {listing?.images?.[0] ? (
                 <img
-                  src={negotiation.listing.images[0]}
-                  alt={negotiation.listing.title}
-                  className="w-full h-full object-cover"
+                  src={listing.images[0]}
+                  alt={listing.title || "Foto produk"}
+                  className="h-full w-full object-cover"
                 />
               ) : (
-                <Package size={48} className="text-[#555]" />
+                <div className="grid h-full place-items-center">
+                  <Package size={44} className="text-line" />
+                </div>
               )}
+              <span className="absolute left-2 top-2 border border-line bg-ink/90 px-2 py-1 font-mono text-[10px] font-bold uppercase tracking-wider text-muted-ink">
+                Barang COD
+              </span>
             </div>
 
-            <div className="space-y-2 text-xs">
-              <div>
-                <div className="text-[#666] text-[10px] mb-0.5">Harga Listing:</div>
-                <div className="text-white font-bold text-sm">
-                  {negotiation.listing?.price_btc?.toFixed(8)} BTC
-                </div>
-                <div className="text-[#FF6600] font-bold text-sm">
-                  {negotiation.listing?.price_xmr?.toFixed(4)} XMR
-                </div>
-                <div className="text-[#666] text-[10px] mt-1">
-                  ≈ Rp {(negotiation.listing?.fiat_estimate_idr || 0).toLocaleString("id-ID")}
-                </div>
-              </div>
-
-              {(negotiation.current_offer_btc || negotiation.current_offer_xmr) && (
-                <div className="pt-2 border-t border-[#222]">
-                  <div className="text-[#666] text-[10px] mb-0.5">Tawaran Saat Ini:</div>
-                  {negotiation.current_offer_btc && (
-                    <div className="text-[#39FF14] font-bold text-sm">
-                      {negotiation.current_offer_btc.toFixed(8)} BTC
-                    </div>
-                  )}
-                  {negotiation.current_offer_xmr && (
-                    <div className="text-[#FF6600] font-bold text-sm">
-                      {negotiation.current_offer_xmr.toFixed(4)} XMR
-                    </div>
-                  )}
-                </div>
-              )}
-
-              <div className="pt-2 border-t border-[#222]">
-                <div className="flex items-center gap-1.5 text-[#aaa]">
-                  <MapPin size={11} />
-                  <span className="text-[10px]">
-                    {negotiation.listing?.location_city}, {negotiation.listing?.location_district}
+            <div className="space-y-3 p-4">
+              {listing?.condition && (
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-mono text-[11px] font-bold uppercase tracking-[0.16em] text-muted-ink">
+                    Condition
                   </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Negotiation Tips */}
-          <div className="bg-[#1a1a0a] border border-[#333] p-4 space-y-2">
-            <h3 className="text-xs font-mono text-[#FFB800] uppercase tracking-wider font-bold flex items-center gap-1.5">
-              <AlertTriangle size={12} />
-              <span>Tips Negosiasi</span>
-            </h3>
-            <ul className="text-[10px] font-mono text-[#aaa] space-y-1.5">
-              <li>• Tawar secara wajar (±10-20% dari harga awal)</li>
-              <li>• Komunikasikan alasan tawaran Anda</li>
-              <li>• Tanyakan kondisi detail barang</li>
-              <li>• Sepakati titik temu yang aman</li>
-              <li>• Transaksi dilindungi escrow COD</li>
-            </ul>
-          </div>
-
-          {/* Seller Action Buttons */}
-          {canAcceptOffer && (
-            <div className="bg-[#0a0a0a] border border-[#39FF14]/30 p-4 space-y-3">
-              <h3 className="text-xs font-mono text-[#39FF14] uppercase tracking-wider font-bold flex items-center gap-1.5">
-                <ShieldCheck size={12} />
-                <span>Seller Action</span>
-              </h3>
-              <p className="text-[10px] font-mono text-[#888]">
-                Sepakati harga dan lanjut ke Escrow Room untuk atur pertemuan COD
-              </p>
-              
-              {!showAcceptConfirm ? (
-                <button
-                  onClick={() => setShowAcceptConfirm(true)}
-                  disabled={isPending}
-                  className="btn-primary w-full py-2.5 text-xs font-bold flex items-center justify-center gap-2"
-                >
-                  <CheckCircle2 size={14} />
-                  <span>Setujui & Buat Escrow Room</span>
-                </button>
-              ) : (
-                <div className="space-y-2">
-                  <div className="text-[10px] text-[#FFB800] font-mono mb-2">
-                    Yakin setuju dengan harga ini? Escrow room akan otomatis dibuat.
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <button
-                      onClick={handleAcceptOffer}
-                      disabled={isPending}
-                      className="bg-[#39FF14] hover:bg-[#2ECC11] text-black py-2 text-xs font-bold flex items-center justify-center gap-1"
-                    >
-                      {isPending ? (
-                        <Loader2 size={12} className="animate-spin" />
-                      ) : (
-                        <>
-                          <CheckCircle2 size={12} />
-                          <span>Ya, Setuju</span>
-                        </>
-                      )}
-                    </button>
-                    <button
-                      onClick={() => setShowAcceptConfirm(false)}
-                      disabled={isPending}
-                      className="bg-[#333] hover:bg-[#444] text-white py-2 text-xs font-bold"
-                    >
-                      Batal
-                    </button>
-                  </div>
+                  <span className="badge-muted">{listing.condition}</span>
                 </div>
               )}
 
-              <button
-                onClick={handleRejectOffer}
-                disabled={isPending}
-                className="w-full py-2 text-xs font-mono text-[#FF4444] border border-[#FF4444]/30 hover:bg-[#FF4444]/10 flex items-center justify-center gap-1.5"
+              <div className="flex items-baseline justify-between gap-3 border-t-2 border-line pt-3">
+                <span className="text-[13px] text-muted-ink">
+                  Listing price
+                </span>
+                <span className="font-mono text-[13px] font-bold text-muted-ink line-through">
+                  {formatIdr(Number(listing?.fiat_estimate_idr || 0))}
+                </span>
+              </div>
+
+              <div
+                className={`border-2 p-3 ${
+                  offerMethod
+                    ? "border-lime/50 bg-lime/5"
+                    : "border-line bg-ink"
+                }`}
               >
-                <XCircle size={12} />
-                <span>Tolak Penawaran</span>
+                <div className="flex items-center gap-1.5 font-mono text-[10px] font-bold uppercase tracking-[0.16em] text-muted-ink">
+                  <Handshake size={12} className="text-lime" />
+                  Current offer
+                </div>
+                {offerMethod ? (
+                  <>
+                    <div className="mt-1.5 font-mono text-base font-bold text-lime">
+                      {formatCrypto(offerAmount, offerMethod)}
+                    </div>
+                    <div className="font-mono text-[12px] text-muted-ink">
+                      ≈{" "}
+                      {formatIdr(
+                        offerAmount *
+                          (offerMethod === "BTC"
+                            ? 1_400_000_000
+                            : 3_500_000)
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <div className="mt-1.5 text-[13px] leading-relaxed text-muted-ink">
+                    Belum ada tawaran. Meja masih di harga listing.
+                  </div>
+                )}
+              </div>
+
+              <div className="flex items-start gap-2 border-t-2 border-line pt-3 text-[12px] leading-relaxed text-muted-ink">
+                <MapPin size={13} className="mt-0.5 shrink-0 text-cyan" />
+                <span>
+                  {listing?.location_city || "Lokasi belum diisi"}
+                  {listing?.location_district
+                    ? `, ${listing.location_district}`
+                    : ""}
+                  . Titik temu pasti diatur setelah deal.
+                </span>
+              </div>
+            </div>
+          </section>
+
+          <section className="border-2 border-amber/40 bg-amber/5 p-4">
+            <h2 className="flex items-center gap-2 font-mono text-[11px] font-bold uppercase tracking-[0.16em] text-amber">
+              <LockKeyhole size={14} />
+              Cara deal di sini
+            </h2>
+            <p className="mt-2 text-[13px] leading-relaxed text-muted-ink">
+              Deal baru sah kalau <span className="font-bold text-cream">buyer
+              dan seller sama-sama setuju</span>. Setelah 2/2, ruang escrow
+              otomatis dibuat untuk atur pembayaran demo dan titik temu.
+            </p>
+            <div className="mt-3 flex items-center gap-2 font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-amber">
+              <ShieldCheck size={12} />
+              Escrow 3 pihak · saldo fiksi
+            </div>
+          </section>
+        </aside>
+
+        <section
+          className="pixel-panel pop-in flex min-w-0 flex-col overflow-hidden"
+          style={{ animationDelay: "160ms" }}
+        >
+          <header className="flex items-center justify-between gap-3 border-b-2 border-line bg-ink px-4 py-3">
+            <div className="flex min-w-0 items-center gap-3">
+              <span className="grid size-9 shrink-0 place-items-center border-2 border-line bg-surface text-lime">
+                <MessageSquare size={16} />
+              </span>
+              <div className="min-w-0">
+                <h2 className="text-sm font-bold text-cream">
+                  Ruang obrolan
+                </h2>
+                <p className="truncate font-mono text-[10px] uppercase tracking-[0.12em] text-muted-ink">
+                  Pesan hilang 10 detik setelah dibaca
+                </p>
+              </div>
+            </div>
+            <span className="hidden items-center gap-1.5 font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-lime sm:flex">
+              <span className="size-1.5 bg-lime pulse-green" />
+              Tersambung
+            </span>
+          </header>
+
+          {isOpen && (
+            <LiveBidBar
+              negotiation={negotiation}
+              isBuyer={isBuyer}
+              isSeller={isSeller}
+              onCounterOffer={handleCounterOffer}
+              onAccept={() => {
+                customAlert.confirm(
+                  "Kunci harga ini dan buat ruang escrow? Pastikan kamu sudah yakin dengan nominal dan kondisi barang.",
+                  handleAcceptOffer,
+                  "Setuju dengan harga ini?"
+                );
+              }}
+              onReject={handleRejectOffer}
+              isPending={isPending}
+            />
+          )}
+
+          <div className="h-[560px] min-h-0 lg:h-[640px]">
+            <MessageThread
+              messages={messages}
+              currentUserId={session.userId}
+              onSendMessage={handleSendMessage}
+              onMarkAsRead={handleMarkAsRead}
+              onDeleteMessage={handleDeleteMessage}
+              placeholder="Tulis pesan untuk lawan nego..."
+              emptyStateText="Belum ada pesan. Sapa dulu, lalu masuk ke harga."
+              enableSelfDestruct={true}
+            />
+          </div>
+
+          {isOpen && (
+            <div className="border-t-2 border-line bg-ink p-3">
+              <button
+                type="button"
+                onClick={handleCancelNegotiation}
+                disabled={isPending}
+                className="flex w-full items-center justify-center gap-2 border-2 border-line bg-surface px-3 py-2.5 font-mono text-[11px] font-bold uppercase tracking-[0.1em] text-muted-ink transition-colors hover:border-danger hover:text-danger disabled:cursor-not-allowed disabled:opacity-45"
+              >
+                {isPending ? (
+                  <Loader2 size={13} className="animate-spin" />
+                ) : (
+                  <XCircle size={13} />
+                )}
+                Tutup negosiasi
               </button>
             </div>
           )}
-        </div>
-
-        {/* Right Column - Chat with Live Bid Bar */}
-        <div className="lg:col-span-2">
-          <div className="bg-[#121212] border border-[#262626] flex flex-col" style={{ height: "700px" }}>
-            {/* Chat Header */}
-            <div className="border-b border-[#222] px-4 py-3 bg-[#0f0f0f]">
-              <h3 className="text-xs font-mono text-white uppercase tracking-wider font-bold flex items-center gap-2">
-                <MessageSquare size={14} className="text-[#39FF14]" />
-                <span>Chat Negosiasi Harga</span>
-              </h3>
-              <p className="text-[10px] font-mono text-[#666] mt-0.5">
-                Diskusikan harga, kondisi barang, dan titik temu dengan {isBuyer ? "seller" : "buyer"}
-              </p>
-            </div>
-
-            {/* Live Bid Bar - Sticky at top */}
-            {(negotiation.status === "PENDING" || negotiation.status === "COUNTER_OFFER") && (
-              <LiveBidBar
-                negotiation={negotiation}
-                isBuyer={isBuyer}
-                isSeller={isSeller}
-                onCounterOffer={handleCounterOffer}
-                onAccept={() => {
-                  customAlert.confirm(
-                    "Yakin setuju dengan harga ini? Escrow room akan otomatis dibuat.",
-                    handleAcceptOffer,
-                    "Konfirmasi Deal"
-                  );
-                }}
-                onReject={handleRejectOffer}
-                isPending={isPending}
-              />
-            )}
-
-            {/* Chat Thread */}
-            <div className="flex-1 overflow-hidden">
-              <MessageThread
-                messages={messages}
-                currentUserId={session.userId}
-                onSendMessage={handleSendMessage}
-                onMarkAsRead={handleMarkAsRead}
-                onDeleteMessage={handleDeleteMessage}
-                placeholder="Ketik pesan negosiasi..."
-                emptyStateText="Mulai negosiasi dengan lawan transaksi"
-                enableSelfDestruct={true}
-              />
-            </div>
-
-            {/* Cancel Negotiation Button - Bottom of chat */}
-            {(negotiation.status === "PENDING" || negotiation.status === "COUNTER_OFFER") && (
-              <div className="border-t border-[#222] p-3 bg-[#0a0a0a]">
-                <button
-                  onClick={handleCancelNegotiation}
-                  disabled={isPending}
-                  className="w-full py-2 text-xs font-mono text-[#666] hover:text-[#FF4444] hover:border-[#FF4444]/50 border border-[#333] transition-all disabled:opacity-50 flex items-center justify-center gap-1.5"
-                  title="Batalkan negosiasi secara permanen (tidak bisa dilanjutkan)"
-                >
-                  <XCircle size={12} />
-                  <span>Batalkan Negosiasi</span>
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
+        </section>
       </div>
+
+      <p className="mt-4 flex items-start gap-2 font-mono text-[11px] leading-relaxed text-muted-ink">
+        <AlertTriangle size={13} className="mt-0.5 shrink-0 text-amber" />
+        Semua nominal crypto di PIXMART adalah simulasi untuk demo. Tidak ada
+        dana nyata yang berpindah.
+      </p>
     </main>
   );
 }

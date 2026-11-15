@@ -102,7 +102,7 @@ export default async function ListingPage({
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-[#e8e8e8] flex flex-col">
+    <div className="min-h-screen bg-[#0A0812] text-[#F5F0E6] flex flex-col">
       <PublicNav currentRole={currentRole} codename={session?.codename} isLoggedIn={!!session} />
       <ListingDetailView listing={listing as any} session={session} />
       <PublicFooter />

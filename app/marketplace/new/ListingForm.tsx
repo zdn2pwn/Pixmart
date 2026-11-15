@@ -49,30 +49,33 @@ export function ListingForm() {
   const [fiatEstimateIdr, setFiatEstimateIdr] = useState("3500000");
   const [stock, setStock] = useState("1");
 
-  // Location preset
-  const [selectedPresetIdx, setSelectedPresetIdx] = useState(0);
-  const selectedPreset = INDONESIAN_LOCATIONS[selectedPresetIdx] || INDONESIAN_LOCATIONS[0];
+  // Province list (unique regions) derived from presets
+  const PROVINCES = Array.from(
+    new Set(INDONESIAN_LOCATIONS.map((l) => l.region))
+  );
+  const [selectedProvince, setSelectedProvince] = useState(PROVINCES[0] || "DKI Jakarta");
 
-  const [locationCity, setLocationCity] = useState(selectedPreset.city);
-  const [locationDistrict, setLocationDistrict] = useState(selectedPreset.district);
-  const [approxLatitude, setApproxLatitude] = useState(selectedPreset.latitude);
-  const [approxLongitude, setApproxLongitude] = useState(selectedPreset.longitude);
-  const [meetupZone, setMeetupZone] = useState(`Area Publik Sekitar ${selectedPreset.district}`);
+  const defaultPreset =
+    INDONESIAN_LOCATIONS.find((l) => l.region === selectedProvince) ||
+    INDONESIAN_LOCATIONS[0];
+
+  const [locationCity, setLocationCity] = useState("");
+  const [locationDistrict, setLocationDistrict] = useState("");
+  const [approxLatitude, setApproxLatitude] = useState(defaultPreset.latitude);
+  const [approxLongitude, setApproxLongitude] = useState(defaultPreset.longitude);
+  const [meetupZone, setMeetupZone] = useState("");
   const [meetingAvailability, setMeetingAvailability] = useState("Senin-Jumat sore atau akhir pekan bebas");
 
   const [condition, setCondition] = useState("MINT / NEW");
   const [imageUrl, setImageUrl] = useState("");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  function handlePresetChange(idx: number) {
-    setSelectedPresetIdx(idx);
-    const p = INDONESIAN_LOCATIONS[idx];
+  function handleProvinceChange(province: string) {
+    setSelectedProvince(province);
+    const p = INDONESIAN_LOCATIONS.find((l) => l.region === province);
     if (p) {
-      setLocationCity(p.city);
-      setLocationDistrict(p.district);
       setApproxLatitude(p.latitude);
       setApproxLongitude(p.longitude);
-      setMeetupZone(`Area Publik Sekitar ${p.district}`);
     }
   }
 
@@ -88,7 +91,7 @@ export function ListingForm() {
     formData.append("stock", stock);
     formData.append("locationCity", locationCity);
     formData.append("locationDistrict", locationDistrict);
-    formData.append("locationRegion", selectedPreset.region);
+    formData.append("locationRegion", selectedProvince);
     formData.append("approxLatitude", String(approxLatitude));
     formData.append("approxLongitude", String(approxLongitude));
     formData.append("meetupZone", meetupZone.trim());
@@ -112,20 +115,20 @@ export function ListingForm() {
     <div className="flex-1 max-w-4xl mx-auto w-full px-4 sm:px-8 py-8 space-y-6">
       <Link
         href="/marketplace"
-        className="inline-flex items-center gap-2 text-sm font-mono text-[#888] hover:text-[#39FF14] transition-colors"
+        className="inline-flex items-center gap-2 text-sm font-mono text-[#A79EC2] hover:text-[#C8FF4D] transition-colors"
       >
         <ArrowLeft size={16} /> Kembali ke Katalog
       </Link>
 
-      <div className="border-b border-[#222222] pb-4">
-        <div className="text-xs font-mono text-[#39FF14] uppercase tracking-wider mb-1 font-bold flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-[#39FF14] pulse-green" />
+      <div className="border-b border-[#3A3157] pb-4">
+        <div className="text-xs font-mono text-[#C8FF4D] uppercase tracking-wider mb-1 font-bold flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-[#C8FF4D] pulse-green" />
           <span>SELLER LISTING PROTOCOL</span>
         </div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+        <h1 className="text-2xl sm:text-3xl font-bold text-cream tracking-tight">
           Pasang Iklan Produk Lokal (COD)
         </h1>
-        <p className="text-xs font-mono text-[#888] mt-1">
+        <p className="text-xs font-mono text-[#A79EC2] mt-1">
           Barang akan dicari oleh pembeli berdasarkan jarak lokasi terdekat.
         </p>
       </div>
@@ -139,14 +142,14 @@ export function ListingForm() {
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Step 1: Info Dasar */}
-        <div className="bg-[#121212] border border-[#262626] p-6 space-y-4">
-          <h2 className="text-sm font-bold text-white font-mono uppercase tracking-wider border-b border-[#222] pb-2">
+        <div className="bg-[#12101F] border border-[#3A3157] p-6 space-y-4">
+          <h2 className="text-sm font-bold text-cream font-mono uppercase tracking-wider border-b border-[#3A3157] pb-2">
             1. Informasi Barang
           </h2>
 
           <div>
-            <label className="text-xs font-mono text-[#aaa] block mb-1">
-              Nama Produk / Hardware <span className="text-[#39FF14]">*</span>
+            <label className="text-xs font-mono text-[#C8C2DA] block mb-1">
+              Nama Produk <span className="text-[#C8FF4D]">*</span>
             </label>
             <input
               type="text"
@@ -160,13 +163,13 @@ export function ListingForm() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="text-xs font-mono text-[#aaa] block mb-1">Kategori</label>
+              <label className="text-xs font-mono text-[#C8C2DA] block mb-1">Kategori</label>
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
                 className="input-dark w-full py-2.5 px-3 text-xs font-mono"
               >
-                <option value="HARDWARE_GADGETS">Hardware &amp; Gadget</option>
+                <option value="HARDWARE_GADGETS">Gadget</option>
                 <option value="RETRO_CONSOLES">Konsol Retro</option>
                 <option value="KEYBOARDS_TECH">Keyboard Mekanikal</option>
                 <option value="CAMERAS_OPTICS">Kamera &amp; Optik</option>
@@ -176,7 +179,7 @@ export function ListingForm() {
             </div>
 
             <div>
-              <label className="text-xs font-mono text-[#aaa] block mb-1">Kondisi</label>
+              <label className="text-xs font-mono text-[#C8C2DA] block mb-1">Kondisi</label>
               <select
                 value={condition}
                 onChange={(e) => setCondition(e.target.value)}
@@ -190,8 +193,8 @@ export function ListingForm() {
           </div>
 
           <div>
-            <label className="text-xs font-mono text-[#aaa] block mb-1">
-              Deskripsi Fisik &amp; Kelengkapan <span className="text-[#39FF14]">*</span>
+            <label className="text-xs font-mono text-[#C8C2DA] block mb-1">
+              Deskripsi Fisik &amp; Kelengkapan <span className="text-[#C8FF4D]">*</span>
             </label>
             <textarea
               value={description}
@@ -205,8 +208,8 @@ export function ListingForm() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="text-xs font-mono text-[#aaa] block mb-1">
-                Harga Jual Patokan (IDR) <span className="text-[#39FF14]">*</span>
+              <label className="text-xs font-mono text-[#C8C2DA] block mb-1">
+                Harga Jual Patokan (IDR) <span className="text-[#C8FF4D]">*</span>
               </label>
               <input
                 type="number"
@@ -214,14 +217,14 @@ export function ListingForm() {
                 onChange={(e) => setFiatEstimateIdr(e.target.value)}
                 min={50000}
                 step={50000}
-                className="input-dark w-full py-2.5 px-3 text-sm font-mono font-bold text-[#39FF14]"
+                className="input-dark w-full py-2.5 px-3 text-sm font-mono font-bold text-[#C8FF4D]"
                 required
               />
             </div>
 
             <div>
-              <label className="text-xs font-mono text-[#aaa] block mb-1">
-                Jumlah Stok Tersedia <span className="text-[#39FF14]">*</span>
+              <label className="text-xs font-mono text-[#C8C2DA] block mb-1">
+                Jumlah Stok Tersedia <span className="text-[#C8FF4D]">*</span>
               </label>
               <input
                 type="number"
@@ -229,10 +232,10 @@ export function ListingForm() {
                 onChange={(e) => setStock(e.target.value)}
                 min={1}
                 step={1}
-                className="input-dark w-full py-2.5 px-3 text-sm font-mono font-bold text-[#39FF14]"
+                className="input-dark w-full py-2.5 px-3 text-sm font-mono font-bold text-[#C8FF4D]"
                 required
               />
-              <p className="text-[10px] font-mono text-[#666] mt-1">
+              <p className="text-[10px] font-mono text-[#8B82A6] mt-1">
                 Jumlah unit yang tersedia. Set 0 untuk SOLD OUT.
               </p>
             </div>
@@ -240,37 +243,40 @@ export function ListingForm() {
         </div>
 
         {/* Step 2: Lokasi Produk & Privasi */}
-        <div className="bg-[#121212] border border-[#262626] p-6 space-y-4">
-          <div className="flex items-center justify-between border-b border-[#222] pb-2">
-            <h2 className="text-sm font-bold text-white font-mono uppercase tracking-wider flex items-center gap-2">
-              <MapPin size={16} className="text-[#39FF14]" />
+        <div className="bg-[#12101F] border border-[#3A3157] p-6 space-y-4">
+          <div className="flex items-center justify-between border-b border-[#3A3157] pb-2">
+            <h2 className="text-sm font-bold text-cream font-mono uppercase tracking-wider flex items-center gap-2">
+              <MapPin size={16} className="text-[#C8FF4D]" />
               <span>2. Lokasi Produk (Untuk Hitungan Jarak ke Pembeli)</span>
             </h2>
-            <span className="text-[10px] font-mono text-[#39FF14] bg-[#39FF14]/10 border border-[#39FF14]/30 px-2 py-0.5">
+            <span className="text-[10px] font-mono text-[#C8FF4D] bg-[#C8FF4D]/10 border border-[#C8FF4D]/30 px-2 py-0.5">
               PRIVASI AMAN
             </span>
           </div>
 
           <div>
-            <label className="text-xs font-mono text-[#aaa] block mb-1">
-              Pilih Wilayah / Kota / Kabupaten
+            <label className="text-xs font-mono text-[#C8C2DA] block mb-1">
+              Provinsi
             </label>
             <select
-              value={selectedPresetIdx}
-              onChange={(e) => handlePresetChange(Number(e.target.value))}
+              value={selectedProvince}
+              onChange={(e) => handleProvinceChange(e.target.value)}
               className="input-dark w-full py-2.5 px-3 text-xs font-mono"
             >
-              {INDONESIAN_LOCATIONS.map((loc, idx) => (
-                <option key={`${loc.city}-${loc.district}`} value={idx}>
-                  {loc.district}, {loc.city} ({loc.region})
+              {PROVINCES.map((prov) => (
+                <option key={prov} value={prov}>
+                  {prov}
                 </option>
               ))}
             </select>
+            <p className="text-[10px] font-mono text-[#8B82A6] mt-1">
+              Pilih provinsi, lalu ketik kota/kabupaten & kecamatan di bawah.
+            </p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="text-xs font-mono text-[#aaa] block mb-1">
+              <label className="text-xs font-mono text-[#C8C2DA] block mb-1">
                 Kecamatan / Area (District)
               </label>
               <input
@@ -284,7 +290,7 @@ export function ListingForm() {
             </div>
 
             <div>
-              <label className="text-xs font-mono text-[#aaa] block mb-1">
+              <label className="text-xs font-mono text-[#C8C2DA] block mb-1">
                 Kota / Kabupaten
               </label>
               <input
@@ -299,7 +305,7 @@ export function ListingForm() {
           </div>
 
           <div>
-            <label className="text-xs font-mono text-[#aaa] block mb-1">
+            <label className="text-xs font-mono text-[#C8C2DA] block mb-1">
               Rekomendasi Area Publik untuk Titik Temu (Zone)
             </label>
             <input
@@ -310,13 +316,13 @@ export function ListingForm() {
               className="input-dark w-full py-2.5 px-3 text-xs font-mono"
               required
             />
-            <p className="text-[10px] font-mono text-[#666] mt-1">
+            <p className="text-[10px] font-mono text-[#8B82A6] mt-1">
               🔒 <strong>JANGAN masukkan alamat rumah pribadi.</strong> Cukup sebutkan area publik umum.
             </p>
           </div>
 
           <div>
-            <label className="text-xs font-mono text-[#aaa] block mb-1">
+            <label className="text-xs font-mono text-[#C8C2DA] block mb-1">
               Ketersediaan Waktu Ketemuan (Availability Notes)
             </label>
             <input
@@ -330,13 +336,13 @@ export function ListingForm() {
         </div>
 
         {/* Step 3: Foto Barang */}
-        <div className="bg-[#121212] border border-[#262626] p-6 space-y-4">
-          <h2 className="text-sm font-bold text-white font-mono uppercase tracking-wider border-b border-[#222] pb-2">
+        <div className="bg-[#12101F] border border-[#3A3157] p-6 space-y-4">
+          <h2 className="text-sm font-bold text-cream font-mono uppercase tracking-wider border-b border-[#3A3157] pb-2">
             3. Foto Fisik Produk
           </h2>
 
           <div>
-            <label className="text-xs font-mono text-[#aaa] block mb-1">
+            <label className="text-xs font-mono text-[#C8C2DA] block mb-1">
               URL Foto Produk (Bisa masukkan tautan gambar langsung)
             </label>
             <input
@@ -348,11 +354,11 @@ export function ListingForm() {
             />
           </div>
 
-          {/* Preset Hardware Photos */}
+          {/* Preset Foto Produk */}
           <div>
-            <div className="text-[10px] font-mono text-[#888] uppercase mb-2 flex items-center gap-1.5">
-              <Sparkles size={12} className="text-[#39FF14]" />
-              <span>Pilihan Cepat Foto Hardware (1-Click Preset):</span>
+            <div className="text-[10px] font-mono text-[#A79EC2] uppercase mb-2 flex items-center gap-1.5">
+              <Sparkles size={12} className="text-[#C8FF4D]" />
+              <span>Pilihan Cepat Foto Produk (1-Click Preset):</span>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {IMAGE_PRESETS.map((preset) => (
@@ -362,8 +368,8 @@ export function ListingForm() {
                   onClick={() => setImageUrl(preset.url)}
                   className={`p-2 text-left border text-xs font-mono flex items-center gap-2 transition-all cursor-pointer ${
                     imageUrl === preset.url
-                      ? "bg-[#39FF14]/10 border-[#39FF14] text-[#39FF14] font-bold"
-                      : "bg-[#161616] border-[#333] text-[#aaa] hover:text-white hover:bg-[#202020]"
+                      ? "bg-[#C8FF4D]/10 border-[#C8FF4D] text-[#C8FF4D] font-bold"
+                      : "bg-[#19152B] border-[#4A4168] text-[#C8C2DA] hover:text-cream hover:bg-[#202020]"
                   }`}
                 >
                   <img src={preset.url} alt={preset.name} className="w-8 h-8 object-cover shrink-0" />
@@ -375,8 +381,8 @@ export function ListingForm() {
 
           {imageUrl && (
             <div className="pt-2">
-              <div className="text-[10px] font-mono text-[#888] mb-1">Preview Foto:</div>
-              <div className="w-48 h-32 bg-[#181818] border border-[#333] overflow-hidden">
+              <div className="text-[10px] font-mono text-[#A79EC2] mb-1">Preview Foto:</div>
+              <div className="w-48 h-32 bg-[#19152B] border border-[#4A4168] overflow-hidden">
                 <img src={imageUrl} alt="Preview" className="w-full h-full object-cover" />
               </div>
             </div>
@@ -388,7 +394,7 @@ export function ListingForm() {
           <button
             type="submit"
             disabled={isPending}
-            className="btn-primary w-full py-3.5 text-xs font-bold flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(57,255,20,0.3)]"
+            className="btn-primary w-full py-3.5 text-xs font-bold flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(200,255,77,0.3)]"
           >
             {isPending ? (
               <Loader2 size={16} className="animate-spin" />

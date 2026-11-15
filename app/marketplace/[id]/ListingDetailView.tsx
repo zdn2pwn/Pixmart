@@ -131,7 +131,7 @@ export function ListingDetailView({
       {/* Back button */}
       <Link
         href="/marketplace"
-        className="inline-flex items-center gap-2 text-sm font-mono text-[#888] hover:text-[#39FF14] transition-colors"
+        className="inline-flex items-center gap-2 text-sm font-mono text-[#A79EC2] hover:text-[#C8FF4D] transition-colors"
       >
         <ArrowLeft size={16} /> Kembali ke Katalog Produk
       </Link>
@@ -147,8 +147,8 @@ export function ListingDetailView({
         {/* Left: Product Images & Info */}
         <div className="lg:col-span-7 space-y-6">
           {/* Main Photo Box */}
-          <div className="bg-[#121212] border border-[#2a2a2a] overflow-hidden">
-            <div className="relative aspect-[16/10] bg-[#181818] overflow-hidden flex items-center justify-center">
+          <div className="bg-[#12101F] border border-[#3A3157] overflow-hidden">
+            <div className="relative aspect-[16/10] bg-[#19152B] overflow-hidden flex items-center justify-center">
               {hasImage ? (
                 <img
                   src={listing.images[0]}
@@ -156,7 +156,7 @@ export function ListingDetailView({
                   className="w-full h-full object-cover object-center"
                 />
               ) : (
-                <div className="flex flex-col items-center justify-center p-8 text-center text-[#555]">
+                <div className="flex flex-col items-center justify-center p-8 text-center text-[#6F6788]">
                   <Package size={48} className="mb-3" />
                   <span className="text-sm font-mono uppercase tracking-wider">
                     Foto Fisik Terverifikasi
@@ -174,22 +174,22 @@ export function ListingDetailView({
                 </span>
               </div>
 
-              <div className="absolute bottom-3 right-4 px-3 py-1 bg-black/85 backdrop-blur-sm text-xs font-mono text-[#aaa] border border-[#333] flex items-center gap-1.5">
-                <Eye size={13} className="text-[#39FF14]" />
+              <div className="absolute bottom-3 right-4 px-3 py-1 bg-black/85 backdrop-blur-sm text-xs font-mono text-[#C8C2DA] border border-[#4A4168] flex items-center gap-1.5">
+                <Eye size={13} className="text-[#C8FF4D]" />
                 <span>{listing.views} kali dilihat</span>
               </div>
             </div>
           </div>
 
           {/* Details & Manifesto */}
-          <div className="bg-[#121212] border border-[#2a2a2a] p-6 sm:p-8 space-y-6">
+          <div className="bg-[#12101F] border border-[#3A3157] p-6 sm:p-8 space-y-6">
             <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight leading-snug">
+              <h1 className="text-xl sm:text-2xl font-bold text-cream tracking-tight leading-snug">
                 {listing.title}
               </h1>
-              <div className="flex items-center gap-3 mt-2 text-xs font-mono text-[#888]">
+              <div className="flex items-center gap-3 mt-2 text-xs font-mono text-[#A79EC2]">
                 <span>Status:</span>
-                <span className="text-[#39FF14] font-bold">TERSEDIA UNTUK COD</span>
+                <span className="text-[#C8FF4D] font-bold">TERSEDIA UNTUK COD</span>
                 <span>•</span>
                 <span>Stok: {listing.stock} unit</span>
               </div>
@@ -197,46 +197,46 @@ export function ListingDetailView({
 
             {/* Description */}
             <div className="space-y-2">
-              <h3 className="text-xs font-mono text-[#888] uppercase tracking-wider font-bold">
+              <h3 className="text-xs font-mono text-[#A79EC2] uppercase tracking-wider font-bold">
                 Deskripsi &amp; Kondisi Fisik
               </h3>
-              <p className="text-sm text-[#ccc] leading-relaxed whitespace-pre-line font-sans">
+              <p className="text-sm text-[#DED9E8] leading-relaxed whitespace-pre-line font-sans">
                 {listing.description}
               </p>
             </div>
 
             {/* Location Privacy Guarantee Box */}
-            <div className="p-4 bg-[#161616] border border-[#282828] space-y-3">
+            <div className="p-4 bg-[#19152B] border border-[#3A3157] space-y-3">
               <div className="flex items-center justify-between">
-                <div className="text-xs font-mono text-[#888] uppercase tracking-wider flex items-center gap-2">
-                  <MapPin size={15} className="text-[#39FF14]" />
+                <div className="text-xs font-mono text-[#A79EC2] uppercase tracking-wider flex items-center gap-2">
+                  <MapPin size={15} className="text-[#C8FF4D]" />
                   <span>Area Lokasi Transaksi (Approximate Location)</span>
                 </div>
                 <button
                   onClick={checkMyDistance}
-                  className="text-[11px] font-mono text-[#39FF14] hover:underline flex items-center gap-1 cursor-pointer"
+                  className="text-[11px] font-mono text-[#C8FF4D] hover:underline flex items-center gap-1 cursor-pointer"
                 >
                   <Navigation size={12} />
                   <span>{distanceText ? `Jarak: ~${distanceText}` : "Hitung Jarak ke Sini"}</span>
                 </button>
               </div>
 
-              <div className="text-sm font-bold text-white font-mono flex items-center gap-2">
+              <div className="text-sm font-bold text-cream font-mono flex items-center gap-2">
                 <span>{approxLocation}</span>
                 {distanceText && (
-                  <span className="text-xs text-[#39FF14] bg-[#39FF14]/10 border border-[#39FF14]/30 px-2 py-0.5">
+                  <span className="text-xs text-[#C8FF4D] bg-[#C8FF4D]/10 border border-[#C8FF4D]/30 px-2 py-0.5">
                     ~{distanceText} dari kamu
                   </span>
                 )}
               </div>
 
-              <p className="text-xs text-[#777] leading-relaxed">
+              <p className="text-xs text-[#A79EC2] leading-relaxed">
                 🔒 <strong>Privasi Lokasi Terjaga:</strong> Alamat pribadi penjual tidak pernah diumbar. Titik temu pertemuan fisik publik (Mall, Cafe, Minimarket) akan disepakati bersama secara tertutup di dalam <em>Escrow Room</em>.
               </p>
 
               {listing.meetingAvailability && (
-                <div className="text-xs text-[#aaa] pt-2 border-t border-[#222] flex items-center gap-2">
-                  <Calendar size={13} className="text-[#39FF14]" />
+                <div className="text-xs text-[#C8C2DA] pt-2 border-t border-[#3A3157] flex items-center gap-2">
+                  <Calendar size={13} className="text-[#C8FF4D]" />
                   <span>Jadwal Penjual: {listing.meetingAvailability}</span>
                 </div>
               )}
@@ -246,46 +246,46 @@ export function ListingDetailView({
 
         {/* Right: Checkout & Action Box */}
         <div className="lg:col-span-5 space-y-6">
-          <div className="bg-[#121212] border border-[#2a2a2a] p-6 space-y-6">
+          <div className="bg-[#12101F] border border-[#3A3157] p-6 space-y-6">
             {/* Price section */}
-            <div className="border-b border-[#222] pb-5">
-              <div className="text-[10px] font-mono text-[#888] uppercase tracking-wider mb-2">Harga (Patokan Katalog)</div>
+            <div className="border-b border-[#3A3157] pb-5">
+              <div className="text-[10px] font-mono text-[#A79EC2] uppercase tracking-wider mb-2">Harga (Patokan Katalog)</div>
               
               {/* Primary: Crypto Prices */}
               <div className="space-y-2 mb-3">
                 <div className="text-2xl font-bold text-[#F7931A] font-mono flex items-center gap-2">
                   <span>{formatBtc(listing.priceBtc)}</span>
-                  <span className="text-xs text-[#666]">BTC</span>
+                  <span className="text-xs text-[#8B82A6]">BTC</span>
                 </div>
-                <div className="text-2xl font-bold text-[#FF6600] font-mono flex items-center gap-2">
+                <div className="text-2xl font-bold text-[#FF8A3D] font-mono flex items-center gap-2">
                   <span>{formatXmr(listing.priceXmr)}</span>
-                  <span className="text-xs text-[#666]">XMR</span>
+                  <span className="text-xs text-[#8B82A6]">XMR</span>
                 </div>
               </div>
 
               {/* Secondary: IDR Reference */}
-              <div className="text-sm text-[#888] font-mono pt-2 border-t border-[#1a1a1a]">
+              <div className="text-sm text-[#A79EC2] font-mono pt-2 border-t border-[#231D3A]">
                 <span className="text-[10px]">Referensi IDR:</span>
-                <span className="text-white font-bold ml-2">
+                <span className="text-cream font-bold ml-2">
                   Rp {listing.fiatEstimateIdr.toLocaleString("id-ID")}
                 </span>
               </div>
             </div>
 
             {/* Seller profile card */}
-            <div className="p-4 bg-[#171717] border border-[#2b2b2b] flex items-center justify-between">
+            <div className="p-4 bg-[#19152B] border border-[#2b2b2b] flex items-center justify-between">
               <div>
-                <div className="text-[10px] font-mono text-[#777] uppercase">Profil Penjual</div>
-                <div className="text-sm font-bold text-white font-mono flex items-center gap-1.5 mt-0.5">
-                  <span className="w-2 h-2 rounded-full bg-[#39FF14] pulse-green" />
+                <div className="text-[10px] font-mono text-[#A79EC2] uppercase">Profil Penjual</div>
+                <div className="text-sm font-bold text-cream font-mono flex items-center gap-1.5 mt-0.5">
+                  <span className="w-2 h-2 rounded-full bg-[#C8FF4D] pulse-green" />
                   <span>{listing.seller.codename}</span>
                 </div>
-                <div className="text-[11px] font-mono text-[#888] mt-1">
-                  Reputasi: <span className="text-[#39FF14] font-bold">{listing.seller.reputation}%</span> • {listing.seller.completedDeals} deal selesai
+                <div className="text-[11px] font-mono text-[#A79EC2] mt-1">
+                  Reputasi: <span className="text-[#C8FF4D] font-bold">{listing.seller.reputation}%</span> • {listing.seller.completedDeals} deal selesai
                 </div>
               </div>
               <div className="text-right">
-                <span className="text-[10px] font-mono bg-[#222] px-2 py-1 text-[#aaa] border border-[#333]">
+                <span className="text-[10px] font-mono bg-[#3A3157] px-2 py-1 text-[#C8C2DA] border border-[#4A4168]">
                   ANONYMOUS
                 </span>
               </div>
@@ -296,7 +296,7 @@ export function ListingDetailView({
               <button
                 onClick={handleOpenNego}
                 disabled={isPending}
-                className="w-full py-3 px-4 bg-[#1a1a1a] hover:bg-[#252525] border border-[#39FF14]/50 hover:border-[#39FF14] text-[#39FF14] text-sm font-mono font-bold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-[0_0_10px_rgba(57,255,20,0.1)]"
+                className="w-full py-3 px-4 bg-[#231D3A] hover:bg-[#3A3157] border border-[#C8FF4D]/50 hover:border-[#C8FF4D] text-[#C8FF4D] text-sm font-mono font-bold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-[0_0_10px_rgba(200,255,77,0.1)]"
               >
                 <MessageSquare size={16} />
                 <span>Ajukan Penawaran (Nego Harga)</span>
@@ -305,7 +305,7 @@ export function ListingDetailView({
               <button
                 onClick={handleDirectBuy}
                 disabled={isPending}
-                className="btn-primary w-full py-3.5 text-xs font-bold flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(57,255,20,0.3)]"
+                className="btn-primary w-full py-3.5 text-xs font-bold flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(200,255,77,0.3)]"
               >
                 {isPending ? (
                   <Loader2 size={16} className="animate-spin" />
@@ -319,20 +319,20 @@ export function ListingDetailView({
 
               <button
                 onClick={handleToggleWishlist}
-                className="w-full py-2.5 px-4 bg-[#141414] hover:bg-[#1c1c1c] border border-[#2b2b2b] text-xs font-mono text-[#aaa] hover:text-white flex items-center justify-center gap-2 transition-colors cursor-pointer"
+                className="w-full py-2.5 px-4 bg-[#19152B] hover:bg-[#2A2440] border border-[#2b2b2b] text-xs font-mono text-[#C8C2DA] hover:text-cream flex items-center justify-center gap-2 transition-colors cursor-pointer"
               >
-                <Heart size={14} className={isWishlisted ? "text-[#FF3B30] fill-[#FF3B30]" : ""} />
+                <Heart size={14} className={isWishlisted ? "text-[#FF6FA8] fill-[#FF6FA8]" : ""} />
                 <span>{isWishlisted ? "Tersimpan di Wishlist" : "Simpan ke Wishlist"}</span>
               </button>
             </div>
 
             {/* Escrow COD Guarantee notes */}
-            <div className="pt-4 border-t border-[#222] space-y-2 text-[11px] font-mono text-[#777]">
-              <div className="flex items-center gap-1.5 text-[#39FF14]">
+            <div className="pt-4 border-t border-[#3A3157] space-y-2 text-[11px] font-mono text-[#A79EC2]">
+              <div className="flex items-center gap-1.5 text-[#C8FF4D]">
                 <ShieldCheck size={14} />
                 <span className="font-bold">PROSES AMAN 100% TATAP MUKA (COD):</span>
               </div>
-              <ul className="space-y-1.5 list-disc pl-4 text-[#888]">
+              <ul className="space-y-1.5 list-disc pl-4 text-[#A79EC2]">
                 <li>Tidak ada pengiriman kurir/ekspedisi. Transaksi bertemu langsung.</li>
                 <li>Escrow room mengunci deal dan memfasilitasi penentuan titik temu publik.</li>
                 <li>Penyelesaian transaksi membutuhkan konfirmasi kedua belah pihak di lokasi.</li>

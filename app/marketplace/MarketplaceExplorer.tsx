@@ -18,7 +18,7 @@ import {
 
 const CATEGORIES: { value: string; label: string }[] = [
   { value: "ALL", label: "Semua Kategori" },
-  { value: "HARDWARE_GADGETS", label: "Hardware & Gadget" },
+  { value: "HARDWARE_GADGETS", label: "Gadget" },
   { value: "RETRO_CONSOLES", label: "Konsol Retro" },
   { value: "KEYBOARDS_TECH", label: "Keyboard Mekanikal" },
   { value: "CAMERAS_OPTICS", label: "Kamera & Optik" },
@@ -203,40 +203,42 @@ export function MarketplaceExplorer({
   return (
     <div className="flex-1 max-w-6xl mx-auto w-full px-4 sm:px-8 py-8 space-y-6">
       {/* Page Title & Location Banner */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-[#222222]">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-[#3A3157]">
         <div>
-          <div className="flex items-center gap-2 text-xs font-mono text-[#39FF14] uppercase tracking-wider mb-1 font-bold">
-            <span className="w-2 h-2 rounded-full bg-[#39FF14] pulse-green" />
+          <div className="flex items-center gap-2 text-xs font-mono text-[#C8FF4D] uppercase tracking-wider mb-1 font-bold">
+            <span className="w-2 h-2 rounded-full bg-[#C8FF4D] pulse-green" />
             <span>LOCATION-BASED LOCAL MARKETPLACE</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
-            Katalog Produk &amp; Hardware Terdekat
+          <h1 className="text-2xl sm:text-3xl font-bold text-cream tracking-tight">
+            Katalog Produk Terdekat
           </h1>
-          <p className="text-sm text-[#888] mt-1">
+          <p className="text-sm text-[#A79EC2] mt-1">
             Temukan barang fisik 100% legal di sekitar area kamu untuk serah terima COD &amp; cek fisik langsung.
           </p>
         </div>
 
-        <Link
-          href="/marketplace/new"
-          className="btn-primary text-xs font-bold px-4 py-2.5 self-start md:self-auto flex items-center gap-1.5 shadow-[0_0_12px_rgba(57,255,20,0.3)]"
-        >
-          <span>+ Pasang Iklan Lokal</span>
-        </Link>
+        {session?.role === "SELLER" && (
+          <Link
+            href="/marketplace/new"
+            className="btn-primary text-xs font-bold px-4 py-2.5 self-start md:self-auto flex items-center gap-1.5 shadow-[0_0_12px_rgba(200,255,77,0.3)]"
+          >
+            <span>+ Pasang Iklan Lokal</span>
+          </Link>
+        )}
       </div>
 
       {/* Location Bar / GPS Switcher */}
-      <div className="bg-[#141414] border border-[#2a2a2a] p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="bg-[#19152B] border border-[#3A3157] p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-none bg-[#1d1d1d] border border-[#333] flex items-center justify-center shrink-0">
-            <MapPin size={20} className={userCoords ? "text-[#39FF14]" : "text-[#888]"} />
+          <div className="w-10 h-10 rounded-none bg-[#231D3A] border border-[#4A4168] flex items-center justify-center shrink-0">
+            <MapPin size={20} className={userCoords ? "text-[#C8FF4D]" : "text-[#A79EC2]"} />
           </div>
           <div>
-            <div className="text-[11px] font-mono text-[#888] uppercase tracking-wider">Titik Acuan Pembeli</div>
-            <div className="text-sm font-bold text-white flex items-center gap-2">
+            <div className="text-[11px] font-mono text-[#A79EC2] uppercase tracking-wider">Titik Acuan Pembeli</div>
+            <div className="text-sm font-bold text-cream flex items-center gap-2">
               <span>{userCoords ? geoName : "Lokasi Belum Terdeteksi"}</span>
               {userCoords && (
-                <span className="text-[10px] bg-[#39FF14]/10 text-[#39FF14] px-1.5 py-0.5 border border-[#39FF14]/30 font-mono">
+                <span className="text-[10px] bg-[#C8FF4D]/10 text-[#C8FF4D] px-1.5 py-0.5 border border-[#C8FF4D]/30 font-mono">
                   AKTIF
                 </span>
               )}
@@ -248,27 +250,27 @@ export function MarketplaceExplorer({
           <button
             onClick={detectLocation}
             disabled={geoStatus === "LOCATING"}
-            className="px-3.5 py-2 bg-[#222] hover:bg-[#2c2c2c] text-white border border-[#3a3a3a] text-xs font-mono font-bold flex items-center gap-2 transition-colors cursor-pointer"
+            className="px-3.5 py-2 bg-[#3A3157] hover:bg-[#4A4168] text-cream border border-[#3A3157] text-xs font-mono font-bold flex items-center gap-2 transition-colors cursor-pointer"
           >
-            <Navigation size={14} className={geoStatus === "LOCATING" ? "animate-spin text-[#39FF14]" : "text-[#39FF14]"} />
+            <Navigation size={14} className={geoStatus === "LOCATING" ? "animate-spin text-[#C8FF4D]" : "text-[#C8FF4D]"} />
             <span>{geoStatus === "LOCATING" ? "Mencari GPS..." : "Gunakan Lokasi Saya"}</span>
           </button>
 
           {/* Quick preset dropdown for easy manual testing */}
           <div className="relative group">
-            <button className="px-3 py-2 bg-[#181818] hover:bg-[#222] text-[#aaa] hover:text-white border border-[#333] text-xs font-mono transition-colors cursor-pointer">
+            <button className="px-3 py-2 bg-[#19152B] hover:bg-[#3A3157] text-[#C8C2DA] hover:text-cream border border-[#4A4168] text-xs font-mono transition-colors cursor-pointer">
               <span>Pilih Area Manual ▾</span>
             </button>
-            <div className="absolute right-0 top-full mt-1 w-56 bg-[#161616] border border-[#333] shadow-2xl z-30 hidden group-hover:block p-1">
-              <div className="text-[10px] text-[#666] px-2 py-1 font-mono uppercase">Area Populer</div>
+            <div className="absolute right-0 top-full mt-1 w-56 bg-[#19152B] border border-[#4A4168] shadow-2xl z-30 hidden group-hover:block p-1">
+              <div className="text-[10px] text-[#8B82A6] px-2 py-1 font-mono uppercase">Area Populer</div>
               {INDONESIAN_LOCATIONS.slice(0, 6).map((preset) => (
                 <button
                   key={`${preset.city}-${preset.district}`}
                   onClick={() => selectPresetLocation(preset)}
-                  className="w-full text-left px-2.5 py-2 text-xs text-[#ccc] hover:text-white hover:bg-[#252525] flex items-center justify-between transition-colors cursor-pointer font-mono"
+                  className="w-full text-left px-2.5 py-2 text-xs text-[#DED9E8] hover:text-cream hover:bg-[#3A3157] flex items-center justify-between transition-colors cursor-pointer font-mono"
                 >
                   <span className="truncate">{preset.district}</span>
-                  <span className="text-[10px] text-[#777] shrink-0">{preset.city}</span>
+                  <span className="text-[10px] text-[#A79EC2] shrink-0">{preset.city}</span>
                 </button>
               ))}
             </div>
@@ -278,7 +280,7 @@ export function MarketplaceExplorer({
 
       {/* Geolocation Denied Helper Banner */}
       {geoStatus === "DENIED" && (
-        <div className="bg-[#FFB800]/10 border border-[#FFB800]/40 p-3.5 text-xs text-[#FFB800] flex items-start gap-2.5 font-mono">
+        <div className="bg-[#FFC857]/10 border border-[#FFC857]/40 p-3.5 text-xs text-[#FFC857] flex items-start gap-2.5 font-mono">
           <AlertCircle size={16} className="shrink-0 mt-0.5" />
           <div>
             <strong>Izin lokasi browser tidak diaktifkan.</strong> Jangan khawatir! Anda tetap dapat memilih area di atas (misal: <em>Gerokgak Buleleng, Jakarta Selatan, atau Bandung</em>) untuk menghitung jarak produk ke lokasi Anda.
@@ -287,10 +289,10 @@ export function MarketplaceExplorer({
       )}
 
       {/* Search & Filter Bar */}
-      <div className="bg-[#121212] border border-[#262626] p-4 space-y-4">
+      <div className="bg-[#12101F] border border-[#3A3157] p-4 space-y-4">
         {/* Search Input */}
         <div className="relative">
-          <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#666]" />
+          <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#8B82A6]" />
           <input
             type="text"
             value={search}
@@ -304,7 +306,7 @@ export function MarketplaceExplorer({
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 pt-1">
           {/* Radius Filter */}
           <div>
-            <label className="text-[10px] font-mono text-[#777] uppercase block mb-1">Radius Jarak</label>
+            <label className="text-[10px] font-mono text-[#A79EC2] uppercase block mb-1">Radius Jarak</label>
             <select
               value={radiusKm}
               onChange={(e) => setRadiusKm(Number(e.target.value))}
@@ -320,7 +322,7 @@ export function MarketplaceExplorer({
 
           {/* Category Filter */}
           <div>
-            <label className="text-[10px] font-mono text-[#777] uppercase block mb-1">Kategori</label>
+            <label className="text-[10px] font-mono text-[#A79EC2] uppercase block mb-1">Kategori</label>
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value)}
@@ -336,7 +338,7 @@ export function MarketplaceExplorer({
 
           {/* Sort By */}
           <div>
-            <label className="text-[10px] font-mono text-[#777] uppercase block mb-1">Urutkan</label>
+            <label className="text-[10px] font-mono text-[#A79EC2] uppercase block mb-1">Urutkan</label>
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as any)}
@@ -352,14 +354,14 @@ export function MarketplaceExplorer({
 
           {/* Currency Display Toggle */}
           <div>
-            <label className="text-[10px] font-mono text-[#777] uppercase block mb-1">Tampilan Harga</label>
-            <div className="flex border border-[#333] bg-[#0d0d0d] p-0.5">
+            <label className="text-[10px] font-mono text-[#A79EC2] uppercase block mb-1">Tampilan Harga</label>
+            <div className="flex border border-[#4A4168] bg-[#0E0B18] p-0.5">
               {(["IDR", "XMR", "BTC"] as const).map((curr) => (
                 <button
                   key={curr}
                   onClick={() => setCurrency(curr)}
                   className={`flex-1 py-1.5 text-[11px] font-mono font-bold transition-all cursor-pointer ${
-                    currency === curr ? "bg-[#252525] text-[#39FF14]" : "text-[#777] hover:text-[#ccc]"
+                    currency === curr ? "bg-[#3A3157] text-[#C8FF4D]" : "text-[#A79EC2] hover:text-[#DED9E8]"
                   }`}
                 >
                   {curr}
@@ -371,13 +373,13 @@ export function MarketplaceExplorer({
       </div>
 
       {/* Results Header */}
-      <div className="flex items-center justify-between text-xs font-mono text-[#888] px-1">
+      <div className="flex items-center justify-between text-xs font-mono text-[#A79EC2] px-1">
         <div>
-          Menampilkan <span className="text-[#39FF14] font-bold">{processedListings.length}</span> barang di area sekitar
+          Menampilkan <span className="text-[#C8FF4D] font-bold">{processedListings.length}</span> barang di area sekitar
         </div>
         {userCoords && (
-          <div className="text-[11px] text-[#39FF14] flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#39FF14]" />
+          <div className="text-[11px] text-[#C8FF4D] flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#C8FF4D]" />
             <span>Jarak dihitung realtime berdasarkan koordinat</span>
           </div>
         )}
@@ -385,10 +387,10 @@ export function MarketplaceExplorer({
 
       {/* Listings Grid */}
       {processedListings.length === 0 ? (
-        <div className="bg-[#121212] border border-[#222] p-12 text-center space-y-4">
-          <Package size={40} className="mx-auto text-[#444]" />
-          <div className="text-white font-bold text-base">Tidak ada barang dalam radius atau pencarian ini</div>
-          <p className="text-xs text-[#888] max-w-md mx-auto">
+        <div className="bg-[#12101F] border border-[#3A3157] p-12 text-center space-y-4">
+          <Package size={40} className="mx-auto text-[#5C5575]" />
+          <div className="text-cream font-bold text-base">Tidak ada barang dalam radius atau pencarian ini</div>
+          <p className="text-xs text-[#A79EC2] max-w-md mx-auto">
             Coba perbesar radius jarak pencarian atau ubah filter kategori untuk melihat barang lain di area sekitar.
           </p>
           <div className="flex flex-wrap justify-center gap-2 pt-2">
@@ -405,7 +407,7 @@ export function MarketplaceExplorer({
             {session?.role === "SELLER" && (
               <Link
                 href="/marketplace/new"
-                className="btn-primary text-xs font-bold px-5 py-2 shadow-[0_0_12px_rgba(57,255,20,0.3)]"
+                className="btn-primary text-xs font-bold px-5 py-2 shadow-[0_0_12px_rgba(200,255,77,0.3)]"
               >
                 + Pasang Iklan Sekarang
               </Link>
@@ -420,10 +422,10 @@ export function MarketplaceExplorer({
               <Link
                 key={item.id}
                 href={`/marketplace/${item.id}`}
-                className="group bg-[#111111] border border-[#242424] hover:border-[#39FF14]/70 transition-all flex flex-col overflow-hidden relative"
+                className="group bg-[#12101F] border border-[#3A3157] hover:border-[#C8FF4D]/70 transition-all flex flex-col overflow-hidden relative"
               >
                 {/* Image Container */}
-                <div className="relative aspect-[16/10] bg-[#181818] overflow-hidden flex items-center justify-center border-b border-[#222]">
+                <div className="relative aspect-[16/10] bg-[#19152B] overflow-hidden flex items-center justify-center border-b border-[#3A3157]">
                   {hasImage ? (
                     <img
                       src={item.images[0]}
@@ -431,32 +433,32 @@ export function MarketplaceExplorer({
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                   ) : (
-                    <div className="flex flex-col items-center justify-center p-6 text-center text-[#555]">
+                    <div className="flex flex-col items-center justify-center p-6 text-center text-[#6F6788]">
                       <Package size={36} className="mb-2" />
                       <span className="text-[10px] font-mono uppercase tracking-wider">Unit Fisik Legal</span>
                     </div>
                   )}
 
                   {/* Distance Badge on Image */}
-                  <div className="absolute top-3 left-3 bg-black/85 backdrop-blur-md border border-[#333] px-2.5 py-1 text-[11px] font-mono font-bold text-[#39FF14] flex items-center gap-1.5 shadow-lg">
-                    <MapPin size={12} className="text-[#39FF14]" />
+                  <div className="absolute top-3 left-3 bg-black/85 backdrop-blur-md border border-[#4A4168] px-2.5 py-1 text-[11px] font-mono font-bold text-[#C8FF4D] flex items-center gap-1.5 shadow-lg">
+                    <MapPin size={12} className="text-[#C8FF4D]" />
                     <span>{item.distanceFormatted}</span>
                   </div>
 
                   {/* Wishlist Button */}
                   <button
                     onClick={(e) => handleToggleWishlist(item.id, e)}
-                    className="absolute top-3 right-3 w-8 h-8 bg-black/80 hover:bg-black border border-[#333] hover:border-[#39FF14] flex items-center justify-center transition-colors cursor-pointer"
+                    className="absolute top-3 right-3 w-8 h-8 bg-black/80 hover:bg-black border border-[#4A4168] hover:border-[#C8FF4D] flex items-center justify-center transition-colors cursor-pointer"
                     title="Simpan ke Wishlist"
                   >
                     <Heart
                       size={15}
-                      className={item.isWishlisted ? "text-[#FF3B30] fill-[#FF3B30]" : "text-[#aaa]"}
+                      className={item.isWishlisted ? "text-[#FF6FA8] fill-[#FF6FA8]" : "text-[#C8C2DA]"}
                     />
                   </button>
 
                   {/* Condition Tag */}
-                  <div className="absolute bottom-3 left-3 bg-black/80 backdrop-blur-sm border border-[#333] px-2 py-0.5 text-[10px] font-mono text-[#aaa]">
+                  <div className="absolute bottom-3 left-3 bg-black/80 backdrop-blur-sm border border-[#4A4168] px-2 py-0.5 text-[10px] font-mono text-[#C8C2DA]">
                     {item.condition}
                   </div>
 
@@ -464,17 +466,17 @@ export function MarketplaceExplorer({
                   {item.stock === 0 && (
                     <div className="absolute inset-0 bg-black/85 backdrop-blur-sm flex items-center justify-center">
                       <div className="text-center transform -rotate-12">
-                        <div className="text-4xl font-black text-[#FF3B30] font-mono tracking-widest mb-2 drop-shadow-[0_0_8px_rgba(255,59,48,0.6)]">
+                        <div className="text-4xl font-black text-[#FF6FA8] font-mono tracking-widest mb-2 drop-shadow-[0_0_8px_rgba(255,59,48,0.6)]">
                           SOLD OUT
                         </div>
-                        <div className="text-xs text-[#888] font-mono">STOK HABIS</div>
+                        <div className="text-xs text-[#A79EC2] font-mono">STOK HABIS</div>
                       </div>
                     </div>
                   )}
 
                   {/* Low Stock Warning */}
                   {item.stock > 0 && item.stock <= 3 && (
-                    <div className="absolute bottom-3 right-3 bg-[#FFB800]/90 backdrop-blur-sm border border-[#FFB800] px-2 py-1 text-[10px] font-mono font-bold text-black animate-pulse">
+                    <div className="absolute bottom-3 right-3 bg-[#FFC857]/90 backdrop-blur-sm border border-[#FFC857] px-2 py-1 text-[10px] font-mono font-bold text-black animate-pulse">
                       Tersisa {item.stock}
                     </div>
                   )}
@@ -484,35 +486,35 @@ export function MarketplaceExplorer({
                 <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
                   <div className="space-y-2">
                     {/* Category & Approximate Location */}
-                    <div className="flex items-center justify-between text-[11px] font-mono text-[#777]">
+                    <div className="flex items-center justify-between text-[11px] font-mono text-[#A79EC2]">
                       <span className="uppercase">{item.category.replace(/_/g, " ")}</span>
-                      <span className="text-[#39FF14] font-medium truncate max-w-[140px]">
+                      <span className="text-[#C8FF4D] font-medium truncate max-w-[140px]">
                         {item.approxLocation}
                       </span>
                     </div>
 
                     {/* Title */}
-                    <h3 className="text-sm font-bold text-white group-hover:text-[#39FF14] transition-colors line-clamp-2 leading-snug">
+                    <h3 className="text-sm font-bold text-cream group-hover:text-[#C8FF4D] transition-colors line-clamp-2 leading-snug">
                       {item.title}
                     </h3>
 
                     {/* Description excerpt */}
-                    <p className="text-xs text-[#888] line-clamp-2 leading-relaxed">
+                    <p className="text-xs text-[#A79EC2] line-clamp-2 leading-relaxed">
                       {item.description}
                     </p>
                   </div>
 
                   {/* Price & Action */}
-                  <div className="pt-3 border-t border-[#1f1f1f] flex items-end justify-between">
+                  <div className="pt-3 border-t border-[#2A2440] flex items-end justify-between">
                     <div>
-                      <div className="text-[10px] font-mono text-[#666] uppercase">Harga Deal COD</div>
+                      <div className="text-[10px] font-mono text-[#8B82A6] uppercase">Harga Deal COD</div>
                       {currency === "IDR" && (
-                        <div className="text-base font-bold text-white font-mono">
+                        <div className="text-base font-bold text-cream font-mono">
                           Rp {(item.fiatEstimateIdr || 0).toLocaleString("id-ID")}
                         </div>
                       )}
                       {currency === "XMR" && (
-                        <div className="text-base font-bold text-[#FF6600] font-mono">
+                        <div className="text-base font-bold text-[#FF8A3D] font-mono">
                           {formatXmr(item.priceXmr || 0)}
                         </div>
                       )}
@@ -523,7 +525,7 @@ export function MarketplaceExplorer({
                       )}
                     </div>
 
-                    <div className="flex items-center gap-1 text-xs font-mono font-bold text-[#39FF14] group-hover:translate-x-1 transition-transform">
+                    <div className="flex items-center gap-1 text-xs font-mono font-bold text-[#C8FF4D] group-hover:translate-x-1 transition-transform">
                       <span>Nego / Beli</span>
                       <ArrowRight size={14} />
                     </div>

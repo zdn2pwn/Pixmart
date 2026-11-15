@@ -75,13 +75,20 @@ export function MessageThread({
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex h-full flex-col">
       {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-[#0c0c0c]">
+      <div className="flex-1 space-y-4 overflow-y-auto bg-ink p-4 sm:p-5">
         {messages.length === 0 ? (
-          <div className="text-center py-12 text-[#666] text-xs font-mono">
-            <MessageSquare size={32} className="mx-auto mb-3 opacity-30" />
-            <p>{emptyStateText}</p>
+          <div className="flex h-full flex-col items-center justify-center px-4 text-center">
+            <span className="grid size-14 place-items-center border-2 border-line bg-panel text-muted-ink">
+              <MessageSquare size={24} />
+            </span>
+            <p className="mt-4 max-w-xs text-sm leading-relaxed text-muted-ink">
+              {emptyStateText}
+            </p>
+            <p className="mt-2 font-mono text-[10px] font-bold uppercase tracking-[0.16em] text-line">
+              Ruang obrolan demo
+            </p>
           </div>
         ) : (
           messages.map((msg) => {
@@ -91,7 +98,7 @@ export function MessageThread({
             if (isSystem) {
               return (
                 <div key={msg.id} className="text-center">
-                  <div className="inline-block bg-[#1a1a1a] border border-[#333] px-3 py-1.5 text-[10px] font-mono text-[#39FF14]">
+                  <div className="inline-block max-w-[92%] border-2 border-line bg-panel px-3 py-2 font-mono text-xs leading-relaxed text-lime">
                     {msg.content}
                   </div>
                 </div>
@@ -124,15 +131,15 @@ export function MessageThread({
                 className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}
               >
                 <div
-                  className={`max-w-[75%] px-3 py-2 text-xs ${
+                  className={`max-w-[80%] border-2 px-3.5 py-2.5 text-sm leading-relaxed ${
                     isMe
-                      ? "bg-[#39FF14] text-black"
-                      : "bg-[#1a1a1a] border border-[#333] text-white"
+                      ? "border-lime bg-lime text-ink"
+                      : "border-line bg-panel text-cream"
                   }`}
                 >
                   <div className="break-words">{msg.content}</div>
                 </div>
-                <div className="text-[9px] font-mono text-[#666] mt-0.5">
+                <div className="mt-1 font-mono text-[10px] text-muted-ink">
                   {new Date(msg.created_at).toLocaleTimeString("id-ID", {
                     hour: "2-digit",
                     minute: "2-digit",
@@ -147,13 +154,16 @@ export function MessageThread({
 
       {/* Error Display */}
       {error && (
-        <div className="px-4 py-2 bg-red-950/40 border-t border-red-500/50 text-red-300 text-xs font-mono">
+        <div className="border-t-2 border-red-500/40 bg-red-950/30 px-4 py-2 font-mono text-sm text-red-300">
           {error}
         </div>
       )}
 
       {/* Input Area */}
-      <form onSubmit={handleSendMessage} className="border-t border-[#222] bg-[#111] p-3">
+      <form
+        onSubmit={handleSendMessage}
+        className="border-t-2 border-line bg-surface p-3"
+      >
         <div className="flex items-center gap-2">
           <input
             type="text"
@@ -161,13 +171,13 @@ export function MessageThread({
             onChange={(e) => setMessageInput(e.target.value)}
             placeholder={placeholder}
             disabled={isPending}
-            className="flex-1 bg-[#1a1a1a] border border-[#333] text-white px-3 py-2 text-xs focus:outline-none focus:border-[#39FF14] placeholder:text-[#666] disabled:opacity-50"
+            className="min-w-0 flex-1 border-2 border-line bg-panel px-3 py-2.5 text-sm text-cream placeholder:text-muted-ink/55 focus:border-lime focus:outline-none disabled:opacity-50"
             maxLength={500}
           />
           <button
             type="submit"
             disabled={!messageInput.trim() || isPending}
-            className="btn-primary px-4 py-2 text-xs font-bold flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="btn-primary shrink-0 !min-h-11 !px-4 !py-2.5 !text-[10px] disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isPending ? (
               <>
@@ -182,7 +192,7 @@ export function MessageThread({
             )}
           </button>
         </div>
-        <div className="text-[9px] font-mono text-[#666] mt-1.5">
+        <div className="mt-1.5 font-mono text-[10px] text-muted-ink/70">
           {messageInput.length}/500 karakter
         </div>
       </form>

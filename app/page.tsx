@@ -3,428 +3,638 @@ import { PublicNav } from "@/components/layout/PublicNav";
 import { PublicFooter } from "@/components/layout/PublicFooter";
 import { getSimpleSession } from "@/app/actions/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { formatCurrency } from "@/lib/format";
 import { LiveTerminalWidget } from "@/components/landing/LiveTerminalWidget";
+import { Reveal } from "@/components/landing/Reveal";
 import {
   MapPin,
   ArrowRight,
   ShieldCheck,
-  MessageSquare,
   Compass,
   Plus,
-  Package,
-  Handshake,
-  Clock,
   Check,
-  X as XIcon,
+  X,
+  Coins,
+  LockKeyhole,
+  Trophy,
+  Star,
 } from "lucide-react";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
-const CITIES = ["Jakarta Selatan", "Bandung", "Surabaya", "Jakarta Pusat", "Yogyakarta", "Medan"];
+const CITIES = [
+  "Jakarta Selatan",
+  "Bandung",
+  "Surabaya",
+  "Jakarta Pusat",
+  "Yogyakarta",
+  "Medan",
+];
 
-const HOW_IT_WORKS = [
+const STEPS = [
   {
     step: "01",
-    icon: Compass,
-    title: "Cari Produk Terdekat",
-    desc: "Lihat barang yang dijual di sekitar kamu. Pilih kota atau aktifkan lokasi untuk hasil lebih akurat.",
+    title: "Cari di kotamu",
+    desc: "Filter kota, lihat barang yang memang ada di sekitar. Nggak ada ongkir siluman.",
   },
   {
     step: "02",
-    icon: MessageSquare,
-    title: "Nego via Chat",
-    desc: "Hubungi penjual langsung. Tawar harga, tanya kondisi barang, sampai kalian sepakat.",
+    title: "Nego langsung",
+    desc: "Tanya kondisi, minta foto tambahan, tawar harga. Semua di satu ruang chat.",
   },
   {
     step: "03",
-    icon: ShieldCheck,
-    title: "Tentukan Tempat COD",
-    desc: "Setelah deal, sistem buat Escrow Room. Kalian tentukan tempat dan waktu ketemu yang aman.",
+    title: "Kunci deal",
+    desc: "Buyer dan seller sama-sama setuju. Ruang escrow mencatat harga dan titik temunya.",
   },
   {
     step: "04",
-    icon: Handshake,
-    title: "Ketemu & Transaksi",
-    desc: "Cek barang di tempat. Kalau cocok, bayar dan ambil. Konfirmasi selesai dari kedua pihak.",
+    title: "Cek, lalu serahkan",
+    desc: "Ketemu di tempat publik, tes barangnya, konfirmasi handshake. Selesai.",
   },
+];
+
+const COMPARISON_ROWS = [
+  { label: "Cek barang sebelum bayar", pixmart: "Bisa", biasa: "Tidak" },
+  { label: "Biaya platform", pixmart: "0%", biasa: "Ada" },
+  { label: "Cara terima barang", pixmart: "COD", biasa: "Kurir" },
+  { label: "Data yang tampil", pixmart: "Codename", biasa: "Nomor HP" },
+  { label: "Kalau ada masalah", pixmart: "Midman", biasa: "Form refund" },
+];
+
+const LEADERBOARD = [
+  { rank: 1, name: "ANONYMOUS SELLER #CRUD", city: "Jakarta Selatan", score: 4820, badge: "LVL 9" },
+  { rank: 2, name: "BYTE HUNTER", city: "Bandung", score: 4105, badge: "LVL 8" },
+  { rank: 3, name: "PIXEL TRADER", city: "Surabaya", score: 3770, badge: "LVL 7" },
+  { rank: 4, name: "RETRO DEALER", city: "Yogyakarta", score: 2950, badge: "LVL 6" },
+  { rank: 5, name: "NEON MERCHANT", city: "Medan", score: 2410, badge: "LVL 5" },
 ];
 
 export default async function HomePage() {
   const session = await getSimpleSession();
   const currentRole = session?.role || "BUYER";
   const supabase = await createSupabaseServerClient();
-  
-  // Fetch active listings from database
+
   const { data: listingsData } = await supabase
     .from("marketplace_listings")
     .select("*")
     .eq("status", "ACTIVE")
     .order("created_at", { ascending: false })
-    .limit(10);
+    .limit(8);
 
   const listings = listingsData || [];
 
-  // Simple metrics (you can make this dynamic later)
-  const metrics = {
-    activeUsers: 1250,
-    totalListings: listings.length || 48,
-    dealsCompleted: 892,
-  };
-
   return (
-    <div className="min-h-screen flex flex-col bg-[#0a0a0a] text-[#f0f0f0]">
-      <PublicNav currentRole={currentRole} codename={session?.codename} isLoggedIn={!!session} />
+    <div className="flex min-h-screen flex-col bg-ink text-cream">
+      <PublicNav
+        currentRole={currentRole}
+        codename={session?.codename}
+        isLoggedIn={!!session}
+      />
 
-      {/* HERO SECTION */}
-      <section className="relative border-b border-[#1c1c1c] py-16 sm:py-24 px-4 sm:px-8 overflow-hidden">
-        {/* Ambient Glow */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-96 bg-[#39FF14]/5 blur-[120px] pointer-events-none rounded-full" />
+      <main className="flex-1">
+        {/* HERO — dark, pixel starfield bg, cabinet on right */}
+        <section className="relative overflow-hidden border-b-2 border-line bg-ink">
+          <PixelStarfield />
 
-        <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 items-center relative z-10">
-          {/* Left Column */}
-          <div className="lg:col-span-7 space-y-6">
-            <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#141414] border border-[#2a2a2a] text-xs font-mono text-[#39FF14]">
-              <span className="w-2 h-2 rounded-full bg-[#39FF14] pulse-green inline-block" />
-              <span className="font-bold tracking-wider">LOCAL MARKETPLACE // JUAL BELI DI SEKITAR KAMU</span>
-            </div>
-
-            <div className="space-y-3">
-              <h1 className="text-3xl sm:text-5xl font-bold tracking-tight text-white leading-[1.15]">
-                Beli & Jual Barang Langsung <br />
-                <span className="text-[#39FF14]">di Kotamu. COD. Aman.</span>
-              </h1>
-              <p className="text-base sm:text-lg text-[#aaa] font-sans leading-relaxed max-w-xl">
-                Marketplace lokal untuk transaksi fisik langsung. Temukan penjual terdekat, nego harga, ketemu di tempat aman, dan selesai. Tanpa kurir, tanpa biaya platform.
-              </p>
-            </div>
-
-            {/* CTAs */}
-            <div className="flex flex-wrap items-center gap-3.5 pt-2">
-              <Link
-                href="/marketplace"
-                className="btn-primary text-sm px-6 py-3 font-bold flex items-center gap-2 shadow-[0_0_20px_rgba(57,255,20,0.35)]"
-              >
-                <span>Lihat Produk Terdekat</span>
-                <ArrowRight size={15} />
-              </Link>
-              <Link
-                href="/marketplace/new"
-                className="btn-ghost text-sm px-5 py-3 font-medium"
-              >
-                + Pasang Iklan
-              </Link>
-            </div>
-
-            {/* Core Guarantees */}
-            <div className="pt-2 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs font-mono text-[#888]">
-              <div className="p-2.5 bg-[#111111] border border-[#222]">
-                <div className="text-[#39FF14] font-bold mb-0.5">COD Lokal</div>
-                <div className="text-[11px] text-[#666]">Ketemu Langsung</div>
-              </div>
-              <div className="p-2.5 bg-[#111111] border border-[#222]">
-                <div className="text-[#39FF14] font-bold mb-0.5">Privasi</div>
-                <div className="text-[11px] text-[#666]">Pakai Codename</div>
-              </div>
-              <div className="p-2.5 bg-[#111111] border border-[#222]">
-                <div className="text-[#39FF14] font-bold mb-0.5">Escrow</div>
-                <div className="text-[11px] text-[#666]">Transaksi Aman</div>
-              </div>
-              <div className="p-2.5 bg-[#111111] border border-[#222]">
-                <div className="text-[#39FF14] font-bold mb-0.5">Gratis</div>
-                <div className="text-[11px] text-[#666]">0% Fee</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Right Column: Live Demo Widget */}
-          <div className="lg:col-span-5">
-            <LiveTerminalWidget />
-          </div>
-        </div>
-      </section>
-
-      {/* STATS STRIP */}
-      <section className="border-b border-[#1c1c1c] bg-[#0c0c0c] py-6 px-4 sm:px-8">
-        <div className="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6">
-          {[
-            { label: "Produk Aktif", value: `${listings.length} Listing`, color: "#39FF14", note: "Siap dinegosiasi" },
-            { label: "Kota Aktif", value: `${CITIES.length} Kota`, color: "#39FF14", note: "Jabodetabek & sekitar" },
-            { label: "Transaksi Berjalan", value: `${metrics.dealsCompleted} Escrow`, color: "#39FF14", note: "Menunggu serah terima" },
-            { label: "Deal Selesai", value: `${metrics.dealsCompleted} Transaksi`, color: "#39FF14", note: "100% meetup sukses" },
-          ].map((s) => (
-            <div key={s.label} className="space-y-1">
-              <div className="text-xs font-mono text-[#666] uppercase tracking-wider">{s.label}</div>
-              <div className="text-xl sm:text-2xl font-bold font-mono" style={{ color: s.color }}>
-                {s.value}
-              </div>
-              <div className="text-[11px] font-mono text-[#555]">{s.note}</div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* PRODUK TERDEKAT */}
-      <section className="py-16 px-4 sm:px-8 border-b border-[#1c1c1c]">
-        <div className="max-w-6xl mx-auto space-y-8">
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+          <div className="relative mx-auto grid max-w-6xl grid-cols-1 gap-10 px-4 pb-16 pt-14 sm:px-8 sm:pb-20 sm:pt-18 lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:gap-12 lg:pt-20">
             <div>
-              <div className="text-xs font-mono text-white uppercase tracking-wider font-bold mb-1">
-                PAPAN IKLAN
+              <div className="flex items-center gap-3 font-mono text-[11px] font-bold uppercase tracking-[0.18em] text-muted-ink">
+                <span className="size-2 bg-lime" />
+                <span>PIXMART</span>
+                <span className="h-px w-10 bg-line" />
+                <span>Pasar COD lokal</span>
               </div>
-              <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
-                Barang yang Lagi Dijual di Kotamu
-              </h2>
-              <p className="text-xs sm:text-sm text-[#777] mt-1 font-sans">
-                Cari yang kamu butuhin, nego harga, deal, terus ketemu.
+
+              <h1 className="mt-7 text-[clamp(2.6rem,8vw,5.8rem)] font-bold leading-[0.93] tracking-[-0.05em] text-cream">
+                Barang nyata.
+                <br />
+                Deal di{" "}
+                <span className="relative inline-block text-lime">
+                  kota sendiri
+                </span>
+                .
+              </h1>
+
+              <p className="mt-7 max-w-md text-base leading-relaxed text-muted-ink sm:text-[17px]">
+                Cari barang yang memang ada di sekitarmu. Nego langsung dengan
+                penjual, ketemu di tempat aman, cek barangnya dulu. PIXMART cuma
+                mencatat deal-nya.
               </p>
+
+              <div className="mt-8 flex flex-wrap items-center gap-3">
+                <Link
+                  href="/marketplace"
+                  className="btn-primary !border-lime !bg-lime !text-ink hover:!bg-lime/80"
+                >
+                  <Compass size={15} />
+                  Cari barang
+                  <ArrowRight size={15} />
+                </Link>
+                <Link
+                  href="/marketplace/new"
+                  className="group inline-flex items-center gap-1.5 border-b-2 border-line py-1 font-mono text-[11px] font-bold uppercase tracking-[0.08em] text-cream transition-colors hover:border-lime hover:text-lime"
+                >
+                  <Plus size={14} />
+                  Jual barang
+                  <ArrowRight
+                    size={13}
+                    className="transition-transform group-hover:translate-x-0.5"
+                  />
+                </Link>
+              </div>
+
+              <div className="mt-10 flex flex-wrap items-center gap-x-7 gap-y-2 border-t-2 border-line pt-5 font-mono text-[10px] font-bold uppercase tracking-[0.12em] text-muted-ink">
+                <span className="flex items-center gap-2">
+                  <MapPin size={12} className="text-lime" />
+                  COD ketemu langsung
+                </span>
+                <span className="flex items-center gap-2">
+                  <Coins size={12} className="text-lime" />
+                  0% biaya platform
+                </span>
+                <span className="flex items-center gap-2">
+                  <ShieldCheck size={12} className="text-lime" />
+                  Escrow demo
+                </span>
+              </div>
             </div>
 
-            <Link
-              href="/marketplace"
-              className="btn-ghost text-xs font-mono font-bold px-4 py-2.5 hover:border-[#39FF14] self-start sm:self-auto"
-            >
-              Lihat Semua ({listings.length}) →
-            </Link>
+            <div className="relative mx-auto w-full max-w-[400px] lg:mx-0 lg:justify-self-end">
+              <PixelCabinet />
+            </div>
           </div>
+        </section>
 
-          {/* City Filter Strip */}
-          <div className="flex flex-wrap items-center gap-2 pt-1 pb-3">
-            <span className="text-xs font-mono text-[#666] mr-2">Pilih Kota:</span>
+        {/* CITY STRIP */}
+        <section className="border-b-2 border-line bg-surface px-4 py-4 sm:px-8">
+          <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-2">
+            <span className="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-muted-ink">
+              Kota aktif
+            </span>
             {CITIES.map((city) => (
               <Link
                 key={city}
                 href={`/marketplace?city=${encodeURIComponent(city)}`}
-                className="px-3 py-1.5 bg-[#121212] border border-[#262626] hover:border-[#39FF14] hover:text-[#39FF14] text-xs font-mono text-[#aaa] transition-all flex items-center gap-1.5"
+                className="font-mono text-[11px] font-bold uppercase tracking-[0.08em] text-cream transition-colors hover:text-lime"
               >
-                <MapPin size={11} className="text-[#39FF14]" />
-                <span>{city}</span>
+                {city}
               </Link>
             ))}
           </div>
+        </section>
 
-          {/* Product Cards Grid */}
-          {listings.length === 0 ? (
-            <div className="bg-[#111111] border border-[#222222] p-12 text-center space-y-4">
-              <Package size={40} className="mx-auto text-[#444]" />
-              <div className="text-white font-bold text-base">Belum ada produk terdaftar</div>
-              <p className="text-xs text-[#777] max-w-md mx-auto font-sans">
-                Pasang iklan pertamamu di kotamu untuk mulai jual-beli langsung secara aman dan anonim.
+        {/* LEADERBOARD — playful, no products */}
+        <section className="border-b-2 border-line bg-ink px-4 py-16 sm:px-8 sm:py-20">
+          <Reveal className="mx-auto max-w-6xl">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-lime">
+                  Papan skor
+                </p>
+                <h2 className="mt-2 font-arcade text-xl leading-snug tracking-[0.02em] text-cream sm:text-2xl">
+                  Pemain teratas minggu ini.
+                </h2>
+                <p className="mt-2 max-w-md text-sm leading-relaxed text-muted-ink">
+                  Demo data. Skor naik tiap deal selesai dan review positif.
+                </p>
+              </div>
+              <div className="flex items-center gap-2 font-mono text-[10px] font-bold uppercase tracking-[0.12em] text-muted-ink">
+                <Trophy size={14} className="text-amber" />
+                {String(LEADERBOARD.length).padStart(2, "0")} pemain
+              </div>
+            </div>
+
+            <div className="mt-8 overflow-hidden border border-line">
+              <div className="grid grid-cols-[40px_1fr_90px_70px] gap-2 border-b border-line bg-surface px-4 py-2.5 font-mono text-[9px] font-bold uppercase tracking-[0.12em] text-muted-ink sm:grid-cols-[48px_1fr_120px_90px_80px] sm:text-[10px]">
+                <span>#</span>
+                <span>Pemain</span>
+                <span className="hidden sm:block">Kota</span>
+                <span>Skor</span>
+                <span className="hidden sm:block text-right">Level</span>
+              </div>
+              {LEADERBOARD.map((p) => (
+                <div
+                  key={p.rank}
+                  className="grid grid-cols-[40px_1fr_90px_70px] items-center gap-2 border-b border-line px-4 py-3 last:border-b-0 transition-colors hover:bg-surface/60 sm:grid-cols-[48px_1fr_120px_90px_80px]"
+                >
+                  <span
+                    className={`font-arcade text-xs ${
+                      p.rank === 1
+                        ? "text-amber"
+                        : p.rank === 2
+                          ? "text-muted-ink"
+                          : p.rank === 3
+                            ? "text-amber/60"
+                            : "text-muted-ink/60"
+                    }`}
+                  >
+                    {String(p.rank).padStart(2, "0")}
+                  </span>
+                  <div className="flex min-w-0 items-center gap-2">
+                    <span
+                      className={`grid size-7 shrink-0 place-items-center border font-arcade text-[9px] ${
+                        p.rank === 1
+                          ? "border-amber bg-amber/10 text-amber"
+                          : "border-line bg-ink text-muted-ink"
+                      }`}
+                    >
+                      {p.name.slice(0, 1)}
+                    </span>
+                    <span className="truncate font-mono text-[11px] font-bold uppercase tracking-[0.04em] text-cream">
+                      {p.name}
+                    </span>
+                    {p.rank === 1 && (
+                      <Star size={11} className="shrink-0 text-amber" fill="currentColor" />
+                    )}
+                  </div>
+                  <span className="hidden truncate font-mono text-[10px] text-muted-ink sm:block">
+                    {p.city}
+                  </span>
+                  <span className="font-mono text-sm font-bold text-lime">
+                    {p.score.toLocaleString("id-ID")}
+                  </span>
+                  <span className="hidden text-right font-mono text-[10px] font-bold uppercase tracking-[0.1em] text-muted-ink sm:block">
+                    {p.badge}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
+              <p className="font-mono text-[10px] leading-relaxed text-muted-ink">
+                Skor dan level adalah simulasi demo, bukan uang nyata.
               </p>
               <Link
-                href="/marketplace/new"
-                className="btn-primary text-xs font-bold px-5 py-2.5 inline-flex items-center gap-2 shadow-[0_0_15px_rgba(57,255,20,0.25)]"
+                href="/marketplace"
+                className="group inline-flex items-center gap-2 font-mono text-[11px] font-bold uppercase tracking-[0.1em] text-cream transition-colors hover:text-lime"
               >
-                <Plus size={14} />
-                <span>+ Pasang Iklan Pertama</span>
+                Ikut main
+                <ArrowRight
+                  size={13}
+                  className="transition-transform group-hover:translate-x-1"
+                />
               </Link>
             </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {listings.slice(0, 6).map((listing: any) => {
-                const hasImage = listing.images && listing.images.length > 0 && listing.images[0];
+          </Reveal>
+        </section>
 
-                return (
-                  <Link
-                    key={listing.id}
-                    href={`/marketplace/${listing.id}`}
-                    className="group bg-[#111111] border border-[#222222] hover:border-[#39FF14] transition-all flex flex-col overflow-hidden hover:shadow-[0_0_20px_rgba(57,255,20,0.12)] cursor-pointer"
+        {/* DEMO */}
+        <section className="border-b-2 border-line bg-surface px-4 py-16 sm:px-8 sm:py-20">
+          <Reveal className="mx-auto grid max-w-6xl grid-cols-1 gap-10 lg:grid-cols-[0.85fr_1.15fr] lg:items-center lg:gap-14">
+            <div>
+              <p className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-lime">
+                Coba alurnya
+              </p>
+              <h2 className="mt-2 font-arcade text-xl leading-snug tracking-[0.02em] text-cream sm:text-2xl">
+                Escrow yang bisa kamu tekan sendiri.
+              </h2>
+              <p className="mt-4 text-sm leading-relaxed text-muted-ink">
+                Ini bukan video. Tombol seller ACC di samping benar-benar
+                mengubah state demo.
+              </p>
+
+              <ul className="mt-6 space-y-3">
+                {[
+                  "Buyer cek barang, seller serahkan. Deal selesai kalau dua-duanya setuju.",
+                  "Harga, titik temu, dan status tersimpan rapi di ruang escrow.",
+                  "Saldo dan crypto cuma pemanis demo. Tidak ada uang yang bergerak.",
+                ].map((t) => (
+                  <li
+                    key={t}
+                    className="flex gap-3 text-[13px] leading-relaxed text-muted-ink"
                   >
-                    {/* Photo */}
-                    <div className="relative aspect-[16/10] bg-[#161616] overflow-hidden border-b border-[#222222]">
-                      {hasImage && (
-                        <img
-                          src={listing.images[0]}
-                          alt={listing.title}
-                          className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300"
-                          loading="lazy"
-                        />
-                      )}
-                      {!hasImage && (
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <Package size={32} className="text-[#333]" />
-                        </div>
-                      )}
-                      <div className="absolute top-3 left-3">
-                        <span className="badge-muted text-[11px] bg-black/85">
-                          {listing.category.replace(/_/g, " ")}
-                        </span>
-                      </div>
-                      <div className="absolute top-3 right-3">
-                        <span className="badge-green text-[11px] bg-black/85">
-                          {listing.condition}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Body */}
-                    <div className="p-4 space-y-3 flex-1 flex flex-col justify-between">
-                      <div className="space-y-1.5">
-                        <h3 className="text-sm font-bold text-white group-hover:text-[#39FF14] transition-colors line-clamp-2 leading-snug">
-                          {listing.title}
-                        </h3>
-                        <div className="flex items-center gap-2 text-xs font-mono text-[#777]">
-                          <span>{listing.seller?.codename ?? "Seller"}</span>
-                          <span>·</span>
-                          <span className="flex items-center gap-1 text-[#aaa]">
-                            <MapPin size={11} className="text-[#39FF14]" /> {listing.location_city || "Jakarta"}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="pt-2.5 border-t border-[#1c1c1c] flex items-center justify-between font-mono">
-                        <div className="text-sm font-bold text-[#39FF14]">
-                          {formatCurrency(listing.fiat_estimate_idr || 0)}
-                        </div>
-                        <div className="text-xs text-[#555] flex items-center gap-1">
-                          <Clock size={10} />
-                          <span>COD</span>
-                        </div>
-                      </div>
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* HOW IT WORKS */}
-      <section className="py-16 px-4 sm:px-8 border-b border-[#1c1c1c] bg-[#0c0c0c]">
-        <div className="max-w-5xl mx-auto space-y-10">
-          <div>
-            <div className="text-xs font-mono text-[#39FF14] uppercase tracking-wider mb-1.5 font-bold">
-              CARA PAKAI
-            </div>
-            <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
-              Gampang Banget, 4 Langkah Doang
-            </h2>
-            <p className="text-sm text-[#888] font-sans mt-1">
-              Dari cari barang sampai transaksi selesai — prosesnya simpel dan jelas.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {HOW_IT_WORKS.map(({ step, icon: Icon, title, desc }) => (
-              <div key={step} className="bg-[#111111] border border-[#222] p-5 space-y-3 hover:border-[#39FF14]/40 transition-colors">
-                <div className="flex items-center justify-between">
-                  <span className="text-3xl font-bold font-mono text-[#1e1e1e]">{step}</span>
-                  <Icon size={20} className="text-[#39FF14]" />
-                </div>
-                <div>
-                  <div className="text-sm font-bold text-white mb-1">{title}</div>
-                  <p className="text-xs text-[#777] font-sans leading-relaxed">{desc}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* PIXMART VS MARKETPLACE KONVENSIONAL */}
-      <section className="py-16 px-4 sm:px-8 border-b border-[#1c1c1c]">
-        <div className="max-w-5xl mx-auto space-y-8">
-          <div>
-            <div className="text-xs font-mono text-[#39FF14] uppercase tracking-wider mb-1.5 font-bold">
-              PERBANDINGAN
-            </div>
-            <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
-              Bedanya Apa Sama Marketplace Biasa?
-            </h2>
-            <p className="text-sm text-[#888] font-sans mt-1">
-              Kami bukan e-commerce. Ini marketplace khusus COD lokal — langsung, transparan, tanpa perantara.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 font-sans">
-            {/* Traditional */}
-            <div className="bg-[#111111] border border-[#262626] p-6 space-y-4">
-              <div className="flex items-center gap-2 text-sm font-bold text-[#FF4444] font-mono uppercase">
-                <XIcon size={16} />
-                <span>Marketplace Konvensional</span>
-              </div>
-              <ul className="space-y-3 text-xs text-[#888] leading-relaxed">
-                <li className="flex items-start gap-2.5">
-                  <span className="text-[#FF4444] font-bold">✕</span>
-                  <span>Biaya admin, komisi, ongkir — sering bikin harga jadi mahal.</span>
-                </li>
-                <li className="flex items-start gap-2.5">
-                  <span className="text-[#FF4444] font-bold">✕</span>
-                  <span>Risiko kurir: paket hilang, rusak, atau ditukar.</span>
-                </li>
-                <li className="flex items-start gap-2.5">
-                  <span className="text-[#FF4444] font-bold">✕</span>
-                  <span>Proses refund ribet dan lama.</span>
-                </li>
-                <li className="flex items-start gap-2.5">
-                  <span className="text-[#FF4444] font-bold">✕</span>
-                  <span>Gabisa liat barang dulu sebelum bayar.</span>
-                </li>
+                    <span className="mt-2 size-1 shrink-0 bg-lime" />
+                    {t}
+                  </li>
+                ))}
               </ul>
+
+              <span className="mt-6 inline-flex items-center gap-2 border border-amber/40 bg-amber/5 px-2.5 py-1.5 font-mono text-[9px] font-bold uppercase tracking-[0.14em] text-amber">
+                <LockKeyhole size={11} />
+                Demo · no real funds
+              </span>
             </div>
 
-            {/* PIXMART */}
-            <div className="bg-[#121212] border border-[#39FF14]/50 p-6 space-y-4 shadow-[0_0_20px_rgba(57,255,20,0.08)]">
-              <div className="flex items-center gap-2 text-sm font-bold text-[#39FF14] font-mono uppercase">
-                <Check size={16} />
-                <span>PIXMART Local COD</span>
+            <div className="w-full">
+              <LiveTerminalWidget />
+            </div>
+          </Reveal>
+        </section>
+
+        {/* ALUR — light contrast */}
+        <section
+          id="cara-main"
+          className="scroll-mt-24 border-b-2 border-line bg-cream px-4 py-16 text-ink sm:px-8 sm:py-20"
+        >
+          <Reveal className="mx-auto grid max-w-6xl grid-cols-1 gap-10 lg:grid-cols-[0.78fr_1.22fr] lg:gap-14">
+            <div className="lg:sticky lg:top-28 lg:self-start">
+              <p className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-ink/45">
+                Alur main
+              </p>
+              <h2 className="mt-2 font-arcade text-xl leading-snug tracking-[0.02em] text-ink sm:text-2xl">
+                Empat langkah, nggak pakai ribet.
+              </h2>
+              <p className="mt-4 text-sm leading-relaxed text-ink/60">
+                Dari nemu barang sampai serah terima. Semua bisa dilakukan di
+                satu tempat.
+              </p>
+            </div>
+
+            <ol className="border-t-2 border-ink">
+              {STEPS.map((item) => (
+                <li
+                  key={item.step}
+                  className="group grid grid-cols-[40px_1fr] gap-4 border-b-2 border-ink py-5 sm:grid-cols-[64px_1fr] sm:gap-6 sm:py-6"
+                >
+                  <span className="font-arcade text-sm leading-none text-ink/25 transition-colors group-hover:text-ink sm:text-base">
+                    {item.step}
+                  </span>
+                  <div>
+                    <h3 className="text-base font-bold tracking-tight text-ink sm:text-lg">
+                      {item.title}
+                    </h3>
+                    <p className="mt-1 text-[13px] leading-relaxed text-ink/60">
+                      {item.desc}
+                    </p>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </Reveal>
+        </section>
+
+        {/* PERBANDINGAN */}
+        <section
+          id="kenapa-pixmart"
+          className="scroll-mt-24 border-b-2 border-line bg-ink px-4 py-16 sm:px-8 sm:py-20"
+        >
+          <Reveal className="mx-auto max-w-5xl">
+            <p className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-lime">
+              Bandingkan
+            </p>
+            <h2 className="mt-2 font-arcade text-xl leading-snug tracking-[0.02em] text-cream sm:text-2xl">
+              Kenapa bukan marketplace biasa?
+            </h2>
+            <p className="mt-3 max-w-xl text-sm leading-relaxed text-muted-ink">
+              PIXMART dibuat untuk barang fisik yang bisa kamu pegang dulu
+              sebelum bayar.
+            </p>
+
+            <div className="mt-8 overflow-hidden border border-line">
+              <div className="grid grid-cols-[1.4fr_0.8fr_0.9fr] border-b border-line bg-surface px-4 py-2.5 font-mono text-[9px] font-bold uppercase tracking-[0.12em] text-muted-ink sm:text-[10px]">
+                <span>Yang kamu dapat</span>
+                <span className="text-lime">PIXMART</span>
+                <span>Biasa</span>
               </div>
-              <ul className="space-y-3 text-xs text-[#ddd] leading-relaxed">
-                <li className="flex items-start gap-2.5">
-                  <span className="text-[#39FF14] font-bold">✓</span>
-                  <span><strong>Gratis Total:</strong> 0% biaya platform. Harga yang disepakati ya itu yang dibayar.</span>
-                </li>
-                <li className="flex items-start gap-2.5">
-                  <span className="text-[#39FF14] font-bold">✓</span>
-                  <span><strong>Cek Langsung:</strong> Ketemu, liat barang, tes kalau perlu. Baru bayar kalau oke.</span>
-                </li>
-                <li className="flex items-start gap-2.5">
-                  <span className="text-[#39FF14] font-bold">✓</span>
-                  <span><strong>Escrow Room:</strong> Sistem bantu atur tempat & waktu ketemu. Kedua pihak harus konfirmasi.</span>
-                </li>
-                <li className="flex items-start gap-2.5">
-                  <span className="text-[#39FF14] font-bold">✓</span>
-                  <span><strong>Privasi Dijaga:</strong> Pakai codename, lokasi detail ga dipublikasi ke umum.</span>
-                </li>
-              </ul>
+              {COMPARISON_ROWS.map((row) => (
+                <div
+                  key={row.label}
+                  className="grid grid-cols-[1.4fr_0.8fr_0.9fr] items-center border-b border-line px-4 py-3 last:border-b-0"
+                >
+                  <span className="text-[12px] font-medium leading-snug text-cream sm:text-[13px]">
+                    {row.label}
+                  </span>
+                  <span className="flex items-center gap-1.5 font-mono text-[10px] font-bold uppercase tracking-[0.06em] text-lime sm:text-[11px]">
+                    <Check size={10} strokeWidth={3} />
+                    {row.pixmart}
+                  </span>
+                  <span className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.06em] text-muted-ink sm:text-[11px]">
+                    <X size={10} strokeWidth={3} />
+                    {row.biasa}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            <p className="mt-3 font-mono text-[10px] leading-relaxed text-muted-ink">
+              Escrow dan saldo di PIXMART adalah simulasi demo.
+            </p>
+          </Reveal>
+        </section>
+
+        {/* CTA */}
+        <section className="bg-lime px-4 py-14 text-ink sm:px-8 sm:py-18">
+          <div className="mx-auto flex max-w-5xl flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-ink/50">
+                Insert coin
+              </p>
+              <h2 className="mt-2 font-arcade text-xl leading-snug tracking-[0.02em] text-ink sm:text-2xl">
+                Barang lama kamu bisa jadi deal hari ini.
+              </h2>
+              <p className="mt-3 max-w-lg text-sm leading-relaxed text-ink/65">
+                Pasang iklan gratis, atur sendiri harga dan titik temunya.
+              </p>
+            </div>
+            <div className="flex shrink-0 items-center gap-4">
+              <Link
+                href="/marketplace/new"
+                className="btn-primary !border-ink !bg-ink !text-cream hover:!bg-panel-2"
+              >
+                <Plus size={15} strokeWidth={3} />
+                Pasang iklan
+              </Link>
+              <Link
+                href="/marketplace"
+                className="font-mono text-[11px] font-bold uppercase tracking-[0.08em] text-ink/70 transition-colors hover:text-ink"
+              >
+                Cari barang →
+              </Link>
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* CTA BOTTOM */}
-      <section className="py-16 px-4 sm:px-8">
-        <div className="max-w-3xl mx-auto text-center space-y-6">
-          <div className="text-xs font-mono text-[#39FF14] uppercase tracking-wider font-bold">
-            MULAI SEKARANG
-          </div>
-          <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
-            Mau jual atau beli barang di sekitarmu?
-          </h2>
-          <p className="text-sm text-[#888] font-sans leading-relaxed">
-            Daftar gratis, pasang iklan, atau langsung cari produk yang kamu butuhin. Semua lokal, semua COD.
-          </p>
-          <div className="flex flex-wrap justify-center items-center gap-4 pt-2">
-            <Link
-              href="/marketplace"
-              className="btn-primary text-sm px-7 py-3 font-bold flex items-center gap-2 shadow-[0_0_20px_rgba(57,255,20,0.3)]"
-            >
-              <Compass size={15} />
-              <span>Jelajahi Produk Lokal</span>
-            </Link>
-            <Link
-              href="/marketplace/new"
-              className="btn-ghost text-sm px-6 py-3 font-medium flex items-center gap-2"
-            >
-              <Plus size={15} />
-              <span>Pasang Iklan Gratis</span>
-            </Link>
-          </div>
-        </div>
-      </section>
+        </section>
+      </main>
 
       <PublicFooter />
+    </div>
+  );
+}
+
+function PixelStarfield() {
+  // fixed pseudo-random positions for pixel "stars"
+  const stars = [
+    { x: 4, y: 8, s: 2, c: "#C8FF4D", o: 0.7 },
+    { x: 12, y: 22, s: 1, c: "#F5F0E6", o: 0.4 },
+    { x: 18, y: 6, s: 2, c: "#F5F0E6", o: 0.5 },
+    { x: 27, y: 14, s: 1, c: "#57E6F0", o: 0.6 },
+    { x: 33, y: 30, s: 2, c: "#F5F0E6", o: 0.3 },
+    { x: 41, y: 9, s: 1, c: "#C8FF4D", o: 0.5 },
+    { x: 49, y: 24, s: 2, c: "#F5F0E6", o: 0.4 },
+    { x: 56, y: 5, s: 1, c: "#FF6FA8", o: 0.5 },
+    { x: 63, y: 18, s: 2, c: "#F5F0E6", o: 0.6 },
+    { x: 71, y: 32, s: 1, c: "#C8FF4D", o: 0.4 },
+    { x: 79, y: 11, s: 2, c: "#F5F0E6", o: 0.5 },
+    { x: 86, y: 27, s: 1, c: "#57E6F0", o: 0.6 },
+    { x: 93, y: 7, s: 2, c: "#F5F0E6", o: 0.4 },
+    { x: 99, y: 21, s: 1, c: "#C8FF4D", o: 0.5 },
+    { x: 6, y: 42, s: 1, c: "#F5F0E6", o: 0.3 },
+    { x: 22, y: 48, s: 2, c: "#F5F0E6", o: 0.4 },
+    { x: 38, y: 44, s: 1, c: "#FFC857", o: 0.5 },
+    { x: 52, y: 52, s: 2, c: "#F5F0E6", o: 0.3 },
+    { x: 68, y: 46, s: 1, c: "#C8FF4D", o: 0.4 },
+    { x: 84, y: 50, s: 2, c: "#F5F0E6", o: 0.5 },
+    { x: 97, y: 44, s: 1, c: "#57E6F0", o: 0.4 },
+    { x: 14, y: 62, s: 1, c: "#F5F0E6", o: 0.3 },
+    { x: 30, y: 68, s: 2, c: "#F5F0E6", o: 0.4 },
+    { x: 46, y: 60, s: 1, c: "#FF6FA8", o: 0.4 },
+    { x: 62, y: 70, s: 2, c: "#F5F0E6", o: 0.3 },
+    { x: 78, y: 64, s: 1, c: "#C8FF4D", o: 0.5 },
+    { x: 92, y: 72, s: 2, c: "#F5F0E6", o: 0.4 },
+    // larger pixel blocks as "distant buildings"
+    { x: 8, y: 80, s: 6, c: "#19152B", o: 0.6 },
+    { x: 20, y: 76, s: 4, c: "#19152B", o: 0.5 },
+    { x: 72, y: 78, s: 8, c: "#19152B", o: 0.6 },
+    { x: 88, y: 82, s: 5, c: "#19152B", o: 0.5 },
+  ];
+
+  return (
+    <div
+      aria-hidden="true"
+      className="pointer-events-none absolute inset-0 overflow-hidden"
+    >
+      <svg
+        className="absolute inset-0 h-full w-full"
+        viewBox="0 0 100 100"
+        preserveAspectRatio="none"
+      >
+        {stars.map((st, i) => (
+          <rect
+            key={i}
+            x={st.x}
+            y={st.y}
+            width={st.s}
+            height={st.s}
+            fill={st.c}
+            opacity={st.o}
+          />
+        ))}
+      </svg>
+      {/* scanline overlay */}
+      <div
+        className="absolute inset-0 opacity-[0.06]"
+        style={{
+          backgroundImage:
+            "repeating-linear-gradient(0deg, #F5F0E6 0 1px, transparent 1px 3px)",
+        }}
+      />
+    </div>
+  );
+}
+
+function PixelCabinet() {
+  return (
+    <div className="relative">
+      <span
+        aria-hidden="true"
+        className="absolute -left-3 top-8 size-3 bg-lime/80 float-slow"
+      />
+      <span
+        aria-hidden="true"
+        className="absolute -right-2 top-2 size-2 bg-cyan/80 float-slow"
+        style={{ animationDelay: "0.6s" }}
+      />
+      <span
+        aria-hidden="true"
+        className="absolute bottom-10 -left-4 size-2 bg-pink/70 float-slow"
+        style={{ animationDelay: "1.1s" }}
+      />
+
+      <svg
+        viewBox="0 0 220 300"
+        className="w-full drop-shadow-[0_8px_0_#05040a]"
+        shapeRendering="crispEdges"
+        aria-hidden="true"
+      >
+        <rect x="20" y="270" width="180" height="16" fill="#0A0812" />
+        <rect x="20" y="270" width="180" height="3" fill="#19152B" />
+
+        <rect x="34" y="24" width="152" height="248" fill="#19152B" />
+        <rect x="34" y="24" width="152" height="6" fill="#3A3157" />
+        <rect x="34" y="24" width="6" height="248" fill="#0A0812" opacity="0.4" />
+        <rect x="180" y="24" width="6" height="248" fill="#0A0812" opacity="0.6" />
+
+        <rect x="46" y="34" width="128" height="22" fill="#12101F" />
+        <rect x="46" y="34" width="128" height="2" fill="#3A3157" />
+        <text
+          x="110"
+          y="49"
+          textAnchor="middle"
+          fontFamily="monospace"
+          fontSize="11"
+          fontWeight="bold"
+          fill="#C8FF4D"
+          letterSpacing="2"
+        >
+          PIXMART
+        </text>
+
+        <rect x="46" y="62" width="128" height="96" fill="#0A0812" />
+        <rect x="52" y="68" width="116" height="84" fill="#05040a" />
+        <rect
+          x="52"
+          y="68"
+          width="116"
+          height="84"
+          fill="#C8FF4D"
+          style={{ opacity: 0.04 }}
+        />
+
+        <rect x="62" y="118" width="18" height="18" fill="#3A3157" />
+        <rect x="62" y="114" width="18" height="4" fill="#57E6F0" opacity="0.7" />
+        <rect x="86" y="110" width="22" height="26" fill="#3A3157" />
+        <rect x="86" y="106" width="22" height="4" fill="#FF6FA8" opacity="0.7" />
+        <rect x="114" y="122" width="14" height="14" fill="#3A3157" />
+        <rect x="114" y="118" width="14" height="4" fill="#FFC857" opacity="0.7" />
+        <rect x="138" y="128" width="6" height="8" fill="#C8FF4D" />
+        <rect x="138" y="124" width="6" height="4" fill="#F5F0E6" />
+
+        <rect x="58" y="74" width="2" height="2" fill="#F5F0E6" opacity="0.6" />
+        <rect x="78" y="82" width="2" height="2" fill="#F5F0E6" opacity="0.4" />
+        <rect x="148" y="76" width="2" height="2" fill="#F5F0E6" opacity="0.5" />
+        <rect x="100" y="78" width="2" height="2" fill="#C8FF4D" opacity="0.8" />
+
+        <rect x="52" y="90" width="116" height="1" fill="#C8FF4D" opacity="0.15" />
+
+        <rect x="46" y="164" width="128" height="40" fill="#12101F" />
+        <rect x="46" y="164" width="128" height="2" fill="#3A3157" />
+        <circle cx="70" cy="184" r="9" fill="#0A0812" />
+        <circle cx="70" cy="184" r="4" fill="#FF6FA8" />
+        <circle cx="132" cy="178" r="4" fill="#57E6F0" />
+        <circle cx="144" cy="188" r="4" fill="#C8FF4D" />
+        <circle cx="120" cy="188" r="4" fill="#FFC857" />
+
+        <rect x="100" y="206" width="20" height="4" fill="#0A0812" />
+        <rect x="100" y="206" width="20" height="1" fill="#3A3157" />
+
+        <rect x="56" y="218" width="40" height="6" fill="#0A0812" opacity="0.5" />
+        {Array.from({ length: 6 }).map((_, i) => (
+          <rect
+            key={i}
+            x={60 + i * 6}
+            y="220"
+            width="2"
+            height="2"
+            fill="#3A3157"
+          />
+        ))}
+
+        <rect x="120" y="218" width="52" height="14" fill="#0A0812" />
+        <text
+          x="146"
+          y="228"
+          textAnchor="middle"
+          fontFamily="monospace"
+          fontSize="8"
+          fontWeight="bold"
+          fill="#C8FF4D"
+        >
+          00420
+        </text>
+      </svg>
+
+      <div className="mt-3 text-center font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-muted-ink">
+        Insert coin · demo
+      </div>
     </div>
   );
 }

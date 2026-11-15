@@ -147,31 +147,31 @@ export function EscrowListClient({
 
   function getPaymentStatus(room: any) {
     if (room.payment_status === "AWAITING_PAYMENT") {
-      return { text: "Belum Bayar", color: "text-[#FF6600]", icon: Wallet };
+      return { text: "Belum Bayar", color: "text-[#FF8A3D]", icon: Wallet };
     }
     if (room.payment_status === "RECEIVED") {
-      return { text: "Sudah Bayar", color: "text-[#39FF14]", icon: CheckCircle2 };
+      return { text: "Sudah Bayar", color: "text-[#C8FF4D]", icon: CheckCircle2 };
     }
     if (room.payment_status === "HELD_BY_MIDMAN") {
-      return { text: "Dana Ditahan", color: "text-[#FFB800]", icon: ShieldCheck };
+      return { text: "Dana Ditahan", color: "text-[#FFC857]", icon: ShieldCheck };
     }
     if (room.payment_status === "RELEASED") {
-      return { text: "Dana Dirilis", color: "text-[#39FF14]", icon: CheckCircle2 };
+      return { text: "Dana Dirilis", color: "text-[#C8FF4D]", icon: CheckCircle2 };
     }
-    return { text: room.payment_status || "Unknown", color: "text-[#888]", icon: Clock };
+    return { text: room.payment_status || "Unknown", color: "text-[#A79EC2]", icon: Clock };
   }
 
   function getMeetingStatus(room: any) {
     if (room.buyer_confirmed && room.seller_confirmed) {
-      return { text: "Transaksi Selesai", color: "text-[#39FF14]", icon: CheckCircle2 };
+      return { text: "Transaksi Selesai", color: "text-[#C8FF4D]", icon: CheckCircle2 };
     }
     if (room.buyer_arrived && room.seller_arrived) {
-      return { text: "COD Berlangsung", color: "text-[#FFB800]", icon: HandshakeIcon };
+      return { text: "COD Berlangsung", color: "text-[#FFC857]", icon: HandshakeIcon };
     }
     if (room.meeting_location) {
-      return { text: "Titik Temu Disepakati", color: "text-[#39FF14]", icon: MapPin };
+      return { text: "Titik Temu Disepakati", color: "text-[#C8FF4D]", icon: MapPin };
     }
-    return { text: "Belum Ada Titik Temu", color: "text-[#666]", icon: MapPin };
+    return { text: "Belum Ada Titik Temu", color: "text-[#8B82A6]", icon: MapPin };
   }
 
   // Calculate stats
@@ -190,8 +190,8 @@ export function EscrowListClient({
           onClick={() => setFilter("ALL")}
           className={`p-3 border transition-all ${
             filter === "ALL"
-              ? "bg-[#39FF14]/10 border-[#39FF14] text-[#39FF14]"
-              : "bg-[#121212] border-[#262626] text-[#888] hover:border-[#39FF14]/50"
+              ? "bg-[#C8FF4D]/10 border-[#C8FF4D] text-[#C8FF4D]"
+              : "bg-[#12101F] border-[#3A3157] text-[#A79EC2] hover:border-[#C8FF4D]/50"
           }`}
         >
           <div className="text-2xl font-bold">{stats.total}</div>
@@ -202,8 +202,8 @@ export function EscrowListClient({
           onClick={() => setFilter("PENDING")}
           className={`p-3 border transition-all ${
             filter === "PENDING"
-              ? "bg-[#FFB800]/10 border-[#FFB800] text-[#FFB800]"
-              : "bg-[#121212] border-[#262626] text-[#888] hover:border-[#FFB800]/50"
+              ? "bg-[#FFC857]/10 border-[#FFC857] text-[#FFC857]"
+              : "bg-[#12101F] border-[#3A3157] text-[#A79EC2] hover:border-[#FFC857]/50"
           }`}
         >
           <div className="text-2xl font-bold">{stats.pending}</div>
@@ -214,8 +214,8 @@ export function EscrowListClient({
           onClick={() => setFilter("COMPLETED")}
           className={`p-3 border transition-all ${
             filter === "COMPLETED"
-              ? "bg-[#39FF14]/10 border-[#39FF14] text-[#39FF14]"
-              : "bg-[#121212] border-[#262626] text-[#888] hover:border-[#39FF14]/50"
+              ? "bg-[#C8FF4D]/10 border-[#C8FF4D] text-[#C8FF4D]"
+              : "bg-[#12101F] border-[#3A3157] text-[#A79EC2] hover:border-[#C8FF4D]/50"
           }`}
         >
           <div className="text-2xl font-bold">{stats.completed}</div>
@@ -226,8 +226,8 @@ export function EscrowListClient({
           onClick={() => setFilter("DISPUTED")}
           className={`p-3 border transition-all ${
             filter === "DISPUTED"
-              ? "bg-[#FF4444]/10 border-[#FF4444] text-[#FF4444]"
-              : "bg-[#121212] border-[#262626] text-[#888] hover:border-[#FF4444]/50"
+              ? "bg-[#FF6B6B]/10 border-[#FF6B6B] text-[#FF6B6B]"
+              : "bg-[#12101F] border-[#3A3157] text-[#A79EC2] hover:border-[#FF6B6B]/50"
           }`}
         >
           <div className="text-2xl font-bold">{stats.disputed}</div>
@@ -237,10 +237,10 @@ export function EscrowListClient({
 
       {/* Escrow List */}
       {filteredRooms.length === 0 ? (
-        <div className="bg-[#121212] border border-[#222] p-8 text-center">
-          <Filter size={32} className="mx-auto text-[#444] mb-3" />
-          <p className="text-sm text-[#888]">
-            Tidak ada escrow dengan filter <span className="text-[#39FF14] font-bold">{filter}</span>
+        <div className="bg-[#12101F] border border-[#3A3157] p-8 text-center">
+          <Filter size={32} className="mx-auto text-[#5C5575] mb-3" />
+          <p className="text-sm text-[#A79EC2]">
+            Tidak ada escrow dengan filter <span className="text-[#C8FF4D] font-bold">{filter}</span>
           </p>
         </div>
       ) : (
@@ -265,12 +265,12 @@ export function EscrowListClient({
               <div key={group.counterpartyId} className="relative">
                 <Link
                   href={`/escrow/${latestRoom.id}`}
-                  className="block bg-[#121212] border border-[#262626] hover:border-[#39FF14]/70 p-4 transition-all group"
+                  className="block bg-[#12101F] border border-[#3A3157] hover:border-[#C8FF4D]/70 p-4 transition-all group"
                 >
                   <div className="flex items-start gap-4">
                     {/* Thumbnail */}
                     <div className="relative">
-                      <div className="w-16 h-16 bg-[#1a1a1a] border border-[#333] shrink-0 overflow-hidden flex items-center justify-center">
+                      <div className="w-16 h-16 bg-[#231D3A] border border-[#4A4168] shrink-0 overflow-hidden flex items-center justify-center">
                         {hasImage ? (
                           <img
                             src={listing.images[0]}
@@ -278,13 +278,13 @@ export function EscrowListClient({
                             className="w-full h-full object-cover"
                           />
                         ) : (
-                          <Package size={24} className="text-[#555]" />
+                          <Package size={24} className="text-[#6F6788]" />
                         )}
                       </div>
                       
                       {totalUnread > 0 && (
-                        <div className="absolute -top-1 -right-1 w-5 h-5 bg-[#FF4444] rounded-full flex items-center justify-center">
-                          <span className="text-white text-[10px] font-bold">{totalUnread}</span>
+                        <div className="absolute -top-1 -right-1 w-5 h-5 bg-[#FF6B6B] rounded-full flex items-center justify-center">
+                          <span className="text-cream text-[10px] font-bold">{totalUnread}</span>
                         </div>
                       )}
                     </div>
@@ -294,12 +294,12 @@ export function EscrowListClient({
                       {/* Header */}
                       <div className="flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2 min-w-0">
-                          <h3 className="text-sm font-bold text-[#39FF14] truncate">
+                          <h3 className="text-sm font-bold text-[#C8FF4D] truncate">
                             {counterparty.codename}
                           </h3>
                           
                           {hasMultiple && (
-                            <span className="text-[10px] bg-[#39FF14]/10 text-[#39FF14] px-2 py-0.5 rounded-full font-bold shrink-0">
+                            <span className="text-[10px] bg-[#C8FF4D]/10 text-[#C8FF4D] px-2 py-0.5 rounded-full font-bold shrink-0">
                               {userRooms.length} escrow
                             </span>
                           )}
@@ -311,11 +311,11 @@ export function EscrowListClient({
                         <button
                           onClick={(e) => handleDelete(latestRoom.id, e)}
                           disabled={deletingId === latestRoom.id}
-                          className="text-[#666] hover:text-[#FF4444] transition-colors p-1 shrink-0 disabled:opacity-50"
+                          className="text-[#8B82A6] hover:text-[#FF6B6B] transition-colors p-1 shrink-0 disabled:opacity-50"
                           title="Hapus dari daftar"
                         >
                           {deletingId === latestRoom.id ? (
-                            <div className="w-3.5 h-3.5 border-2 border-[#FF4444] border-t-transparent rounded-full animate-spin" />
+                            <div className="w-3.5 h-3.5 border-2 border-[#FF6B6B] border-t-transparent rounded-full animate-spin" />
                           ) : (
                             <Trash2 size={14} />
                           )}
@@ -324,17 +324,17 @@ export function EscrowListClient({
 
                       {/* Product Title & Signature */}
                       <div className="space-y-1">
-                        <div className="text-xs text-white font-medium line-clamp-1">
+                        <div className="text-xs text-cream font-medium line-clamp-1">
                           {latestRoom.item_title || listing?.title || "Produk"}
                         </div>
-                        <div className="text-[10px] font-mono text-[#666]">
-                          Signature: <span className="text-[#39FF14]">{latestRoom.escrow_address}</span>
+                        <div className="text-[10px] font-mono text-[#8B82A6]">
+                          Signature: <span className="text-[#C8FF4D]">{latestRoom.escrow_address}</span>
                         </div>
                       </div>
 
                       {/* Latest Message */}
                       {latestMessage && (
-                        <div className="text-xs text-[#888] line-clamp-1 flex items-center gap-1">
+                        <div className="text-xs text-[#A79EC2] line-clamp-1 flex items-center gap-1">
                           <MessageSquare size={10} className="shrink-0" />
                           <span className="truncate">{latestMessage.content}</span>
                         </div>
@@ -355,15 +355,15 @@ export function EscrowListClient({
 
                       {/* Price & Time */}
                       <div className="flex items-center justify-between text-[10px] font-mono">
-                        <div className="text-[#888]">
+                        <div className="text-[#A79EC2]">
                           Total:{" "}
-                          <span className="text-white font-bold">
+                          <span className="text-cream font-bold">
                             Rp {agreedPriceIdr.toLocaleString("id-ID")}
                           </span>
                         </div>
 
                         {latestMessage && (
-                          <span className="text-[#666]">
+                          <span className="text-[#8B82A6]">
                             {formatDistanceToNow(new Date(latestMessage.created_at), {
                               addSuffix: true,
                               locale: idLocale,
@@ -374,22 +374,22 @@ export function EscrowListClient({
                     </div>
 
                     {/* Arrow */}
-                    <div className="text-[#666] group-hover:text-[#39FF14] transition-colors shrink-0 self-center">
+                    <div className="text-[#8B82A6] group-hover:text-[#C8FF4D] transition-colors shrink-0 self-center">
                       <ArrowRight size={18} />
                     </div>
                   </div>
 
                   {/* Multiple escrows preview */}
                   {hasMultiple && (
-                    <div className="mt-3 pt-3 border-t border-[#222] grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    <div className="mt-3 pt-3 border-t border-[#3A3157] grid grid-cols-2 sm:grid-cols-3 gap-2">
                       {userRooms.slice(0, 3).map((room) => (
-                        <div key={room.id} className="text-[10px] text-[#666] truncate flex items-center gap-1">
-                          <div className="w-1 h-1 rounded-full bg-[#666]" />
+                        <div key={room.id} className="text-[10px] text-[#8B82A6] truncate flex items-center gap-1">
+                          <div className="w-1 h-1 rounded-full bg-[#8B82A6]" />
                           <span className="truncate">{room.item_title}</span>
                         </div>
                       ))}
                       {userRooms.length > 3 && (
-                        <div className="text-[10px] text-[#39FF14]">+{userRooms.length - 3} lagi</div>
+                        <div className="text-[10px] text-[#C8FF4D]">+{userRooms.length - 3} lagi</div>
                       )}
                     </div>
                   )}

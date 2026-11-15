@@ -71,7 +71,7 @@ export default async function SellerDashboardPage() {
   const completedEscrowsList = completedEscrows || [];
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-[#e8e8e8] flex flex-col">
+    <div className="min-h-screen bg-[#0A0812] text-[#F5F0E6] flex flex-col">
       <PublicNav currentRole={session.role} codename={session.codename} isLoggedIn={true} />
       <SellerDashboardContent
         session={session}

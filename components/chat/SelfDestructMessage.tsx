@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Flame, Eye, Clock } from "lucide-react";
+import { Flame, Eye, Clock, AlertTriangle } from "lucide-react";
 
 interface SelfDestructMessageProps {
   message: any;
@@ -17,35 +17,31 @@ export function SelfDestructMessage({
   onDestruct,
 }: SelfDestructMessageProps) {
   const [hasStartedReading, setHasStartedReading] = useState(false);
-  const [countdown, setCountdown] = useState(10); // 10 seconds to read
+  const [countdown, setCountdown] = useState(10);
   const [isDestroying, setIsDestroying] = useState(false);
 
   const isUnread = !message.read_at && !isOwnMessage;
   const isDeleted = message.is_deleted;
+  const isReading =
+    hasStartedReading || Boolean(isOwnMessage && message.read_at);
 
-  // The sender's countdown starts automatically once the recipient has read it.
-  const isReading = hasStartedReading || Boolean(isOwnMessage && message.read_at);
-
-  // Handle reading message (only recipient can trigger)
   const handleStartReading = () => {
     if (isOwnMessage || isDeleted) return;
-    
+
     setHasStartedReading(true);
     onRead(message.id);
   };
 
-  // Countdown timer after reading (for BOTH sender and recipient)
   useEffect(() => {
     if (!isReading || countdown <= 0) return;
 
     const timer = setInterval(() => {
       setCountdown((prev) => {
         if (prev <= 1) {
-          // Start destruction animation
           setIsDestroying(true);
           setTimeout(() => {
             onDestruct(message.id);
-          }, 1000); // Wait for animation
+          }, 1000);
           return 0;
         }
         return prev - 1;
@@ -55,87 +51,98 @@ export function SelfDestructMessage({
     return () => clearInterval(timer);
   }, [isReading, countdown, message.id, onDestruct]);
 
-  // If message is deleted, show placeholder
   if (isDeleted) {
     return (
-      <div className="flex items-center gap-2 p-3 bg-[#1a1a1a]/50 border border-[#333]/30 rounded text-[#666] text-xs italic">
-        <Flame size={12} className="text-[#FF6600]" />
-        <span>Pesan telah dihapus (self-destruct)</span>
+      <div className="flex items-center gap-2 border-2 border-line bg-panel/60 p-3 text-[13px] italic text-muted-ink">
+        <Flame size={14} className="shrink-0 text-amber" />
+        <span>Pesan sudah hilang. Jejaknya cuma di sini.</span>
       </div>
     );
   }
 
-  // Unread message - show "Tap to reveal"
   if (isUnread && !isReading) {
     return (
       <button
+        type="button"
         onClick={handleStartReading}
-        className="group relative p-4 bg-gradient-to-r from-[#FF6600]/10 to-[#FF3B30]/10 border border-[#FF6600]/30 rounded hover:border-[#FF6600] transition-all cursor-pointer w-full text-left"
+        className="group relative w-full cursor-pointer border-2 border-amber/50 bg-amber/[0.07] p-4 text-left transition-colors hover:border-amber hover:bg-amber/10"
       >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="relative">
-              <Eye size={16} className="text-[#FF6600]" />
-              <span className="absolute -top-1 -right-1 w-2 h-2 bg-[#FF6600] rounded-full animate-pulse" />
-            </div>
-            <span className="text-sm font-mono text-[#FF6600] font-bold">
-              Pesan Baru (Tap untuk Baca)
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <span className="relative grid size-8 place-items-center border-2 border-amber/60 bg-ink text-amber">
+              <Eye size={15} />
+              <span className="absolute -right-1 -top-1 size-2 bg-amber arcade-blink" />
+            </span>
+            <span className="font-mono text-[13px] font-bold uppercase tracking-[0.06em] text-amber">
+              Pesan baru · tap untuk baca
             </span>
           </div>
-          <Flame size={14} className="text-[#FF6600]/50 group-hover:text-[#FF6600] transition-colors" />
+          <Flame
+            size={15}
+            className="shrink-0 text-amber/50 transition-colors group-hover:text-amber"
+          />
         </div>
-        <div className="text-xs text-[#888] mt-1 font-mono">
-          ⚠️ Pesan akan hilang otomatis setelah dibaca
+        <div className="mt-2 flex items-start gap-1.5 font-mono text-[11px] leading-relaxed text-muted-ink">
+          <AlertTriangle size={12} className="mt-0.5 shrink-0 text-amber" />
+          Pesan hilang otomatis 10 detik setelah dibuka.
         </div>
       </button>
     );
   }
 
-  // Reading mode with countdown (BOTH sender & recipient see this after read)
   return (
     <div
-      className={`relative p-3 rounded transition-all duration-1000 ${
+      className={`relative border-2 p-3.5 transition-all duration-1000 ${
         isDestroying
-          ? "opacity-0 scale-95 blur-sm"
-          : "opacity-100 scale-100"
+          ? "scale-95 opacity-0 blur-sm"
+          : "scale-100 opacity-100"
       } ${
         isOwnMessage
-          ? "bg-[#39FF14]/10 border border-[#39FF14]/30 ml-auto"
-          : "bg-[#FF6600]/10 border border-[#FF6600]/30"
+          ? "ml-auto border-lime/40 bg-lime/[0.07]"
+          : "border-amber/40 bg-amber/[0.06]"
       }`}
     >
-      {/* Countdown timer (VISIBLE FOR BOTH) */}
       {isReading && (
-        <div className={`absolute -top-3 right-2 flex items-center gap-1 px-2 py-0.5 ${
-          isOwnMessage ? 'bg-[#39FF14]' : 'bg-[#FF6600]'
-        } text-black text-xs font-bold rounded-full animate-pulse`}>
+        <div
+          className={`absolute -top-3 right-2 flex items-center gap-1 border-2 border-ink px-2 py-0.5 font-mono text-[10px] font-bold text-ink ${
+            isOwnMessage ? "bg-lime" : "bg-amber"
+          }`}
+        >
           <Clock size={10} />
           <span>{countdown}s</span>
         </div>
       )}
 
-      {/* Message content */}
-      <div className="space-y-1">
-        <div className="flex items-center gap-2 text-xs text-[#888]">
-          <span className="font-mono">
+      <div className="space-y-1.5">
+        <div className="flex flex-wrap items-center gap-2 font-mono text-[11px] text-muted-ink">
+          <span className="font-bold uppercase tracking-[0.08em]">
             {isOwnMessage ? "Kamu" : message.sender_role}
           </span>
           {isOwnMessage && message.read_at && (
-            <span className="text-[#39FF14] flex items-center gap-1 animate-pulse">
+            <span className="flex items-center gap-1 text-lime">
               <Eye size={10} />
-              Dibaca {isReading && "→ Menghilang..."}
+              Dibaca {isReading && "· menghilang"}
             </span>
           )}
         </div>
-        <p className="text-sm text-white whitespace-pre-wrap break-words">
+
+        <p className="whitespace-pre-wrap break-words text-sm leading-relaxed text-cream">
           {message.content}
         </p>
-        <div className="flex items-center justify-between text-[10px] text-[#666] font-mono pt-1">
-          <span>{new Date(message.created_at).toLocaleTimeString("id-ID")}</span>
+
+        <div className="flex items-center justify-between gap-2 pt-1 font-mono text-[10px] text-muted-ink/80">
+          <span>
+            {new Date(message.created_at).toLocaleTimeString("id-ID", {
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
+          </span>
           {isReading && (
-            <span className={`flex items-center gap-1 ${
-              isOwnMessage ? 'text-[#39FF14]' : 'text-[#FF6600]'
-            }`}>
+            <span
+              className={`flex items-center gap-1 ${
+                isOwnMessage ? "text-lime" : "text-amber"
+              }`}
+            >
               <Flame size={10} />
               Auto-hapus aktif
             </span>
@@ -143,14 +150,15 @@ export function SelfDestructMessage({
         </div>
       </div>
 
-      {/* Destruction progress bar (VISIBLE FOR BOTH) */}
       {isReading && (
-        <div className={`absolute bottom-0 left-0 right-0 h-0.5 rounded-b overflow-hidden ${
-          isOwnMessage ? 'bg-[#39FF14]/20' : 'bg-[#FF6600]/20'
-        }`}>
+        <div
+          className={`absolute bottom-0 left-0 right-0 h-1 overflow-hidden ${
+            isOwnMessage ? "bg-lime/20" : "bg-amber/20"
+          }`}
+        >
           <div
-            className={`h-full transition-all ${
-              isOwnMessage ? 'bg-[#39FF14]' : 'bg-[#FF6600]'
+            className={`h-full ${
+              isOwnMessage ? "bg-lime" : "bg-amber"
             }`}
             style={{
               width: `${(countdown / 10) * 100}%`,

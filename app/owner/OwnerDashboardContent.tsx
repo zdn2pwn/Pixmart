@@ -44,62 +44,62 @@ export function OwnerDashboardContent({
   return (
     <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-8 py-8 space-y-6">
       {/* Header */}
-      <div className="border-b border-[#222] pb-6">
-        <div className="flex items-center gap-2 text-xs font-mono text-[#39FF14] uppercase tracking-wider mb-2 font-bold">
+      <div className="border-b border-[#3A3157] pb-6">
+        <div className="flex items-center gap-2 text-xs font-mono text-[#C8FF4D] uppercase tracking-wider mb-2 font-bold">
           <ShieldCheck size={16} />
           <span>MIDMAN CONTROL PANEL</span>
         </div>
-        <h1 className="text-3xl font-bold text-white tracking-tight">
+        <h1 className="text-3xl font-bold text-cream tracking-tight">
           Escrow Transaction Manager
         </h1>
-        <p className="text-sm text-[#888] mt-1 font-sans">
+        <p className="text-sm text-[#A79EC2] mt-1 font-sans">
           Kelola dan verifikasi seluruh transaksi escrow sebagai pihak ketiga terpercaya.
         </p>
       </div>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-[#121212] border border-[#262626] p-5">
+        <div className="bg-[#12101F] border border-[#3A3157] p-5">
           <div className="flex items-center justify-between mb-3">
-            <Clock size={20} className="text-[#39FF14]" />
-            <span className="text-xs font-mono text-[#666]">ACTIVE</span>
+            <Clock size={20} className="text-[#C8FF4D]" />
+            <span className="text-xs font-mono text-[#8B82A6]">ACTIVE</span>
           </div>
-          <div className="text-3xl font-bold text-white font-mono">{stats.active}</div>
-          <div className="text-xs text-[#888] mt-1">Escrow Berjalan</div>
+          <div className="text-3xl font-bold text-cream font-mono">{stats.active}</div>
+          <div className="text-xs text-[#A79EC2] mt-1">Escrow Berjalan</div>
         </div>
 
-        <div className="bg-[#121212] border border-[#FF6600]/50 p-5">
+        <div className="bg-[#12101F] border border-[#FF8A3D]/50 p-5">
           <div className="flex items-center justify-between mb-3">
-            <AlertTriangle size={20} className="text-[#FF6600]" />
-            <span className="text-xs font-mono text-[#666]">ACTION</span>
+            <AlertTriangle size={20} className="text-[#FF8A3D]" />
+            <span className="text-xs font-mono text-[#8B82A6]">ACTION</span>
           </div>
-          <div className="text-3xl font-bold text-[#FF6600] font-mono">{stats.needsAction}</div>
-          <div className="text-xs text-[#888] mt-1">Butuh Verifikasi</div>
+          <div className="text-3xl font-bold text-[#FF8A3D] font-mono">{stats.needsAction}</div>
+          <div className="text-xs text-[#A79EC2] mt-1">Butuh Verifikasi</div>
         </div>
 
-        <div className="bg-[#121212] border border-[#262626] p-5">
+        <div className="bg-[#12101F] border border-[#3A3157] p-5">
           <div className="flex items-center justify-between mb-3">
-            <CheckCircle2 size={20} className="text-[#39FF14]" />
-            <span className="text-xs font-mono text-[#666]">DONE</span>
+            <CheckCircle2 size={20} className="text-[#C8FF4D]" />
+            <span className="text-xs font-mono text-[#8B82A6]">DONE</span>
           </div>
-          <div className="text-3xl font-bold text-white font-mono">{stats.completed}</div>
-          <div className="text-xs text-[#888] mt-1">Transaksi Selesai</div>
+          <div className="text-3xl font-bold text-cream font-mono">{stats.completed}</div>
+          <div className="text-xs text-[#A79EC2] mt-1">Transaksi Selesai</div>
         </div>
 
-        <div className="bg-[#121212] border border-[#262626] p-5">
+        <div className="bg-[#12101F] border border-[#3A3157] p-5">
           <div className="flex items-center justify-between mb-3">
-            <DollarSign size={20} className="text-[#39FF14]" />
-            <span className="text-xs font-mono text-[#666]">HELD</span>
+            <DollarSign size={20} className="text-[#C8FF4D]" />
+            <span className="text-xs font-mono text-[#8B82A6]">HELD</span>
           </div>
-          <div className="text-3xl font-bold text-white font-mono">
+          <div className="text-3xl font-bold text-cream font-mono">
             {escrowSessions.filter((e: any) => e.funds_held && !e.funds_released).length}
           </div>
-          <div className="text-xs text-[#888] mt-1">Dana Ditahan</div>
+          <div className="text-xs text-[#A79EC2] mt-1">Dana Ditahan</div>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="flex items-center gap-2 border-b border-[#222]">
+      <div className="flex items-center gap-2 border-b border-[#3A3157]">
         {[
           { id: "OVERVIEW", label: "Overview", icon: Activity },
           { id: "ACTIVE", label: `Active (${stats.active})`, icon: Clock },
@@ -111,8 +111,8 @@ export function OwnerDashboardContent({
             onClick={() => setActiveTab(id as any)}
             className={`px-4 py-3 text-xs font-mono font-bold transition-all flex items-center gap-2 ${
               activeTab === id
-                ? "text-[#39FF14] border-b-2 border-[#39FF14]"
-                : "text-[#666] hover:text-[#aaa]"
+                ? "text-[#C8FF4D] border-b-2 border-[#C8FF4D]"
+                : "text-[#8B82A6] hover:text-[#C8C2DA]"
             }`}
           >
             <Icon size={14} />
@@ -127,7 +127,7 @@ export function OwnerDashboardContent({
           {/* Needs Action */}
           {needsActionEscrows.length > 0 && (
             <div className="space-y-3">
-              <div className="flex items-center gap-2 text-sm font-bold text-[#FF6600]">
+              <div className="flex items-center gap-2 text-sm font-bold text-[#FF8A3D]">
                 <AlertTriangle size={16} />
                 <span>Transaksi Membutuhkan Aksi Midman ({needsActionEscrows.length})</span>
               </div>
@@ -142,10 +142,10 @@ export function OwnerDashboardContent({
           {/* Recent Active */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <div className="text-sm font-bold text-white">Escrow Aktif Terbaru</div>
+              <div className="text-sm font-bold text-cream">Escrow Aktif Terbaru</div>
               <button
                 onClick={() => setActiveTab("ACTIVE")}
-                className="text-xs text-[#39FF14] hover:underline font-mono"
+                className="text-xs text-[#C8FF4D] hover:underline font-mono"
               >
                 Lihat Semua →
               </button>
@@ -162,10 +162,10 @@ export function OwnerDashboardContent({
       {activeTab === "ACTIVE" && (
         <div className="space-y-3">
           {activeEscrows.length === 0 ? (
-            <div className="bg-[#111] border border-[#222] p-12 text-center">
-              <Clock size={40} className="mx-auto text-[#444] mb-3" />
-              <div className="text-white font-bold mb-1">Tidak Ada Escrow Aktif</div>
-              <p className="text-xs text-[#777]">Semua transaksi sudah diselesaikan atau belum ada transaksi baru.</p>
+            <div className="bg-[#12101F] border border-[#3A3157] p-12 text-center">
+              <Clock size={40} className="mx-auto text-[#5C5575] mb-3" />
+              <div className="text-cream font-bold mb-1">Tidak Ada Escrow Aktif</div>
+              <p className="text-xs text-[#A79EC2]">Semua transaksi sudah diselesaikan atau belum ada transaksi baru.</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-3">
@@ -180,10 +180,10 @@ export function OwnerDashboardContent({
       {activeTab === "COMPLETED" && (
         <div className="space-y-3">
           {completedEscrows.length === 0 ? (
-            <div className="bg-[#111] border border-[#222] p-12 text-center">
-              <CheckCircle2 size={40} className="mx-auto text-[#444] mb-3" />
-              <div className="text-white font-bold mb-1">Belum Ada Transaksi Selesai</div>
-              <p className="text-xs text-[#777]">Transaksi yang sudah diverifikasi dan diselesaikan akan muncul di sini.</p>
+            <div className="bg-[#12101F] border border-[#3A3157] p-12 text-center">
+              <CheckCircle2 size={40} className="mx-auto text-[#5C5575] mb-3" />
+              <div className="text-cream font-bold mb-1">Belum Ada Transaksi Selesai</div>
+              <p className="text-xs text-[#A79EC2]">Transaksi yang sudah diverifikasi dan diselesaikan akan muncul di sini.</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-3">
@@ -197,26 +197,26 @@ export function OwnerDashboardContent({
 
       {activeTab === "ACTIVITIES" && (
         <div className="space-y-3">
-          <div className="text-xs text-[#666] font-mono">AUDIT TRAIL • {recentActivities.length} Activities</div>
+          <div className="text-xs text-[#8B82A6] font-mono">AUDIT TRAIL • {recentActivities.length} Activities</div>
           {recentActivities.map((activity: any) => (
-            <div key={activity.id} className="bg-[#111] border border-[#222] p-4 flex items-start gap-4">
-              <div className="text-xs font-mono text-[#666] w-32 shrink-0">
+            <div key={activity.id} className="bg-[#12101F] border border-[#3A3157] p-4 flex items-start gap-4">
+              <div className="text-xs font-mono text-[#8B82A6] w-32 shrink-0">
                 {new Date(activity.created_at).toLocaleString("id-ID", {
                   dateStyle: "short",
                   timeStyle: "short",
                 })}
               </div>
               <div className="flex-1">
-                <div className="text-xs font-bold text-white mb-1">
+                <div className="text-xs font-bold text-cream mb-1">
                   {activity.actor?.codename || "System"} • {activity.actor_role}
                 </div>
-                <div className="text-xs text-[#aaa]">
-                  <span className="text-[#39FF14] font-mono">{activity.action}</span> • {activity.description}
+                <div className="text-xs text-[#C8C2DA]">
+                  <span className="text-[#C8FF4D] font-mono">{activity.action}</span> • {activity.description}
                 </div>
               </div>
               <Link 
                 href={`/owner/escrow/${activity.escrow_id}`}
-                className="text-xs text-[#39FF14] hover:underline font-mono shrink-0"
+                className="text-xs text-[#C8FF4D] hover:underline font-mono shrink-0"
               >
                 View →
               </Link>
@@ -235,14 +235,14 @@ function EscrowCard({ escrow, highlight, completed }: { escrow: any; highlight?:
   return (
     <Link
       href={`/owner/escrow/${escrow.id}`}
-      className={`block bg-[#111] border p-4 hover:border-[#39FF14] transition-all group ${
-        highlight === "ACTION" ? "border-[#FF6600]/50 shadow-[0_0_15px_rgba(255,102,0,0.15)]" : "border-[#222]"
+      className={`block bg-[#12101F] border p-4 hover:border-[#C8FF4D] transition-all group ${
+        highlight === "ACTION" ? "border-[#FF8A3D]/50 shadow-[0_0_15px_rgba(255,138,61,0.15)]" : "border-[#3A3157]"
       }`}
     >
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1 space-y-2">
           <div className="flex items-center gap-2">
-            <span className="text-xs font-mono text-[#39FF14]">#{escrow.id.slice(0, 8)}</span>
+            <span className="text-xs font-mono text-[#C8FF4D]">#{escrow.id.slice(0, 8)}</span>
             {highlight === "ACTION" && (
               <span className="badge-warn text-[10px] animate-pulse">ACTION REQUIRED</span>
             )}
@@ -251,11 +251,11 @@ function EscrowCard({ escrow, highlight, completed }: { escrow: any; highlight?:
             )}
           </div>
 
-          <div className="text-sm font-bold text-white group-hover:text-[#39FF14] transition-colors">
+          <div className="text-sm font-bold text-cream group-hover:text-[#C8FF4D] transition-colors">
             {(escrow as any).item_title || listing?.title || "Produk"}
           </div>
 
-          <div className="flex items-center gap-4 text-xs font-mono text-[#888]">
+          <div className="flex items-center gap-4 text-xs font-mono text-[#A79EC2]">
             <span className="flex items-center gap-1">
               <Users size={11} />
               Buyer: {escrow.buyer?.codename || "Unknown"}
@@ -267,19 +267,19 @@ function EscrowCard({ escrow, highlight, completed }: { escrow: any; highlight?:
             </span>
           </div>
 
-          <div className="text-xs font-mono text-[#39FF14]">
+          <div className="text-xs font-mono text-[#C8FF4D]">
             Rp {agreedPriceIdr.toLocaleString("id-ID")}
           </div>
         </div>
 
         <div className="text-right space-y-2">
-          <div className="text-xs font-mono text-[#666]">
+          <div className="text-xs font-mono text-[#8B82A6]">
             {escrow.payment_status || "AWAITING_PAYMENT"}
           </div>
           {escrow.funds_held && !escrow.funds_released && (
             <div className="badge-warn text-[10px]">FUNDS HELD</div>
           )}
-          <div className="flex items-center gap-1 text-xs text-[#39FF14] font-mono font-bold">
+          <div className="flex items-center gap-1 text-xs text-[#C8FF4D] font-mono font-bold">
             <Eye size={12} />
             <span>Kelola</span>
             <ArrowRight size={12} />

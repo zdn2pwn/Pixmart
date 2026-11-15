@@ -154,12 +154,12 @@ export function NegotiationsListClient({
           <div key={group.counterpartyId} className="relative">
             <Link
               href={`/negotiations/${latestNeg.id}`}
-              className="block bg-[#121212] border border-[#262626] hover:border-[#39FF14]/70 p-4 transition-all group"
+              className="block bg-[#12101F] border border-[#3A3157] hover:border-[#C8FF4D]/70 p-4 transition-all group"
             >
               <div className="flex items-start gap-4">
                 {/* Avatar/Thumbnail */}
                 <div className="relative">
-                  <div className="w-16 h-16 bg-[#1a1a1a] border border-[#333] shrink-0 overflow-hidden flex items-center justify-center">
+                  <div className="w-16 h-16 bg-[#231D3A] border border-[#4A4168] shrink-0 overflow-hidden flex items-center justify-center">
                     {hasImage ? (
                       <img
                         src={latestNeg.listing.images[0]}
@@ -167,14 +167,14 @@ export function NegotiationsListClient({
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <Package size={24} className="text-[#555]" />
+                      <Package size={24} className="text-[#6F6788]" />
                     )}
                   </div>
                   
                   {/* Unread Badge */}
                   {totalUnread > 0 && (
-                    <div className="absolute -top-1 -right-1 w-5 h-5 bg-[#FF4444] rounded-full flex items-center justify-center">
-                      <span className="text-white text-[10px] font-bold">{totalUnread}</span>
+                    <div className="absolute -top-1 -right-1 w-5 h-5 bg-[#FF6B6B] rounded-full flex items-center justify-center">
+                      <span className="text-cream text-[10px] font-bold">{totalUnread}</span>
                     </div>
                   )}
                 </div>
@@ -184,12 +184,12 @@ export function NegotiationsListClient({
                   {/* Header */}
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2 min-w-0">
-                      <h3 className="text-sm font-bold text-[#39FF14] truncate">
+                      <h3 className="text-sm font-bold text-[#C8FF4D] truncate">
                         {counterparty.codename}
                       </h3>
                       
                       {hasMultiple && (
-                        <span className="text-[10px] bg-[#39FF14]/10 text-[#39FF14] px-2 py-0.5 rounded-full font-bold shrink-0">
+                        <span className="text-[10px] bg-[#C8FF4D]/10 text-[#C8FF4D] px-2 py-0.5 rounded-full font-bold shrink-0">
                           {userNegotiations.length} item
                         </span>
                       )}
@@ -201,11 +201,11 @@ export function NegotiationsListClient({
                     <button
                       onClick={(e) => handleDelete(group.counterpartyId, userNegotiations, e)}
                       disabled={deletingId === group.counterpartyId}
-                      className="text-[#666] hover:text-[#FF4444] transition-colors p-1 shrink-0 disabled:opacity-50"
+                      className="text-[#8B82A6] hover:text-[#FF6B6B] transition-colors p-1 shrink-0 disabled:opacity-50"
                       title="Hapus negosiasi"
                     >
                       {deletingId === group.counterpartyId ? (
-                        <div className="w-3.5 h-3.5 border-2 border-[#FF4444] border-t-transparent rounded-full animate-spin" />
+                        <div className="w-3.5 h-3.5 border-2 border-[#FF6B6B] border-t-transparent rounded-full animate-spin" />
                       ) : (
                         <Trash2 size={14} />
                       )}
@@ -213,16 +213,16 @@ export function NegotiationsListClient({
                   </div>
 
                   {/* Product Title */}
-                  <div className="text-xs text-white font-medium line-clamp-1">
+                  <div className="text-xs text-cream font-medium line-clamp-1">
                     {latestNeg.listing?.title || "Produk"}
                     {hasMultiple && (
-                      <span className="text-[#666]"> + {userNegotiations.length - 1} lainnya</span>
+                      <span className="text-[#8B82A6]"> + {userNegotiations.length - 1} lainnya</span>
                     )}
                   </div>
 
                   {/* Latest Message Preview */}
                   {latestMessage && (
-                    <div className="text-xs text-[#888] line-clamp-1 flex items-center gap-1">
+                    <div className="text-xs text-[#A79EC2] line-clamp-1 flex items-center gap-1">
                       <MessageSquare size={10} className="shrink-0" />
                       <span className="truncate">{latestMessage.content}</span>
                     </div>
@@ -230,9 +230,9 @@ export function NegotiationsListClient({
 
                   {/* Price Info */}
                   <div className="flex items-center justify-between text-[10px] font-mono">
-                    <div className="text-[#888]">
+                    <div className="text-[#A79EC2]">
                       Tawaran:{" "}
-                      <span className="text-white font-bold">
+                      <span className="text-cream font-bold">
                         {latestNeg.current_offer_btc
                           ? `${latestNeg.current_offer_btc.toFixed(8)} BTC`
                           : latestNeg.current_offer_xmr
@@ -243,7 +243,7 @@ export function NegotiationsListClient({
 
                     {/* Time ago */}
                     {latestMessage && (
-                      <span className="text-[#666]">
+                      <span className="text-[#8B82A6]">
                         {formatDistanceToNow(new Date(latestMessage.created_at), {
                           addSuffix: true,
                           locale: idLocale,
@@ -254,25 +254,25 @@ export function NegotiationsListClient({
                 </div>
 
                 {/* Arrow */}
-                <div className="text-[#666] group-hover:text-[#39FF14] transition-colors shrink-0 self-center">
+                <div className="text-[#8B82A6] group-hover:text-[#C8FF4D] transition-colors shrink-0 self-center">
                   <ArrowRight size={18} />
                 </div>
               </div>
 
               {/* Show all negotiations preview if multiple */}
               {hasMultiple && (
-                <div className="mt-3 pt-3 border-t border-[#222] grid grid-cols-2 sm:grid-cols-3 gap-2">
+                <div className="mt-3 pt-3 border-t border-[#3A3157] grid grid-cols-2 sm:grid-cols-3 gap-2">
                   {userNegotiations.slice(0, 3).map((neg) => (
                     <div
                       key={neg.id}
-                      className="text-[10px] text-[#666] truncate flex items-center gap-1"
+                      className="text-[10px] text-[#8B82A6] truncate flex items-center gap-1"
                     >
-                      <div className="w-1 h-1 rounded-full bg-[#666]" />
+                      <div className="w-1 h-1 rounded-full bg-[#8B82A6]" />
                       <span className="truncate">{neg.listing?.title}</span>
                     </div>
                   ))}
                   {userNegotiations.length > 3 && (
-                    <div className="text-[10px] text-[#39FF14]">+{userNegotiations.length - 3} lagi</div>
+                    <div className="text-[10px] text-[#C8FF4D]">+{userNegotiations.length - 3} lagi</div>
                   )}
                 </div>
               )}

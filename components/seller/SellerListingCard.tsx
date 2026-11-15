@@ -66,10 +66,10 @@ export function SellerListingCard({ listing, onDelete, onUpdate }: SellerListing
   const hasImage = listing.images && listing.images.length > 0;
 
   return (
-    <div className="bg-[#121212] border border-[#262626] hover:border-[#39FF14]/50 p-4 transition-all">
+    <div className="bg-[#12101F] border border-[#3A3157] hover:border-[#C8FF4D]/50 p-4 transition-all">
       <div className="flex items-start gap-4">
         {/* Thumbnail */}
-        <div className="w-20 h-20 bg-[#1a1a1a] border border-[#333] shrink-0 overflow-hidden flex items-center justify-center">
+        <div className="w-20 h-20 bg-[#231D3A] border border-[#4A4168] shrink-0 overflow-hidden flex items-center justify-center">
           {hasImage ? (
             <img
               src={listing.images[0]}
@@ -77,7 +77,7 @@ export function SellerListingCard({ listing, onDelete, onUpdate }: SellerListing
               className="w-full h-full object-cover"
             />
           ) : (
-            <Package size={24} className="text-[#555]" />
+            <Package size={24} className="text-[#6F6788]" />
           )}
         </div>
 
@@ -85,8 +85,8 @@ export function SellerListingCard({ listing, onDelete, onUpdate }: SellerListing
         <div className="flex-1 min-w-0 space-y-3">
           {/* Title & Location */}
           <div>
-            <h3 className="text-sm font-bold text-white truncate mb-1">{listing.title}</h3>
-            <div className="flex items-center gap-3 text-xs text-[#888]">
+            <h3 className="text-sm font-bold text-cream truncate mb-1">{listing.title}</h3>
+            <div className="flex items-center gap-3 text-xs text-[#A79EC2]">
               <span className="flex items-center gap-1">
                 <MapPin size={11} />
                 {listing.location_city}
@@ -94,8 +94,8 @@ export function SellerListingCard({ listing, onDelete, onUpdate }: SellerListing
               <span>Rp {(listing.fiat_estimate_idr || 0).toLocaleString("id-ID")}</span>
               <span className={`px-2 py-0.5 text-xs font-bold ${
                 listing.status === "ACTIVE"
-                  ? "bg-[#39FF14]/10 text-[#39FF14]"
-                  : "bg-[#666]/10 text-[#666]"
+                  ? "bg-[#C8FF4D]/10 text-[#C8FF4D]"
+                  : "bg-[#8B82A6]/10 text-[#8B82A6]"
               }`}>
                 {listing.status}
               </span>
@@ -103,7 +103,7 @@ export function SellerListingCard({ listing, onDelete, onUpdate }: SellerListing
           </div>
 
           {/* STOCK MANAGER */}
-          <div className="pt-2 border-t border-[#222]">
+          <div className="pt-2 border-t border-[#3A3157]">
             <StockManager
               listing={listing}
               onUpdate={handleStockUpdate}
@@ -111,11 +111,11 @@ export function SellerListingCard({ listing, onDelete, onUpdate }: SellerListing
           </div>
 
           {/* Action Buttons */}
-          <div className="flex items-center gap-2 pt-2 border-t border-[#222]">
+          <div className="flex items-center gap-2 pt-2 border-t border-[#3A3157]">
             {/* Edit */}
             <Link
               href={`/marketplace/${listing.id}/edit`}
-              className="text-xs px-3 py-1.5 border border-[#333] hover:border-[#39FF14] text-[#888] hover:text-[#39FF14] transition-colors flex items-center gap-1"
+              className="text-xs px-3 py-1.5 border border-[#4A4168] hover:border-[#C8FF4D] text-[#A79EC2] hover:text-[#C8FF4D] transition-colors flex items-center gap-1"
               title="Edit listing"
             >
               <Edit size={12} />
@@ -131,7 +131,7 @@ export function SellerListingCard({ listing, onDelete, onUpdate }: SellerListing
                 handleDelete();
               }}
               disabled={isPending}
-              className="text-xs px-3 py-1.5 border border-[#333] hover:border-[#FF4444] text-[#888] hover:text-[#FF4444] transition-colors flex items-center gap-1 disabled:opacity-50 cursor-pointer"
+              className="text-xs px-3 py-1.5 border border-[#4A4168] hover:border-[#FF6B6B] text-[#A79EC2] hover:text-[#FF6B6B] transition-colors flex items-center gap-1 disabled:opacity-50 cursor-pointer"
               title="Hapus listing"
             >
               <Trash2 size={12} />
@@ -141,7 +141,7 @@ export function SellerListingCard({ listing, onDelete, onUpdate }: SellerListing
             {/* View */}
             <Link
               href={`/marketplace/${listing.id}`}
-              className="text-xs px-3 py-1.5 border border-[#333] hover:border-white text-[#888] hover:text-white transition-colors flex items-center gap-1"
+              className="text-xs px-3 py-1.5 border border-[#4A4168] hover:border-white text-[#A79EC2] hover:text-cream transition-colors flex items-center gap-1"
               title="Lihat detail"
               target="_blank"
             >

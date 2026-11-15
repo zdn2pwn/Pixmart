@@ -56,15 +56,15 @@ export function ProfilePageContent({ session, profile }: ProfilePageContentProps
   return (
     <main className="flex-1 max-w-4xl mx-auto w-full px-4 sm:px-8 py-8 space-y-6">
       {/* Header */}
-      <div className="pb-4 border-b border-[#222]">
+      <div className="pb-4 border-b border-[#3A3157]">
         <div className="flex items-center gap-3 mb-2">
-          <div className="w-12 h-12 rounded-full bg-[#39FF14]/10 border-2 border-[#39FF14] flex items-center justify-center">
-            <User size={24} className="text-[#39FF14]" />
+          <div className="w-12 h-12 rounded-full bg-[#C8FF4D]/10 border-2 border-[#C8FF4D] flex items-center justify-center">
+            <User size={24} className="text-[#C8FF4D]" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-white">Profile Settings</h1>
-            <p className="text-xs font-mono text-[#888]">
-              Role: <span className="text-[#39FF14]">{session.role}</span> • Email: {session.email}
+            <h1 className="text-2xl font-bold text-cream">Profile Settings</h1>
+            <p className="text-xs font-mono text-[#A79EC2]">
+              Role: <span className="text-[#C8FF4D]">{session.role}</span> • Email: {session.email}
             </p>
           </div>
         </div>
@@ -75,8 +75,8 @@ export function ProfilePageContent({ session, profile }: ProfilePageContentProps
         <div
           className={`p-4 border font-mono text-sm ${
             message.type === "success"
-              ? "bg-[#39FF14]/10 border-[#39FF14] text-[#39FF14]"
-              : "bg-[#FF4444]/10 border-[#FF4444] text-[#FF4444]"
+              ? "bg-[#C8FF4D]/10 border-[#C8FF4D] text-[#C8FF4D]"
+              : "bg-[#FF6B6B]/10 border-[#FF6B6B] text-[#FF6B6B]"
           }`}
         >
           {message.text}
@@ -84,29 +84,29 @@ export function ProfilePageContent({ session, profile }: ProfilePageContentProps
       )}
 
       {/* Profile Information */}
-      <div className="bg-[#101010] border border-[#2a2a2a] p-6 space-y-4">
+      <div className="bg-[#19152B] border border-[#3A3157] p-6 space-y-4">
         <div className="flex items-center gap-2 mb-4">
-          <User size={18} className="text-[#39FF14]" />
-          <h2 className="text-lg font-bold text-white font-mono">INFORMASI PROFIL</h2>
+          <User size={18} className="text-[#C8FF4D]" />
+          <h2 className="text-lg font-bold text-cream font-mono">INFORMASI PROFIL</h2>
         </div>
 
         <div className="space-y-4">
           <div>
-            <label className="text-xs font-mono text-[#888] uppercase tracking-wider block mb-2">
+            <label className="text-xs font-mono text-[#A79EC2] uppercase tracking-wider block mb-2">
               Codename (Nama Anonim)
             </label>
             <input
               type="text"
               value={codename}
               onChange={(e) => setCodename(e.target.value)}
-              className="w-full bg-[#0a0a0a] border border-[#2a2a2a] text-white px-4 py-2.5 font-mono text-sm focus:outline-none focus:border-[#39FF14]"
+              className="w-full bg-[#0A0812] border border-[#3A3157] text-cream px-4 py-2.5 font-mono text-sm focus:outline-none focus:border-[#C8FF4D]"
               placeholder="Anonymous Seller #1234"
             />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="text-xs font-mono text-[#888] uppercase tracking-wider block mb-2">
+              <label className="text-xs font-mono text-[#A79EC2] uppercase tracking-wider block mb-2">
                 <MapPin size={12} className="inline mr-1" />
                 Kota
               </label>
@@ -114,34 +114,34 @@ export function ProfilePageContent({ session, profile }: ProfilePageContentProps
                 type="text"
                 value={locationCity}
                 onChange={(e) => setLocationCity(e.target.value)}
-                className="w-full bg-[#0a0a0a] border border-[#2a2a2a] text-white px-4 py-2.5 font-mono text-sm focus:outline-none focus:border-[#39FF14]"
+                className="w-full bg-[#0A0812] border border-[#3A3157] text-cream px-4 py-2.5 font-mono text-sm focus:outline-none focus:border-[#C8FF4D]"
                 placeholder="Jakarta Selatan"
               />
             </div>
 
             <div>
-              <label className="text-xs font-mono text-[#888] uppercase tracking-wider block mb-2">
+              <label className="text-xs font-mono text-[#A79EC2] uppercase tracking-wider block mb-2">
                 Kecamatan
               </label>
               <input
                 type="text"
                 value={locationDistrict}
                 onChange={(e) => setLocationDistrict(e.target.value)}
-                className="w-full bg-[#0a0a0a] border border-[#2a2a2a] text-white px-4 py-2.5 font-mono text-sm focus:outline-none focus:border-[#39FF14]"
+                className="w-full bg-[#0A0812] border border-[#3A3157] text-cream px-4 py-2.5 font-mono text-sm focus:outline-none focus:border-[#C8FF4D]"
                 placeholder="Kebayoran Baru"
               />
             </div>
           </div>
 
           <div>
-            <label className="text-xs font-mono text-[#888] uppercase tracking-wider block mb-2">
+            <label className="text-xs font-mono text-[#A79EC2] uppercase tracking-wider block mb-2">
               Bio (Opsional)
             </label>
             <textarea
               value={bio}
               onChange={(e) => setBio(e.target.value)}
               rows={3}
-              className="w-full bg-[#0a0a0a] border border-[#2a2a2a] text-white px-4 py-2.5 font-mono text-sm focus:outline-none focus:border-[#39FF14] resize-none"
+              className="w-full bg-[#0A0812] border border-[#3A3157] text-cream px-4 py-2.5 font-mono text-sm focus:outline-none focus:border-[#C8FF4D] resize-none"
               placeholder="Ceritakan sedikit tentang kamu..."
             />
           </div>
@@ -149,57 +149,57 @@ export function ProfilePageContent({ session, profile }: ProfilePageContentProps
       </div>
 
       {/* Wallet Addresses */}
-      <div className="bg-[#101010] border border-[#2a2a2a] p-6 space-y-4">
+      <div className="bg-[#19152B] border border-[#3A3157] p-6 space-y-4">
         <div className="flex items-center gap-2 mb-4">
-          <Wallet size={18} className="text-[#39FF14]" />
-          <h2 className="text-lg font-bold text-white font-mono">WALLET ADDRESSES</h2>
+          <Wallet size={18} className="text-[#C8FF4D]" />
+          <h2 className="text-lg font-bold text-cream font-mono">WALLET ADDRESSES</h2>
         </div>
 
         <div className="space-y-4">
           <div>
-            <label className="text-xs font-mono text-[#888] uppercase tracking-wider block mb-2">
+            <label className="text-xs font-mono text-[#A79EC2] uppercase tracking-wider block mb-2">
               Bitcoin (BTC) Address
             </label>
             <input
               type="text"
               value={walletBtc}
               onChange={(e) => setWalletBtc(e.target.value)}
-              className="w-full bg-[#0a0a0a] border border-[#2a2a2a] text-white px-4 py-2.5 font-mono text-xs focus:outline-none focus:border-[#39FF14]"
+              className="w-full bg-[#0A0812] border border-[#3A3157] text-cream px-4 py-2.5 font-mono text-xs focus:outline-none focus:border-[#C8FF4D]"
               placeholder="bc1q..."
             />
-            <p className="text-[10px] font-mono text-[#666] mt-1">
+            <p className="text-[10px] font-mono text-[#8B82A6] mt-1">
               Untuk menerima pembayaran BTC dari escrow
             </p>
           </div>
 
           <div>
-            <label className="text-xs font-mono text-[#888] uppercase tracking-wider block mb-2">
+            <label className="text-xs font-mono text-[#A79EC2] uppercase tracking-wider block mb-2">
               Monero (XMR) Address
             </label>
             <input
               type="text"
               value={walletXmr}
               onChange={(e) => setWalletXmr(e.target.value)}
-              className="w-full bg-[#0a0a0a] border border-[#2a2a2a] text-white px-4 py-2.5 font-mono text-xs focus:outline-none focus:border-[#39FF14]"
+              className="w-full bg-[#0A0812] border border-[#3A3157] text-cream px-4 py-2.5 font-mono text-xs focus:outline-none focus:border-[#C8FF4D]"
               placeholder="4..."
             />
-            <p className="text-[10px] font-mono text-[#666] mt-1">
+            <p className="text-[10px] font-mono text-[#8B82A6] mt-1">
               Untuk menerima pembayaran XMR dari escrow (privasi maksimal)
             </p>
           </div>
         </div>
 
-        <div className="bg-[#39FF14]/5 border border-[#39FF14]/30 p-3 text-xs font-mono text-[#888]">
-          <Shield size={14} className="inline text-[#39FF14] mr-2" />
+        <div className="bg-[#C8FF4D]/5 border border-[#C8FF4D]/30 p-3 text-xs font-mono text-[#A79EC2]">
+          <Shield size={14} className="inline text-[#C8FF4D] mr-2" />
           Wallet address ini digunakan untuk withdrawal dari platform. Pastikan address yang kamu masukkan benar!
         </div>
       </div>
 
       {/* Change Password */}
-      <div className="bg-[#101010] border border-[#2a2a2a] p-6 space-y-4">
+      <div className="bg-[#19152B] border border-[#3A3157] p-6 space-y-4">
         <div className="flex items-center gap-2 mb-4">
-          <Key size={18} className="text-[#39FF14]" />
-          <h2 className="text-lg font-bold text-white font-mono">UBAH PASSWORD</h2>
+          <Key size={18} className="text-[#C8FF4D]" />
+          <h2 className="text-lg font-bold text-cream font-mono">UBAH PASSWORD</h2>
         </div>
 
         {!showPasswordForm ? (
@@ -212,40 +212,40 @@ export function ProfilePageContent({ session, profile }: ProfilePageContentProps
         ) : (
           <div className="space-y-4">
             <div>
-              <label className="text-xs font-mono text-[#888] uppercase tracking-wider block mb-2">
+              <label className="text-xs font-mono text-[#A79EC2] uppercase tracking-wider block mb-2">
                 Password Saat Ini
               </label>
               <input
                 type="password"
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
-                className="w-full bg-[#0a0a0a] border border-[#2a2a2a] text-white px-4 py-2.5 font-mono text-sm focus:outline-none focus:border-[#39FF14]"
+                className="w-full bg-[#0A0812] border border-[#3A3157] text-cream px-4 py-2.5 font-mono text-sm focus:outline-none focus:border-[#C8FF4D]"
                 placeholder="••••••••"
               />
             </div>
 
             <div>
-              <label className="text-xs font-mono text-[#888] uppercase tracking-wider block mb-2">
+              <label className="text-xs font-mono text-[#A79EC2] uppercase tracking-wider block mb-2">
                 Password Baru
               </label>
               <input
                 type="password"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                className="w-full bg-[#0a0a0a] border border-[#2a2a2a] text-white px-4 py-2.5 font-mono text-sm focus:outline-none focus:border-[#39FF14]"
+                className="w-full bg-[#0A0812] border border-[#3A3157] text-cream px-4 py-2.5 font-mono text-sm focus:outline-none focus:border-[#C8FF4D]"
                 placeholder="Min. 8 karakter"
               />
             </div>
 
             <div>
-              <label className="text-xs font-mono text-[#888] uppercase tracking-wider block mb-2">
+              <label className="text-xs font-mono text-[#A79EC2] uppercase tracking-wider block mb-2">
                 Konfirmasi Password Baru
               </label>
               <input
                 type="password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full bg-[#0a0a0a] border border-[#2a2a2a] text-white px-4 py-2.5 font-mono text-sm focus:outline-none focus:border-[#39FF14]"
+                className="w-full bg-[#0A0812] border border-[#3A3157] text-cream px-4 py-2.5 font-mono text-sm focus:outline-none focus:border-[#C8FF4D]"
                 placeholder="Ulangi password baru"
               />
             </div>
@@ -286,11 +286,11 @@ export function ProfilePageContent({ session, profile }: ProfilePageContentProps
       </div>
 
       {/* Account Info */}
-      <div className="bg-[#0a0a0a] border border-[#222] p-4 space-y-2 text-xs font-mono text-[#666]">
-        <div>User ID: <span className="text-[#888]">{session.userId}</span></div>
-        <div>Reputation: <span className="text-[#39FF14]">{profile.reputation || 100}</span></div>
-        <div>Completed Deals: <span className="text-white">{profile.completed_deals || 0}</span></div>
-        <div>Member Since: <span className="text-[#888]">{new Date(profile.created_at).toLocaleDateString('id-ID')}</span></div>
+      <div className="bg-[#0A0812] border border-[#3A3157] p-4 space-y-2 text-xs font-mono text-[#8B82A6]">
+        <div>User ID: <span className="text-[#A79EC2]">{session.userId}</span></div>
+        <div>Reputation: <span className="text-[#C8FF4D]">{profile.reputation || 100}</span></div>
+        <div>Completed Deals: <span className="text-cream">{profile.completed_deals || 0}</span></div>
+        <div>Member Since: <span className="text-[#A79EC2]">{new Date(profile.created_at).toLocaleDateString('id-ID')}</span></div>
       </div>
     </main>
   );

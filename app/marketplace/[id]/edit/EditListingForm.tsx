@@ -111,20 +111,20 @@ export function EditListingForm({ listing }: { listing: any }) {
     <div className="flex-1 max-w-4xl mx-auto w-full px-4 sm:px-8 py-8 space-y-6">
       <Link
         href="/seller"
-        className="inline-flex items-center gap-2 text-sm font-mono text-[#888] hover:text-[#39FF14] transition-colors"
+        className="inline-flex items-center gap-2 text-sm font-mono text-[#A79EC2] hover:text-[#C8FF4D] transition-colors"
       >
         <ArrowLeft size={16} /> Kembali ke Dashboard
       </Link>
 
-      <div className="border-b border-[#222222] pb-4">
-        <div className="text-xs font-mono text-[#39FF14] uppercase tracking-wider mb-1 font-bold flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-[#39FF14] pulse-green" />
+      <div className="border-b border-[#3A3157] pb-4">
+        <div className="text-xs font-mono text-[#C8FF4D] uppercase tracking-wider mb-1 font-bold flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-[#C8FF4D] pulse-green" />
           <span>EDIT LISTING</span>
         </div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+        <h1 className="text-2xl sm:text-3xl font-bold text-cream tracking-tight">
           Edit Produk: {listing.title}
         </h1>
-        <p className="text-xs font-mono text-[#888] mt-1">
+        <p className="text-xs font-mono text-[#A79EC2] mt-1">
           Update informasi produk yang sudah terdaftar.
         </p>
       </div>
@@ -138,14 +138,14 @@ export function EditListingForm({ listing }: { listing: any }) {
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Informasi Barang */}
-        <div className="bg-[#121212] border border-[#262626] p-6 space-y-4">
-          <h2 className="text-sm font-bold text-white font-mono uppercase tracking-wider border-b border-[#222] pb-2">
+        <div className="bg-[#12101F] border border-[#3A3157] p-6 space-y-4">
+          <h2 className="text-sm font-bold text-cream font-mono uppercase tracking-wider border-b border-[#3A3157] pb-2">
             Informasi Barang
           </h2>
 
           <div>
-            <label className="text-xs font-mono text-[#aaa] block mb-1">
-              Nama Produk <span className="text-[#39FF14]">*</span>
+            <label className="text-xs font-mono text-[#C8C2DA] block mb-1">
+              Nama Produk <span className="text-[#C8FF4D]">*</span>
             </label>
             <input
               type="text"
@@ -158,13 +158,13 @@ export function EditListingForm({ listing }: { listing: any }) {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="text-xs font-mono text-[#aaa] block mb-1">Kategori</label>
+              <label className="text-xs font-mono text-[#C8C2DA] block mb-1">Kategori</label>
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
                 className="input-dark w-full py-2.5 px-3 text-xs font-mono"
               >
-                <option value="HARDWARE_GADGETS">Hardware &amp; Gadget</option>
+                <option value="HARDWARE_GADGETS">Gadget</option>
                 <option value="RETRO_CONSOLES">Konsol Retro</option>
                 <option value="KEYBOARDS_TECH">Keyboard Mekanikal</option>
                 <option value="CAMERAS_OPTICS">Kamera &amp; Optik</option>
@@ -174,7 +174,7 @@ export function EditListingForm({ listing }: { listing: any }) {
             </div>
 
             <div>
-              <label className="text-xs font-mono text-[#aaa] block mb-1">Kondisi</label>
+              <label className="text-xs font-mono text-[#C8C2DA] block mb-1">Kondisi</label>
               <select
                 value={condition}
                 onChange={(e) => setCondition(e.target.value)}
@@ -188,8 +188,8 @@ export function EditListingForm({ listing }: { listing: any }) {
           </div>
 
           <div>
-            <label className="text-xs font-mono text-[#aaa] block mb-1">
-              Deskripsi <span className="text-[#39FF14]">*</span>
+            <label className="text-xs font-mono text-[#C8C2DA] block mb-1">
+              Deskripsi <span className="text-[#C8FF4D]">*</span>
             </label>
             <textarea
               value={description}
@@ -202,8 +202,8 @@ export function EditListingForm({ listing }: { listing: any }) {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="text-xs font-mono text-[#aaa] block mb-1">
-                Harga (IDR) <span className="text-[#39FF14]">*</span>
+              <label className="text-xs font-mono text-[#C8C2DA] block mb-1">
+                Harga (IDR) <span className="text-[#C8FF4D]">*</span>
               </label>
               <input
                 type="number"
@@ -211,14 +211,14 @@ export function EditListingForm({ listing }: { listing: any }) {
                 onChange={(e) => setFiatEstimateIdr(e.target.value)}
                 min={50000}
                 step={50000}
-                className="input-dark w-full py-2.5 px-3 text-sm font-mono font-bold text-[#39FF14]"
+                className="input-dark w-full py-2.5 px-3 text-sm font-mono font-bold text-[#C8FF4D]"
                 required
               />
             </div>
 
             <div>
-              <label className="text-xs font-mono text-[#aaa] block mb-1">
-                Stok <span className="text-[#39FF14]">*</span>
+              <label className="text-xs font-mono text-[#C8C2DA] block mb-1">
+                Stok <span className="text-[#C8FF4D]">*</span>
               </label>
               <input
                 type="number"
@@ -226,10 +226,10 @@ export function EditListingForm({ listing }: { listing: any }) {
                 onChange={(e) => setStock(e.target.value)}
                 min={0}
                 step={1}
-                className="input-dark w-full py-2.5 px-3 text-sm font-mono font-bold text-[#39FF14]"
+                className="input-dark w-full py-2.5 px-3 text-sm font-mono font-bold text-[#C8FF4D]"
                 required
               />
-              <p className="text-[10px] font-mono text-[#666] mt-1">
+              <p className="text-[10px] font-mono text-[#8B82A6] mt-1">
                 Set 0 untuk SOLD OUT
               </p>
             </div>
@@ -237,15 +237,15 @@ export function EditListingForm({ listing }: { listing: any }) {
         </div>
 
         {/* Lokasi */}
-        <div className="bg-[#121212] border border-[#262626] p-6 space-y-4">
-          <h2 className="text-sm font-bold text-white font-mono uppercase tracking-wider border-b border-[#222] pb-2 flex items-center gap-2">
-            <MapPin size={16} className="text-[#39FF14]" />
+        <div className="bg-[#12101F] border border-[#3A3157] p-6 space-y-4">
+          <h2 className="text-sm font-bold text-cream font-mono uppercase tracking-wider border-b border-[#3A3157] pb-2 flex items-center gap-2">
+            <MapPin size={16} className="text-[#C8FF4D]" />
             <span>Lokasi Produk</span>
           </h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="text-xs font-mono text-[#aaa] block mb-1">Kecamatan</label>
+              <label className="text-xs font-mono text-[#C8C2DA] block mb-1">Kecamatan</label>
               <input
                 type="text"
                 value={locationDistrict}
@@ -256,7 +256,7 @@ export function EditListingForm({ listing }: { listing: any }) {
             </div>
 
             <div>
-              <label className="text-xs font-mono text-[#aaa] block mb-1">Kota</label>
+              <label className="text-xs font-mono text-[#C8C2DA] block mb-1">Kota</label>
               <input
                 type="text"
                 value={locationCity}
@@ -268,7 +268,7 @@ export function EditListingForm({ listing }: { listing: any }) {
           </div>
 
           <div>
-            <label className="text-xs font-mono text-[#aaa] block mb-1">Area Titik Temu</label>
+            <label className="text-xs font-mono text-[#C8C2DA] block mb-1">Area Titik Temu</label>
             <input
               type="text"
               value={meetupZone}
@@ -279,7 +279,7 @@ export function EditListingForm({ listing }: { listing: any }) {
           </div>
 
           <div>
-            <label className="text-xs font-mono text-[#aaa] block mb-1">Ketersediaan Waktu</label>
+            <label className="text-xs font-mono text-[#C8C2DA] block mb-1">Ketersediaan Waktu</label>
             <input
               type="text"
               value={meetingAvailability}
@@ -290,13 +290,13 @@ export function EditListingForm({ listing }: { listing: any }) {
         </div>
 
         {/* Foto */}
-        <div className="bg-[#121212] border border-[#262626] p-6 space-y-4">
-          <h2 className="text-sm font-bold text-white font-mono uppercase tracking-wider border-b border-[#222] pb-2">
+        <div className="bg-[#12101F] border border-[#3A3157] p-6 space-y-4">
+          <h2 className="text-sm font-bold text-cream font-mono uppercase tracking-wider border-b border-[#3A3157] pb-2">
             Foto Produk
           </h2>
 
           <div>
-            <label className="text-xs font-mono text-[#aaa] block mb-1">URL Foto</label>
+            <label className="text-xs font-mono text-[#C8C2DA] block mb-1">URL Foto</label>
             <input
               type="url"
               value={imageUrl}
@@ -313,8 +313,8 @@ export function EditListingForm({ listing }: { listing: any }) {
                 onClick={() => setImageUrl(preset.url)}
                 className={`p-2 text-left border text-xs font-mono flex items-center gap-2 transition-all cursor-pointer ${
                   imageUrl === preset.url
-                    ? "bg-[#39FF14]/10 border-[#39FF14] text-[#39FF14] font-bold"
-                    : "bg-[#161616] border-[#333] text-[#aaa] hover:text-white hover:bg-[#202020]"
+                    ? "bg-[#C8FF4D]/10 border-[#C8FF4D] text-[#C8FF4D] font-bold"
+                    : "bg-[#19152B] border-[#4A4168] text-[#C8C2DA] hover:text-cream hover:bg-[#202020]"
                 }`}
               >
                 <img src={preset.url} alt={preset.name} className="w-8 h-8 object-cover shrink-0" />
@@ -325,8 +325,8 @@ export function EditListingForm({ listing }: { listing: any }) {
 
           {imageUrl && (
             <div className="pt-2">
-              <div className="text-[10px] font-mono text-[#888] mb-1">Preview:</div>
-              <div className="w-48 h-32 bg-[#181818] border border-[#333] overflow-hidden">
+              <div className="text-[10px] font-mono text-[#A79EC2] mb-1">Preview:</div>
+              <div className="w-48 h-32 bg-[#19152B] border border-[#4A4168] overflow-hidden">
                 <img src={imageUrl} alt="Preview" className="w-full h-full object-cover" />
               </div>
             </div>

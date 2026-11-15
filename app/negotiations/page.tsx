@@ -70,22 +70,22 @@ export default async function NegotiationsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-[#e8e8e8] flex flex-col">
+    <div className="min-h-screen bg-[#0A0812] text-[#F5F0E6] flex flex-col">
       <PublicNav currentRole={currentRole} codename={session.codename} isLoggedIn={true} />
 
       <main className="flex-1 max-w-5xl mx-auto w-full px-4 sm:px-8 py-8 space-y-6">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#222222]">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#3A3157]">
           <div>
-            <div className="flex items-center gap-2 text-xs font-mono text-[#39FF14] uppercase tracking-wider mb-1 font-bold">
-              <span className="w-2 h-2 rounded-full bg-[#39FF14] pulse-green" />
+            <div className="flex items-center gap-2 text-xs font-mono text-[#C8FF4D] uppercase tracking-wider mb-1 font-bold">
+              <span className="w-2 h-2 rounded-full bg-[#C8FF4D] pulse-green" />
               <span>P2P NEGOTIATION HUB</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+            <h1 className="text-2xl sm:text-3xl font-bold text-cream tracking-tight">
               Daftar Negosiasi &amp; Tawaran Aktif
             </h1>
-            <p className="text-xs font-mono text-[#888] mt-1">
-              Login sebagai: <span className="text-[#39FF14] font-bold">{session?.codename}</span> ({currentRole})
+            <p className="text-xs font-mono text-[#A79EC2] mt-1">
+              Login sebagai: <span className="text-[#C8FF4D] font-bold">{session?.codename}</span> ({currentRole})
             </p>
           </div>
 
@@ -99,10 +99,10 @@ export default async function NegotiationsPage() {
 
         {/* List of negotiations */}
         {!negotiations || negotiations.length === 0 ? (
-          <div className="bg-[#121212] border border-[#222] p-12 text-center space-y-4">
-            <MessageSquare size={40} className="mx-auto text-[#444]" />
-            <h3 className="text-white font-bold text-base">Belum Ada Negosiasi Aktif</h3>
-            <p className="text-xs text-[#888] max-w-md mx-auto">
+          <div className="bg-[#12101F] border border-[#3A3157] p-12 text-center space-y-4">
+            <MessageSquare size={40} className="mx-auto text-[#5C5575]" />
+            <h3 className="text-cream font-bold text-base">Belum Ada Negosiasi Aktif</h3>
+            <p className="text-xs text-[#A79EC2] max-w-md mx-auto">
               {currentRole === "BUYER"
                 ? "Buka katalog produk dan klik 'Ajukan Penawaran (Nego Harga)' untuk mulai menawar barang dari seller lokal."
                 : "Belum ada penawaran masuk dari pembeli untuk barang dagangan Anda."}

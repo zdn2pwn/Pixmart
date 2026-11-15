@@ -45,7 +45,7 @@ export default async function MarketplacePage({
   const listings = listingsData || [];
 
   return (
-    <div className="min-h-screen bg-[#090a0f] text-[#f4f5f8] flex flex-col">
+    <div className="min-h-screen bg-[#0A0812] text-[#F5F0E6] flex flex-col">
       <PublicNav currentRole={currentRole} codename={session?.codename} isLoggedIn={!!session} />
       <MarketplaceExplorer
         initialListings={listings}
