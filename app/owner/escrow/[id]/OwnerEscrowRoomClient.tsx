@@ -7,6 +7,7 @@ import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { MessageThread } from "@/components/chat/MessageThread";
 import { sendEscrowMessageAction } from "@/app/actions/messaging";
 import { markEscrowMessageAsReadAction, deleteEscrowMessageAction } from "@/app/actions/messages";
+import { customAlert } from "@/components/ui/CustomAlert";
 import {
   holdFundsAction,
   releaseFundsAction,
@@ -65,45 +66,55 @@ export function OwnerEscrowRoomClient({
 
   // Actions
   async function handleHoldFunds() {
-    if (!confirm("Tahan dana dari Buyer untuk escrow ini?")) return;
-    
-    startTransition(async () => {
-      const result = await holdFundsAction(escrow.id);
-      if (result.success) {
-        alert("✓ Dana berhasil ditahan di escrow!");
-        window.location.reload(); // Force full reload
-      } else {
-        alert(`✗ ${result.error}`);
+    customAlert.confirm(
+      "Tahan dana dari Buyer untuk escrow ini?",
+      async () => {
+        startTransition(async () => {
+          const result = await holdFundsAction(escrow.id);
+          if (result.success) {
+            customAlert.success("✓ Dana berhasil ditahan di escrow!");
+            setTimeout(() => window.location.reload(), 1500);
+          } else {
+            customAlert.error(result.error || "Gagal menahan dana");
+          }
+        });
       }
-    });
+    );
   }
 
   async function handleReleaseFunds() {
-    if (!confirm("Lepas dana ke Seller? Transaksi akan diselesaikan.")) return;
-    
-    startTransition(async () => {
-      const result = await releaseFundsAction(escrow.id);
-      if (result.success) {
-        alert("✓ Dana berhasil dilepas ke Seller! Transaksi selesai.");
-        window.location.reload(); // Force full reload
-      } else {
-        alert(`✗ ${result.error}`);
-      }
-    });
+    customAlert.confirm(
+      "Lepas dana ke Seller? Transaksi akan diselesaikan. IRREVERSIBLE!",
+      async () => {
+        startTransition(async () => {
+          const result = await releaseFundsAction(escrow.id);
+          if (result.success) {
+            customAlert.success("✓ Dana berhasil dilepas ke Seller! Transaksi selesai.");
+            setTimeout(() => window.location.reload(), 1500);
+          } else {
+            customAlert.error(result.error || "Gagal melepas dana");
+          }
+        });
+      },
+      "Konfirmasi Release Funds"
+    );
   }
 
   async function handleVerify() {
-    if (!confirm("Verifikasi transaksi ini sebagai Midman?")) return;
-    
-    startTransition(async () => {
-      const result = await verifyEscrowAction(escrow.id);
-      if (result.success) {
-        alert("✓ Transaksi diverifikasi!");
-        window.location.reload(); // Force full reload
-      } else {
-        alert(`✗ ${result.error}`);
+    customAlert.confirm(
+      "Verifikasi transaksi ini sebagai Midman?",
+      async () => {
+        startTransition(async () => {
+          const result = await verifyEscrowAction(escrow.id);
+          if (result.success) {
+            customAlert.success("✓ Transaksi diverifikasi!");
+            setTimeout(() => window.location.reload(), 1500);
+          } else {
+            customAlert.error(result.error || "Gagal verifikasi");
+          }
+        });
       }
-    });
+    );
   }
 
   // Handle sending messages

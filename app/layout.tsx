@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { CustomAlertProvider } from "@/components/ui/CustomAlert";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -34,7 +35,9 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full`}
     >
       <body className="min-h-full bg-[#0a0a0a] text-[#f0f0f0] antialiased">
-        {children}
+        <CustomAlertProvider>
+          {children}
+        </CustomAlertProvider>
       </body>
     </html>
   );

@@ -24,7 +24,8 @@ export function LiveBidBar({
 }: LiveBidBarProps) {
   const [showCounterForm, setShowCounterForm] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'BTC' | 'XMR'>('BTC');
-  const [inputAmount, setInputAmount] = useState(''); // RENAMED from offerAmount
+  const [inputAmount, setInputAmount] = useState('');
+  const [idrPreview, setIdrPreview] = useState(0);
 
   // Fiat conversion rates
   const btcToIdr = 1400000000; // 1 BTC ≈ Rp 1.4B
@@ -33,6 +34,17 @@ export function LiveBidBar({
   const estimateFiat = (amount: number, method: 'BTC' | 'XMR') => {
     if (isNaN(amount) || amount <= 0) return 0;
     return Math.round(amount * (method === 'BTC' ? btcToIdr : xmrToIdr));
+  };
+
+  // Update IDR preview when input changes (FIX BUG #4)
+  const handleInputChange = (value: string) => {
+    setInputAmount(value);
+    const amount = parseFloat(value);
+    if (!isNaN(amount) && amount > 0) {
+      setIdrPreview(estimateFiat(amount, paymentMethod));
+    } else {
+      setIdrPreview(0);
+    }
   };
 
   const handleSubmitCounter = async () => {
@@ -134,7 +146,7 @@ export function LiveBidBar({
             )}
 
             <div className="grid grid-cols-3 gap-2">
-              {/* Counter Offer Button */}
+              {/* Counter Offer Button - ALWAYS ENABLED (FIX RACE CONDITION) */}
               <button
                 onClick={() => setShowCounterForm(true)}
                 disabled={isPending}
@@ -143,7 +155,7 @@ export function LiveBidBar({
                 💰 {isBuyer ? "Tawar" : "Counter"}
               </button>
 
-              {/* Deal Button (for both buyer and seller) */}
+              {/* Deal Button (for both buyer and seller) - Show agreed status */}
               {hasOffer && (
                 <button
                   onClick={onAccept}
@@ -167,12 +179,13 @@ export function LiveBidBar({
                 </button>
               )}
 
-              {/* Reject Button */}
-              {((isSeller && hasOffer) || isBuyer) && (
+              {/* Reject Button - HANYA RESET, BUKAN TUTUP */}
+              {hasOffer && (
                 <button
                   onClick={onReject}
                   disabled={isPending}
                   className="bg-[#FF4444]/10 hover:bg-[#FF4444]/20 border border-[#FF4444]/50 text-[#FF4444] py-2 text-xs font-bold flex items-center justify-center gap-1 transition-all disabled:opacity-50"
+                  title="Tolak offer ini (bisa counter lagi)"
                 >
                   ✗ Reject
                 </button>
@@ -235,20 +248,21 @@ export function LiveBidBar({
             </label>
           </div>
 
-          {/* Amount Input - Compact */}
+          {/* Amount Input - Compact with LIVE IDR Preview */}
           <div className="grid grid-cols-3 gap-2 items-end">
             <div className="col-span-2">
               <input
                 type="number"
                 step={paymentMethod === 'BTC' ? '0.00000001' : '0.0001'}
                 value={inputAmount}
-                onChange={(e) => setInputAmount(e.target.value)}
+                onChange={(e) => handleInputChange(e.target.value)}
                 placeholder={paymentMethod === 'BTC' ? '0.00000000' : '0.0000'}
                 className="w-full bg-[#0a0a0a] border border-[#333] text-white px-3 py-2 text-xs font-mono focus:outline-none focus:border-[#39FF14]"
               />
-              {inputAmount && !isNaN(parseFloat(inputAmount)) && (
-                <div className="text-xs text-[#888] mt-1">
-                  ≈ Rp {estimateFiat(parseFloat(inputAmount), paymentMethod).toLocaleString('id-ID')}
+              {/* LIVE IDR PREVIEW (FIX BUG #4) */}
+              {idrPreview > 0 && (
+                <div className="text-xs text-[#39FF14] font-bold mt-1 animate-pulse">
+                  💰 ≈ Rp {idrPreview.toLocaleString('id-ID')}
                 </div>
               )}
             </div>

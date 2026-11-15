@@ -90,9 +90,13 @@ export async function counterOfferAction(formData: FormData) {
     return { success: false, error: "Data counter offer tidak valid" };
   }
 
-  // Update negotiation - ONLY set the selected method!
+  // RESET deal agreements when counter offer is made (FIX RACE CONDITION)
   const updateData: any = {
     status: "COUNTER_OFFER",
+    deal_buyer_agreed: false,
+    deal_seller_agreed: false,
+    buyer_agreed_at: null,
+    seller_agreed_at: null,
   };
 
   if (method === 'BTC') {
@@ -287,9 +291,21 @@ export async function rejectOfferAction(formData: FormData) {
   
   const negotiationId = formData.get("negotiationId") as string;
 
+  if (!negotiationId) {
+    return { success: false, error: "ID Negosiasi diperlukan" };
+  }
+
+  // REJECT HANYA RESET OFFER, BUKAN TUTUP NEGOSIASI (FIX BUG)
+  // Reset deal agreements dan status kembali ke PENDING
   const { error } = await supabase
     .from("negotiations")
-    .update({ status: "REJECTED" })
+    .update({ 
+      status: "PENDING",
+      deal_buyer_agreed: false,
+      deal_seller_agreed: false,
+      buyer_agreed_at: null,
+      seller_agreed_at: null,
+    })
     .eq("id", negotiationId);
 
   if (error) {
@@ -297,7 +313,7 @@ export async function rejectOfferAction(formData: FormData) {
   }
 
   revalidatePath(`/negotiations/${negotiationId}`);
-  return { success: true };
+  return { success: true, message: "Offer ditolak. Anda bisa counter offer lagi." };
 }
 
 export async function sendNegotiationMessageAction(formData: FormData) {
@@ -328,4 +344,49 @@ export async function sendNegotiationMessageAction(formData: FormData) {
   }
 
   return { success: true, message };
+}
+
+export async function cancelNegotiationAction(formData: FormData) {
+  const session = await requireSimpleSession();
+  const supabase = await createSupabaseServerClient();
+  
+  const negotiationId = formData.get("negotiationId") as string;
+
+  if (!negotiationId) {
+    return { success: false, error: "ID Negosiasi diperlukan" };
+  }
+
+  // Get negotiation to verify ownership
+  const { data: nego } = await supabase
+    .from("negotiations")
+    .select("buyer_id, seller_id")
+    .eq("id", negotiationId)
+    .single();
+
+  if (!nego) {
+    return { success: false, error: "Negosiasi tidak ditemukan" };
+  }
+
+  // Only buyer or seller can cancel
+  if (session.userId !== nego.buyer_id && session.userId !== nego.seller_id) {
+    return { success: false, error: "Anda tidak memiliki akses" };
+  }
+
+  // CANCEL = permanent close
+  const { error } = await supabase
+    .from("negotiations")
+    .update({ 
+      status: "CANCELLED",
+      deal_buyer_agreed: false,
+      deal_seller_agreed: false,
+    })
+    .eq("id", negotiationId);
+
+  if (error) {
+    return { success: false, error: "Gagal membatalkan negosiasi" };
+  }
+
+  revalidatePath(`/negotiations/${negotiationId}`);
+  revalidatePath("/negotiations");
+  return { success: true, message: "Negosiasi dibatalkan secara permanen." };
 }

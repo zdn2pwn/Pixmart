@@ -7,6 +7,7 @@ import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { MessageThread } from "@/components/chat/MessageThread";
 import { sendEscrowMessageAction } from "@/app/actions/messaging";
 import { markEscrowMessageAsReadAction, deleteEscrowMessageAction } from "@/app/actions/messages";
+import { customAlert } from "@/components/ui/CustomAlert";
 import {
   proposeMeetingAction,
   acceptMeetingAction,
@@ -102,8 +103,8 @@ export function EscrowRoomClient({ room: initialRoom, messages: initialMessages,
     
     const result = await proposeMeetingAction(formData);
     if (result.success) {
-      alert("Usulan titik temu berhasil dikirim!");
-      window.location.reload(); // Force full reload
+      customAlert.success("Usulan titik temu berhasil dikirim!");
+      setTimeout(() => window.location.reload(), 1500);
     }
   }
 
@@ -111,20 +112,23 @@ export function EscrowRoomClient({ room: initialRoom, messages: initialMessages,
   async function handleAcceptMeeting() {
     const result = await acceptMeetingAction(room.id);
     if (result.success) {
-      alert("Titik temu disepakati!");
-      window.location.reload(); // Force full reload
+      customAlert.success("Titik temu disepakati!");
+      setTimeout(() => window.location.reload(), 1500);
     }
   }
 
   // Handle confirm arrival
   async function handleConfirmArrival() {
-    if (!confirm(`Konfirmasi bahwa Anda sudah sampai di lokasi?`)) return;
-    
-    const result = await confirmArrivalAction(room.id);
-    if (result.success) {
-      alert("Kehadiran dikonfirmasi!");
-      window.location.reload(); // Force full reload
-    }
+    customAlert.confirm(
+      "Konfirmasi bahwa Anda sudah sampai di lokasi?",
+      async () => {
+        const result = await confirmArrivalAction(room.id);
+        if (result.success) {
+          customAlert.success("Kehadiran dikonfirmasi!");
+          setTimeout(() => window.location.reload(), 1500);
+        }
+      }
+    );
   }
 
   // Handle COD handshake (buyer confirm received, seller confirm handed over)
@@ -133,30 +137,34 @@ export function EscrowRoomClient({ room: initialRoom, messages: initialMessages,
       ? "Konfirmasi bahwa Anda SUDAH MENERIMA barang sesuai deskripsi?"
       : "Konfirmasi bahwa Anda SUDAH MENYERAHKAN barang kepada buyer?";
     
-    if (!confirm(confirmText)) return;
-    
-    const result = await confirmCodHandshakeAction(room.id);
-    if (result.success) {
-      if (result.bothConfirmed) {
-        alert("🎉 Kedua pihak sudah konfirmasi! Menunggu Midman release dana...");
-      } else {
-        alert("Konfirmasi berhasil. Menunggu konfirmasi dari pihak lain...");
+    customAlert.confirm(confirmText, async () => {
+      const result = await confirmCodHandshakeAction(room.id);
+      if (result.success) {
+        if (result.bothConfirmed) {
+          customAlert.success("🎉 Kedua pihak sudah konfirmasi! Menunggu Midman release dana...");
+        } else {
+          customAlert.success("Konfirmasi berhasil. Menunggu konfirmasi dari pihak lain...");
+        }
+        setTimeout(() => window.location.reload(), 1500);
       }
-      window.location.reload(); // Force full reload
-    }
+    });
   }
 
   // Handle payment (Buyer only)
   async function handlePayment() {
-    if (!confirm(`Bayar ${agreedPriceBtc?.toFixed(8) || 0} ${cryptoType} (≈ Rp ${agreedPriceIdr.toLocaleString("id-ID")})?`)) return;
-
-    const result = await payEscrowAction(room.id);
-    if (result.success) {
-      alert("✅ Pembayaran berhasil! Dana ditahan oleh sistem escrow.");
-      window.location.reload(); // Force full reload
-    } else {
-      alert(`❌ Pembayaran gagal: ${result.error}`);
-    }
+    customAlert.confirm(
+      `Bayar ${agreedPriceBtc?.toFixed(8) || 0} ${cryptoType} (≈ Rp ${agreedPriceIdr.toLocaleString("id-ID")})?`,
+      async () => {
+        const result = await payEscrowAction(room.id);
+        if (result.success) {
+          customAlert.success("✅ Pembayaran berhasil! Dana ditahan oleh sistem escrow.");
+          setTimeout(() => window.location.reload(), 1500);
+        } else {
+          customAlert.error(result.error || "Pembayaran gagal");
+        }
+      },
+      "Konfirmasi Pembayaran"
+    );
   }
 
   // Setup Supabase Realtime for instant message updates

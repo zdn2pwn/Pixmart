@@ -7,7 +7,7 @@ import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { MessageThread } from "@/components/chat/MessageThread";
 import { LiveBidBar } from "@/components/nego/LiveBidBar";
 import { sendNegotiationMessageAction } from "@/app/actions/messaging";
-import { acceptOfferAction, rejectOfferAction, counterOfferAction } from "@/app/actions/negotiation";
+import { acceptOfferAction, rejectOfferAction, counterOfferAction, cancelNegotiationAction } from "@/app/actions/negotiation";
 import { markNegoMessageAsReadAction, deleteNegoMessageAction } from "@/app/actions/messages";
 import {
   ArrowLeft,
@@ -34,7 +34,7 @@ export function NegotiationRoomClient({
   session,
 }: NegotiationRoomClientProps) {
   const router = useRouter();
-  const [negotiation] = useState(initialNegotiation);
+  const [negotiation, setNegotiation] = useState(initialNegotiation);
   const [messages, setMessages] = useState(initialMessages);
   const [isPending, startTransition] = useTransition();
   const [showAcceptConfirm, setShowAcceptConfirm] = useState(false);
@@ -69,8 +69,6 @@ export function NegotiationRoomClient({
 
   // Handle rejecting offer
   async function handleRejectOffer() {
-    if (!confirm("Yakin ingin menolak penawaran ini?")) return;
-    
     startTransition(async () => {
       const formData = new FormData();
       formData.append("negotiationId", negotiation.id);
@@ -78,9 +76,29 @@ export function NegotiationRoomClient({
       const result = await rejectOfferAction(formData);
       
       if (result.success) {
+        alert(result.message || "Offer ditolak. Silakan counter offer lagi.");
         router.refresh();
       } else {
         alert(result.error || "Gagal menolak penawaran");
+      }
+    });
+  }
+
+  // Handle canceling entire negotiation
+  async function handleCancelNegotiation() {
+    if (!confirm("Yakin ingin MEMBATALKAN negosiasi ini secara permanen? Negosiasi akan ditutup dan tidak bisa dilanjutkan.")) return;
+    
+    startTransition(async () => {
+      const formData = new FormData();
+      formData.append("negotiationId", negotiation.id);
+      
+      const result = await cancelNegotiationAction(formData);
+      
+      if (result.success) {
+        alert(result.message || "Negosiasi dibatalkan.");
+        router.push("/negotiations");
+      } else {
+        alert(result.error || "Gagal membatalkan negosiasi");
       }
     });
   }
@@ -199,8 +217,26 @@ export function NegotiationRoomClient({
       }
     };
 
+    // Function to fetch latest negotiation data
+    const fetchNegotiation = async () => {
+      const { data } = await supabase
+        .from("negotiations")
+        .select(`
+          *,
+          listing:marketplace_listings(*),
+          buyer:profiles!negotiations_buyer_id_fkey(id, codename),
+          seller:profiles!negotiations_seller_id_fkey(id, codename)
+        `)
+        .eq("id", negotiation.id)
+        .single();
+      
+      if (data) {
+        setNegotiation(data);
+      }
+    };
+
     // Subscribe to negotiation_messages table for this negotiation
-    const channel = supabase
+    const messagesChannel = supabase
       .channel(`negotiation_messages:${negotiation.id}`)
       .on(
         "postgres_changes",
@@ -238,14 +274,35 @@ export function NegotiationRoomClient({
       )
       .subscribe();
 
+    // Subscribe to negotiations table for price updates (FIX BUG #1 & #2)
+    const negotiationChannel = supabase
+      .channel(`negotiation:${negotiation.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "negotiations",
+          filter: `id=eq.${negotiation.id}`,
+        },
+        (payload) => {
+          console.log("Realtime negotiation update:", payload);
+          // Update negotiation state immediately for live bid bar
+          fetchNegotiation();
+        }
+      )
+      .subscribe();
+
     // POLLING: Fetch messages every 2 seconds as fallback
     const pollInterval = setInterval(() => {
       fetchMessages();
+      fetchNegotiation();
     }, 2000); // 2 seconds
 
     // Cleanup on unmount
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(messagesChannel);
+      supabase.removeChannel(negotiationChannel);
       clearInterval(pollInterval);
     };
   }, [negotiation.id]);
@@ -494,6 +551,21 @@ export function NegotiationRoomClient({
                 enableSelfDestruct={true}
               />
             </div>
+
+            {/* Cancel Negotiation Button - Bottom of chat */}
+            {(negotiation.status === "PENDING" || negotiation.status === "COUNTER_OFFER") && (
+              <div className="border-t border-[#222] p-3 bg-[#0a0a0a]">
+                <button
+                  onClick={handleCancelNegotiation}
+                  disabled={isPending}
+                  className="w-full py-2 text-xs font-mono text-[#666] hover:text-[#FF4444] hover:border-[#FF4444]/50 border border-[#333] transition-all disabled:opacity-50 flex items-center justify-center gap-1.5"
+                  title="Batalkan negosiasi secara permanen (tidak bisa dilanjutkan)"
+                >
+                  <XCircle size={12} />
+                  <span>Batalkan Negosiasi</span>
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
