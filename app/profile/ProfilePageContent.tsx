@@ -70,6 +70,22 @@ export function ProfilePageContent({ session, profile }: ProfilePageContentProps
         </div>
       </div>
 
+      {/* Reputation card */}
+      <div className="bg-[#12101F] border border-[#3A3157] p-4 flex flex-wrap items-center gap-6">
+        <div>
+          <div className="text-[10px] font-mono text-[#A79EC2] uppercase tracking-wider">Reputation</div>
+          <div className="text-2xl font-bold text-[#C8FF4D] font-mono">{profile.reputation ?? 100}</div>
+        </div>
+        <div>
+          <div className="text-[10px] font-mono text-[#A79EC2] uppercase tracking-wider">Completed deals</div>
+          <div className="text-2xl font-bold text-cream font-mono">{profile.completed_deals ?? 0}</div>
+        </div>
+        <div>
+          <div className="text-[10px] font-mono text-[#A79EC2] uppercase tracking-wider">Role</div>
+          <div className="text-sm font-bold text-cream">{session.role}</div>
+        </div>
+      </div>
+
       {/* Success/Error Message */}
       {message && (
         <div

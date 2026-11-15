@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { formatBtc, formatXmr } from "@/lib/format";
 import { calculateDistanceKm, formatDistance, INDONESIAN_LOCATIONS, type Coordinates } from "@/lib/location";
-import { toggleWishlistAction } from "@/app/actions/marketplace";
+import { toggleWishlistAction, getWishlistIdsAction } from "@/app/actions/wishlist";
 import {
   Search,
   MapPin,
@@ -56,6 +56,11 @@ export function MarketplaceExplorer({
   const [radiusKm, setRadiusKm] = useState<number>(0);
   const [sortBy, setSortBy] = useState<"nearest" | "farthest" | "newest" | "lowest_price" | "highest_price">("newest");
   const [currency, setCurrency] = useState<"IDR" | "BTC" | "XMR">("IDR");
+
+  useEffect(() => {
+    if (!session?.userId) return;
+    getWishlistIdsAction().then(setWishlistIds).catch(() => {});
+  }, [session?.userId]);
 
   // Geolocation state
   const [userCoords, setUserCoords] = useState<Coordinates | null>(null);
@@ -109,7 +114,7 @@ export function MarketplaceExplorer({
     setWishlistIds((prev) =>
       prev.includes(listingId) ? prev.filter((id) => id !== listingId) : [...prev, listingId]
     );
-    await toggleWishlistAction();
+    await toggleWishlistAction(listingId);
   }
 
   // Dynamic distance calculation & filtering

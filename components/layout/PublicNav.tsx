@@ -22,6 +22,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { logoutAction } from "@/app/actions/auth";
+import { NotificationBell } from "@/components/layout/NotificationBell";
 
 interface PublicNavProps {
   currentRole?: string;
@@ -199,6 +200,8 @@ export function PublicNav({
                     Pasang Iklan
                   </Link>
                 )}
+
+                {isLoggedIn && <NotificationBell />}
 
                 <div className="relative">
                   <button

@@ -51,6 +51,21 @@ export async function sendEscrowMessageAction(formData: FormData) {
       return { error: "Gagal mengirim pesan." };
     }
 
+    const otherId =
+      room.buyer_id === session.userId ? room.seller_id : room.buyer_id;
+    try {
+      const { createNotificationAction } = await import("./notifications");
+      await createNotificationAction(
+        otherId,
+        "message",
+        "Pesan baru di escrow",
+        content.slice(0, 80),
+        `/escrow/${roomId}`
+      );
+    } catch {
+      /* ignore */
+    }
+
     revalidatePath(`/escrow/${roomId}`);
     return { success: true };
   } catch (err) {
@@ -105,6 +120,24 @@ export async function sendNegotiationMessageAction(formData: FormData) {
     if (insertError) {
       console.error("[SendNegotiationMessage] Error:", insertError);
       return { error: "Gagal mengirim pesan." };
+    }
+
+    // Notify the other party (best-effort, demo)
+    const otherId =
+      negotiation.buyer_id === session.userId
+        ? negotiation.seller_id
+        : negotiation.buyer_id;
+    try {
+      const { createNotificationAction } = await import("./notifications");
+      await createNotificationAction(
+        otherId,
+        "message",
+        "Pesan baru di negosiasi",
+        content.slice(0, 80),
+        `/negotiations/${negotiationId}`
+      );
+    } catch {
+      /* ignore */
     }
 
     revalidatePath(`/negotiations/${negotiationId}`);
