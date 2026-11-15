@@ -202,27 +202,3 @@ export async function verifyEscrowAction(escrowId: string) {
   return { success: true };
 }
 
-/**
- * Add manual activity log (utility function)
- */
-export async function addEscrowActivityAction(
-  escrowId: string,
-  action: string,
-  description: string
-) {
-  const session = await requireSimpleSession();
-  const supabase = await createSupabaseServerClient();
-
-  await supabase.from("escrow_activities").insert({
-    escrow_id: escrowId,
-    actor_id: session.userId,
-    actor_role: session.role,
-    action,
-    description,
-  });
-
-  revalidatePath(`/owner/escrow/${escrowId}`);
-  revalidatePath("/owner");
-  
-  return { success: true };
-}

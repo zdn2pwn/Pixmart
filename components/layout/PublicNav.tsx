@@ -11,11 +11,9 @@ import {
   Compass,
   MessageSquare,
   ShieldCheck,
-  LayoutDashboard,
   Store,
   ShoppingBag,
   LogOut,
-  RefreshCw,
   ChevronDown,
   User,
 } from "lucide-react";
@@ -49,7 +47,6 @@ export function PublicNav({
 
   // Color scheme based on role
   const activeColor = currentRole === "OWNER" ? "text-[#FFB800]" : "text-[#39FF14]";
-  const activeBorder = currentRole === "OWNER" ? "border-[#FFB800]" : "border-[#39FF14]";
   const activeIconColor = currentRole === "OWNER" ? "#FFB800" : "#39FF14";
 
   const displayName = codename || (currentRole === "BUYER" ? "Buyer" : currentRole === "SELLER" ? "Seller" : "Owner");

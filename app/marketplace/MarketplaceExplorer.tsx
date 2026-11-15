@@ -1,25 +1,19 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import type { PublicListingItem, ListingCategory } from "@/lib/types";
-import { formatBtc, formatXmr, formatCurrency } from "@/lib/format";
+import { formatBtc, formatXmr } from "@/lib/format";
 import { calculateDistanceKm, formatDistance, INDONESIAN_LOCATIONS, type Coordinates } from "@/lib/location";
 import { toggleWishlistAction } from "@/app/actions/marketplace";
 import {
   Search,
   MapPin,
-  Compass,
-  SlidersHorizontal,
   Heart,
   Navigation,
   Package,
   ArrowRight,
-  ShieldCheck,
-  CheckCircle2,
   AlertCircle,
-  Eye,
 } from "lucide-react";
 
 const CATEGORIES: { value: string; label: string }[] = [
@@ -45,7 +39,6 @@ interface MarketplaceExplorerProps {
   initialCity?: string;
   initialCategory?: string;
   initialSearch?: string;
-  userId?: string;
   session?: any;
 }
 
@@ -54,12 +47,11 @@ export function MarketplaceExplorer({
   initialCity = "ALL",
   initialCategory = "ALL",
   initialSearch = "",
-  userId,
   session,
 }: MarketplaceExplorerProps) {
   const router = useRouter();
   const [search, setSearch] = useState(initialSearch);
-  const [city, setCity] = useState(initialCity);
+  const city = initialCity;
   const [category, setCategory] = useState(initialCategory);
   const [radiusKm, setRadiusKm] = useState<number>(0);
   const [sortBy, setSortBy] = useState<"nearest" | "farthest" | "newest" | "lowest_price" | "highest_price">("newest");
@@ -88,7 +80,7 @@ export function MarketplaceExplorer({
         setGeoName("Lokasi Browser Saat Ini");
         setSortBy("nearest");
       },
-      (_err) => {
+      () => {
         setGeoStatus("DENIED");
       },
       { timeout: 10000, enableHighAccuracy: false }
@@ -117,7 +109,7 @@ export function MarketplaceExplorer({
     setWishlistIds((prev) =>
       prev.includes(listingId) ? prev.filter((id) => id !== listingId) : [...prev, listingId]
     );
-    await toggleWishlistAction(listingId);
+    await toggleWishlistAction();
   }
 
   // Dynamic distance calculation & filtering

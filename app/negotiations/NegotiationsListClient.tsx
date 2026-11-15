@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { customAlert } from "@/components/ui/CustomAlert";
 import { cancelNegotiationAction } from "@/app/actions/negotiation";
@@ -22,7 +21,6 @@ export function NegotiationsListClient({
   unreadCounts,
   latestMessages,
 }: NegotiationsListClientProps) {
-  const router = useRouter();
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [negotiations, setNegotiations] = useState(initialNegotiations);
 

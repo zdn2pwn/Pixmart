@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useTransition } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { MessageThread } from "@/components/chat/MessageThread";
@@ -12,19 +11,15 @@ import {
   holdFundsAction,
   releaseFundsAction,
   verifyEscrowAction,
-  addEscrowActivityAction,
 } from "@/app/actions/ownerEscrow";
 import {
   ArrowLeft,
   ShieldCheck,
-  AlertTriangle,
   CheckCircle2,
   Package,
   Users,
-  DollarSign,
   Lock,
   Unlock,
-  Clock,
   Activity,
   MessageSquare,
 } from "lucide-react";
@@ -42,8 +37,7 @@ export function OwnerEscrowRoomClient({
   activities: initialActivities,
   session 
 }: OwnerEscrowRoomClientProps) {
-  const router = useRouter();
-  const [escrow, setEscrow] = useState(initialEscrow);
+  const [escrow] = useState(initialEscrow);
   const [messages, setMessages] = useState(initialMessages);
   const [activities, setActivities] = useState(initialActivities);
   const [isPending, startTransition] = useTransition();

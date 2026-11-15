@@ -33,7 +33,7 @@ export async function markNegoMessageAsReadAction(messageId: string, negotiation
  * Delete negotiation message (self-destruct)
  */
 export async function deleteNegoMessageAction(messageId: string, negotiationId: string) {
-  const session = await requireSimpleSession();
+  await requireSimpleSession();
   const supabase = await createSupabaseServerClient();
 
   const { error } = await supabase
@@ -82,7 +82,7 @@ export async function markEscrowMessageAsReadAction(messageId: string, escrowId:
  * Delete escrow message (self-destruct)
  */
 export async function deleteEscrowMessageAction(messageId: string, escrowId: string) {
-  const session = await requireSimpleSession();
+  await requireSimpleSession();
   const supabase = await createSupabaseServerClient();
 
   const { error } = await supabase

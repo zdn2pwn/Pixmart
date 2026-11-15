@@ -7,18 +7,17 @@ const SESSION_COOKIE = "pixmart_session";
 const protectedRoutes = [
   "/dashboard",
   "/seller",
+  "/owner",
   "/admin",
   "/marketplace/new",
   "/negotiations",
   "/escrow",
   "/onboarding",
+  "/profile",
 ];
 
 // Routes yang hanya bisa diakses kalau belum login
 const authRoutes = ["/login", "/register"];
-
-// Routes yang bisa diakses siapa saja (public)
-const publicRoutes = ["/", "/marketplace", "/products"];
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -90,8 +89,13 @@ export async function proxy(request: NextRequest) {
       return NextResponse.redirect(new URL("/onboarding", request.url));
     }
 
-    // Otherwise go to dashboard
-    const dashboardUrl = session.role === "SELLER" ? "/seller" : "/dashboard";
+    // Otherwise go to the role's home
+    const dashboardUrl =
+      session.role === "OWNER"
+        ? "/owner"
+        : session.role === "SELLER"
+          ? "/seller"
+          : "/dashboard";
     return NextResponse.redirect(new URL(dashboardUrl, request.url));
   }
 
@@ -99,14 +103,18 @@ export async function proxy(request: NextRequest) {
   // ROLE-BASED ACCESS CONTROL
   // ═══════════════════════════════════════════════════════════
   if (isAuthenticated && session) {
-    // Admin routes - only OWNER can access
-    if (pathname.startsWith("/admin") && session.role !== "OWNER") {
+    // Owner/admin routes - only OWNER can access
+    if (
+      (pathname.startsWith("/owner") || pathname.startsWith("/admin")) &&
+      session.role !== "OWNER"
+    ) {
       return NextResponse.redirect(new URL("/dashboard", request.url));
     }
 
     // Seller routes - only SELLER can access
     if (pathname.startsWith("/seller") && session.role !== "SELLER") {
-      return NextResponse.redirect(new URL("/dashboard", request.url));
+      const fallback = session.role === "OWNER" ? "/owner" : "/dashboard";
+      return NextResponse.redirect(new URL(fallback, request.url));
     }
   }
 

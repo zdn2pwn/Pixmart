@@ -16,12 +16,10 @@ import {
 } from "lucide-react";
 
 export function OwnerDashboardContent({
-  session,
   escrowSessions,
   recentActivities,
   stats,
 }: {
-  session: any;
   escrowSessions: any[];
   recentActivities: any[];
   stats: {

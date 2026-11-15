@@ -2,6 +2,7 @@
 
 import { useTransition } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { StockManager } from "./StockManager";
 import { deleteListingAction } from "@/app/actions/seller";
 import { customAlert } from "@/components/ui/CustomAlert";
@@ -20,32 +21,37 @@ interface SellerListingCardProps {
 }
 
 export function SellerListingCard({ listing, onDelete, onUpdate }: SellerListingCardProps) {
+  const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
   function handleDelete() {
-    console.log("[SellerListingCard] Delete clicked for:", listing.id);
-    
     customAlert.confirm(
       "Yakin ingin menghapus listing ini? Buyer yang sedang nego akan diberitahu bahwa produk sudah tidak tersedia.",
-      async () => {
-        console.log("[SellerListingCard] Delete confirmed");
+      () => {
         startTransition(async () => {
           try {
-            console.log("[SellerListingCard] Calling deleteListingAction...");
             const res = await deleteListingAction(listing.id);
-            console.log("[SellerListingCard] Delete result:", res);
-            
-            if (res.success) {
-              console.log("[SellerListingCard] Delete SUCCESS, calling onDelete");
+
+            if (res?.success) {
+              // Hapus dari state lokal HANYA setelah server memastikan
+              // baris listing benar-benar terhapus dari database.
               onDelete(listing.id);
               customAlert.success("Listing berhasil dihapus");
-            } else {
-              console.error("[SellerListingCard] Delete FAILED:", res.error);
-              customAlert.error(res.error || "Gagal menghapus listing");
+              router.refresh();
+              return;
             }
-          } catch (err) {
-            console.error("[SellerListingCard] Delete EXCEPTION:", err);
-            customAlert.error("Terjadi kesalahan saat menghapus listing: " + String(err));
+
+            customAlert.error(res?.error || "Gagal menghapus listing");
+          } catch (err: any) {
+            // Redirect bukan berarti sukses. Ini biasanya terjadi saat sesi
+            // sudah kedaluwarsa (diarahkan ke /login).
+            if (err?.digest?.includes?.("NEXT_REDIRECT") || err?.message === "NEXT_REDIRECT") {
+              customAlert.error("Sesi Anda berakhir. Silakan login kembali.");
+              return;
+            }
+
+            console.error("[SellerListingCard] Delete exception:", err);
+            customAlert.error("Terjadi kesalahan: " + String(err?.message || err));
           }
         });
       },
@@ -87,8 +93,8 @@ export function SellerListingCard({ listing, onDelete, onUpdate }: SellerListing
               </span>
               <span>Rp {(listing.fiat_estimate_idr || 0).toLocaleString("id-ID")}</span>
               <span className={`px-2 py-0.5 text-xs font-bold ${
-                listing.status === "ACTIVE" 
-                  ? "bg-[#39FF14]/10 text-[#39FF14]" 
+                listing.status === "ACTIVE"
+                  ? "bg-[#39FF14]/10 text-[#39FF14]"
                   : "bg-[#666]/10 text-[#666]"
               }`}>
                 {listing.status}
@@ -98,9 +104,9 @@ export function SellerListingCard({ listing, onDelete, onUpdate }: SellerListing
 
           {/* STOCK MANAGER */}
           <div className="pt-2 border-t border-[#222]">
-            <StockManager 
-              listing={listing} 
-              onUpdate={handleStockUpdate} 
+            <StockManager
+              listing={listing}
+              onUpdate={handleStockUpdate}
             />
           </div>
 
@@ -122,7 +128,6 @@ export function SellerListingCard({ listing, onDelete, onUpdate }: SellerListing
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                console.log("[DEBUG] Delete button clicked!");
                 handleDelete();
               }}
               disabled={isPending}
@@ -130,7 +135,7 @@ export function SellerListingCard({ listing, onDelete, onUpdate }: SellerListing
               title="Hapus listing"
             >
               <Trash2 size={12} />
-              <span>Hapus</span>
+              <span>{isPending ? "Menghapus..." : "Hapus"}</span>
             </button>
 
             {/* View */}

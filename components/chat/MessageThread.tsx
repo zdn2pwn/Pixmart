@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useTransition } from "react";
+import { useState, useRef, useTransition } from "react";
 import { Send, Loader2, MessageSquare } from "lucide-react";
 import { SelfDestructMessage } from "./SelfDestructMessage";
 
@@ -41,16 +41,6 @@ export function MessageThread({
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const prevMessageCountRef = useRef(messages.length);
-
-  // DISABLED: Auto-scroll removed per user request
-  // Users can manually scroll to see new messages
-  // useEffect(() => {
-  //   if (messages.length > prevMessageCountRef.current) {
-  //     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  //   }
-  //   prevMessageCountRef.current = messages.length;
-  // }, [messages.length]);
 
   async function handleSendMessage(e: React.FormEvent) {
     e.preventDefault();

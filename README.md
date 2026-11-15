@@ -56,12 +56,16 @@
 - `/marketplace` : Katalog penawaran barang P2P dengan filter kota (Jakarta, Bandung, Surabaya, Yogyakarta, dll.) dan currency toggle (BTC/XMR)
 - `/marketplace/[id]` : Halaman detail barang, foto fisik, estimasi fiat IDR, dan form penguncian escrow
 - `/marketplace/new` : Form pasang iklan barang oleh seller dengan fitur live image preview & preset foto hardware
+- `/marketplace/[id]/edit` : Form edit iklan milik seller (judul, harga, stok, lokasi, status)
+- `/dashboard` : Dashboard buyer untuk negosiasi, escrow aktif, dan listing terdekat
+- `/seller` : Dashboard seller untuk kelola listing, tawaran masuk, dan pendapatan
+- `/negotiations` : Daftar negosiasi buyer-seller
+- `/escrow` : Daftar escrow aktif
 - `/escrow/[id]` : Ruang serah terima fisik (Dual-Handshake Room) dengan OTP verifikasi dan tombol konfirmasi dua pihak
-- `/admin` : Owner Radar & Platform Telemetry Command Center
-- `/admin/sales` : P2P Escrow Ledger & audit log transaksi
-- `/admin/products` : Moderasi dan compliance audit inventaris barang
-- `/admin/users` : Direktori peer nodes & reputasi pengguna
-- `/admin/settings` : Konfigurasi parameter protokol multisig & timeout
+- `/owner` : Midman Dashboard untuk memantau dan memverifikasi escrow
+- `/owner/escrow/[id]` : Ruang verifikasi escrow oleh Midman
+- `/profile` : Pengaturan profil, wallet, dan keamanan akun
+- `/admin` : Alias lama, otomatis dialihkan ke `/owner`
 
 ---
 

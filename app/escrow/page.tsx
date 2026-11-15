@@ -1,5 +1,4 @@
 import { requireSimpleSession } from "@/app/actions/auth";
-import { redirect } from "next/navigation";
 import { PublicNav } from "@/components/layout/PublicNav";
 import { PublicFooter } from "@/components/layout/PublicFooter";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -22,7 +21,7 @@ export default async function EscrowListPage() {
   const currentRole = session.role;
   const userId = session.userId;
 
-  // Fetch escrow sessions with midman info
+  // Fetch escrow sessions with midman info (exclude soft-deleted)
   const { data: rooms = [] } = await supabase
     .from("escrow_sessions")
     .select(`
@@ -35,6 +34,7 @@ export default async function EscrowListPage() {
       )
     `)
     .or(`buyer_id.eq.${userId},seller_id.eq.${userId}`)
+    .is("deleted_at", null) // Exclude soft-deleted escrows
     .order("created_at", { ascending: false });
 
   // Fetch unread message counts
@@ -54,7 +54,7 @@ export default async function EscrowListPage() {
   }
 
   // Fetch latest message for each escrow
-  const latestMessages: { [key: string]: any } = {};
+  const latestMessages: Record<string, { content: string; created_at: string }> = {};
   
   if (rooms && rooms.length > 0) {
     for (const room of rooms) {
@@ -105,7 +105,7 @@ export default async function EscrowListPage() {
             <ShieldCheck size={40} className="mx-auto text-[#444]" />
             <h3 className="text-white font-bold text-base">Belum Ada Escrow Room Aktif</h3>
             <p className="text-xs text-[#888] max-w-md mx-auto">
-              Escrow Room dibuat secara otomatis saat kesepakatan negosiasi harga tercapai atau saat Anda memilih 'Beli Langsung' di katalog produk.
+              Escrow Room dibuat secara otomatis saat kesepakatan negosiasi harga tercapai atau saat Anda memilih &apos;Beli Langsung&apos; di katalog produk.
             </p>
             <Link href="/marketplace" className="btn-primary text-xs font-bold px-4 py-2 inline-block">
               Jelajahi Produk

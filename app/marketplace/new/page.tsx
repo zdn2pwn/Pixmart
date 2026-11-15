@@ -22,7 +22,7 @@ export default async function NewListingPage() {
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-[#e8e8e8] flex flex-col">
       <PublicNav currentRole={session.role} codename={session.codename} isLoggedIn={true} />
-      <ListingForm session={session} />
+      <ListingForm />
       <PublicFooter />
     </div>
   );

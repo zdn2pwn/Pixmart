@@ -2,21 +2,15 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { createListingAction } from "@/app/actions/marketplace";
 import { INDONESIAN_LOCATIONS } from "@/lib/location";
 import {
   ArrowLeft,
   MapPin,
-  ShieldCheck,
   Plus,
   Loader2,
   AlertCircle,
-  CheckCircle2,
-  ImageIcon,
   Sparkles,
-  X,
-  Calendar,
 } from "lucide-react";
 
 const IMAGE_PRESETS = [
@@ -46,8 +40,7 @@ const IMAGE_PRESETS = [
   },
 ];
 
-export function ListingForm({ session }: { session: any }) {
-  const router = useRouter();
+export function ListingForm() {
   const [isPending, startTransition] = useTransition();
 
   const [title, setTitle] = useState("");

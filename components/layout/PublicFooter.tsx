@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export function PublicFooter() {
   return (
     <footer className="border-t border-[#1c1c1c] bg-[#0c0c0c] mt-auto">
@@ -21,9 +23,9 @@ export function PublicFooter() {
           <div className="space-y-3">
             <div className="text-xs font-mono text-[#aaa] uppercase tracking-wider font-bold">Navigasi</div>
             <ul className="space-y-2 text-xs font-sans text-[#777]">
-              <li><a href="/marketplace" className="hover:text-[#39FF14] transition-colors">Katalog Hardware</a></li>
-              <li><a href="/marketplace/new" className="hover:text-[#39FF14] transition-colors">Pasang Iklan Barang</a></li>
-              <li><a href="/admin" className="hover:text-[#39FF14] transition-colors">Owner Radar &amp; Ledger</a></li>
+              <li><Link href="/marketplace" className="hover:text-[#39FF14] transition-colors">Katalog Hardware</Link></li>
+              <li><Link href="/marketplace/new" className="hover:text-[#39FF14] transition-colors">Pasang Iklan Barang</Link></li>
+              <li><Link href="/owner" className="hover:text-[#39FF14] transition-colors">Owner Radar &amp; Ledger</Link></li>
             </ul>
           </div>
 

@@ -4,7 +4,6 @@ import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { updateListingAction } from "@/app/actions/marketplace";
-import { INDONESIAN_LOCATIONS } from "@/lib/location";
 import {
   ArrowLeft,
   MapPin,
@@ -40,7 +39,7 @@ const IMAGE_PRESETS = [
   },
 ];
 
-export function EditListingForm({ listing, session }: { listing: any; session: any }) {
+export function EditListingForm({ listing }: { listing: any }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
@@ -52,8 +51,8 @@ export function EditListingForm({ listing, session }: { listing: any; session: a
 
   const [locationCity, setLocationCity] = useState(listing.location_city || "");
   const [locationDistrict, setLocationDistrict] = useState(listing.location_district || "");
-  const [approxLatitude, setApproxLatitude] = useState(listing.approx_latitude || -6.2415);
-  const [approxLongitude, setApproxLongitude] = useState(listing.approx_longitude || 106.7978);
+  const approxLatitude = listing.approx_latitude || -6.2415;
+  const approxLongitude = listing.approx_longitude || 106.7978;
   const [meetupZone, setMeetupZone] = useState(listing.meetup_zone || "");
   const [meetingAvailability, setMeetingAvailability] = useState(listing.meeting_availability || "");
 
@@ -84,11 +83,26 @@ export function EditListingForm({ listing, session }: { listing: any; session: a
     }
 
     startTransition(async () => {
-      const res = await updateListingAction(formData);
-      if (res.success) {
-        router.push("/seller");
-      } else {
-        setErrorMsg(res.error || "Gagal mengupdate listing");
+      try {
+        const res = await updateListingAction(formData);
+
+        if (res?.success) {
+          // Pastikan dashboard seller mengambil data terbaru dari server
+          // setelah listing diupdate.
+          router.push("/seller");
+          router.refresh();
+          return;
+        }
+
+        setErrorMsg(res?.error || "Gagal mengupdate listing");
+      } catch (err: any) {
+        if (err?.digest?.includes?.("NEXT_REDIRECT") || err?.message === "NEXT_REDIRECT") {
+          setErrorMsg("Sesi Anda berakhir. Silakan login kembali.");
+          return;
+        }
+
+        console.error("[EditListingForm] Update exception:", err);
+        setErrorMsg("Terjadi kesalahan: " + String(err?.message || err));
       }
     });
   }

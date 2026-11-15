@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { MessageThread } from "@/components/chat/MessageThread";
@@ -24,10 +23,8 @@ import {
   Package,
   AlertTriangle,
   UserCheck,
-  Calendar,
   Navigation,
   Wallet,
-  CreditCard,
 } from "lucide-react";
 
 interface EscrowRoomClientProps {
@@ -37,7 +34,6 @@ interface EscrowRoomClientProps {
 }
 
 export function EscrowRoomClient({ room: initialRoom, messages: initialMessages, session }: EscrowRoomClientProps) {
-  const router = useRouter();
   const [room] = useState(initialRoom);
   const [messages, setMessages] = useState(initialMessages);
   const [showMeetingForm, setShowMeetingForm] = useState(false);
@@ -45,8 +41,6 @@ export function EscrowRoomClient({ room: initialRoom, messages: initialMessages,
   const [meetingTime, setMeetingTime] = useState("");
 
   const isBuyer = session.userId === room.buyer_id;
-  const isSeller = session.userId === room.seller_id;
-  const isMidman = session.userId === room.midman_id;
   const counterparty = isBuyer ? room.seller : room.buyer;
   const midman = room.midman;
 

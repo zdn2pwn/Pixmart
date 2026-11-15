@@ -4,13 +4,6 @@
 
 export type UserRole = "OWNER" | "SELLER" | "BUYER";
 
-export interface Session {
-  userId: string;
-  name: string;
-  email: string;
-  role: UserRole;
-}
-
 export interface User {
   id: string;
   codename: string; // e.g. "Anonymous Buyer #8821", "Anonymous Seller #1042"
@@ -95,11 +88,9 @@ export interface ListingWithSeller extends Listing {
 // ============================================================
 
 export type NegotiationStatus =
-  | "OPEN"
-  | "OFFER_MADE"
-  | "COUNTER_OFFERED"
-  | "DEAL_AGREED"
-  | "REJECTED"
+  | "PENDING"
+  | "COUNTER_OFFER"
+  | "ACCEPTED"
   | "CANCELLED";
 
 export interface NegotiationMessage {
@@ -249,49 +240,4 @@ export interface EscrowRoomWithDetails extends EscrowRoom {
   buyer: User;
 }
 
-// Backward compatibility alias for existing components
-export type EscrowOrder = EscrowRoom;
-export type EscrowOrderWithDetails = EscrowRoomWithDetails;
-export type EscrowStatus = MeetingStatus;
 
-// ============================================================
-// AUDIT LOG & NOTIFICATIONS
-// ============================================================
-
-export interface AuditLogEntry {
-  id: string;
-  actorId: string;
-  actorRole: UserRole;
-  action: string;
-  targetId: string;
-  details: string;
-  metadata?: any;
-  timestamp: Date;
-}
-
-export interface SystemNotification {
-  id: string;
-  userId: string;
-  title: string;
-  message: string;
-  linkUrl: string;
-  read: boolean;
-  createdAt: Date;
-}
-
-export interface PlatformMetrics {
-  totalDealsCompleted: number;
-  completedDealsCount?: number;
-  activeNegotiationsCount: number;
-  activeEscrowsCount: number;
-  disputeRatePct: number;
-  totalVolumeIdr: number;
-  totalVolumeBtc: number;
-  totalVolumeXmr: number;
-  activeUsersCount: number;
-  activeNodesCount?: number;
-  recentAuditLogs: AuditLogEntry[];
-  recentEscrowRooms: EscrowRoomWithDetails[];
-  recentOrders?: EscrowRoomWithDetails[];
-  trafficFeed?: any[];
-}

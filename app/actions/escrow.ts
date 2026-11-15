@@ -238,7 +238,7 @@ export async function proposeMeetingAction(formData: FormData) {
  * Accept meeting point & time
  */
 export async function acceptMeetingAction(roomId: string) {
-  const session = await requireSimpleSession();
+  await requireSimpleSession();
   const supabase = await createSupabaseServerClient();
 
   const { error } = await supabase
@@ -356,11 +356,6 @@ export async function confirmCodHandshakeAction(roomId: string) {
   };
 }
 
-// Backward compatibility alias
-export async function confirmHandshakeAction(orderId: string, roleToConfirm: "BUYER" | "SELLER") {
-  return confirmCodHandshakeAction(orderId);
-}
-
 /**
  * File dispute if issue occurs during meetup or negotiation
  */
@@ -403,7 +398,8 @@ export async function fileDisputeAction(formData: FormData) {
     .single();
 
   revalidatePath(`/escrow/${roomId}`);
-  revalidatePath("/admin");
+  revalidatePath("/owner");
+  revalidatePath(`/owner/escrow/${roomId}`);
   return { success: true, room: transformEscrowRoom(room) };
 }
 
@@ -438,7 +434,8 @@ export async function resolveDisputeAction(formData: FormData) {
   }
 
   revalidatePath(`/escrow/${roomId}`);
-  revalidatePath("/admin");
+  revalidatePath("/owner");
+  revalidatePath(`/owner/escrow/${roomId}`);
   return { success: true };
 }
 
@@ -476,7 +473,7 @@ export async function sendEscrowMessageAction(formData: FormData) {
 }
 
 /**
- * Delete escrow session (soft delete - hanya hide dari daftar user)
+ * Delete escrow session (soft delete - mark as deleted, not hard delete)
  * Hanya bisa delete jika user adalah buyer atau seller
  */
 export async function deleteEscrowSessionAction(roomId: string) {
@@ -498,10 +495,14 @@ export async function deleteEscrowSessionAction(roomId: string) {
     return { success: false, error: "Anda tidak memiliki akses untuk menghapus escrow ini" };
   }
   
-  // Hard delete (bisa diganti soft delete kalau mau)
+  // SOFT DELETE: Mark as deleted instead of hard delete
+  // This preserves data for income calculation
   const { error } = await supabase
     .from("escrow_sessions")
-    .delete()
+    .update({ 
+      deleted_at: new Date().toISOString(),
+      deleted_by: session.userId,
+    })
     .eq("id", roomId);
     
   if (error) {

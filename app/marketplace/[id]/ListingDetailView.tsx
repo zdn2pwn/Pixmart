@@ -4,8 +4,8 @@ import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { ListingWithSeller } from "@/lib/types";
-import { formatBtc, formatXmr, formatCurrency } from "@/lib/format";
-import { calculateDistanceKm, formatDistance, type Coordinates } from "@/lib/location";
+import { formatBtc, formatXmr } from "@/lib/format";
+import { calculateDistanceKm, formatDistance } from "@/lib/location";
 import { createOfferAction } from "@/app/actions/negotiation";
 import { createDirectEscrowAction } from "@/app/actions/escrow";
 import { toggleWishlistAction } from "@/app/actions/marketplace";
@@ -13,10 +13,8 @@ import {
   ArrowLeft,
   MapPin,
   ShieldCheck,
-  Lock,
   Loader2,
   AlertCircle,
-  CheckCircle2,
   Package,
   Eye,
   Calendar,
@@ -41,7 +39,6 @@ export function ListingDetailView({
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   // Distance state
-  const [userCoords, setUserCoords] = useState<Coordinates | null>(null);
   const [distanceText, setDistanceText] = useState<string | null>(null);
 
   function checkMyDistance() {
@@ -49,7 +46,6 @@ export function ListingDetailView({
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const coords = { latitude: pos.coords.latitude, longitude: pos.coords.longitude };
-        setUserCoords(coords);
         if (listing.approxLatitude && listing.approxLongitude) {
           const dist = calculateDistanceKm(coords, {
             latitude: listing.approxLatitude,
@@ -70,7 +66,7 @@ export function ListingDetailView({
       return;
     }
     setIsWishlisted(!isWishlisted);
-    await toggleWishlistAction(listing.id);
+    await toggleWishlistAction();
   }
 
   function handleOpenNego() {
@@ -100,11 +96,6 @@ export function ListingDetailView({
         setErrorMsg(res.error || "Gagal membuat ruang negosiasi");
       }
     });
-  }
-
-  async function handleSubmitOffer(e: React.FormEvent) {
-    // Not used anymore - direct nego creation
-    e.preventDefault();
   }
 
   async function handleDirectBuy() {

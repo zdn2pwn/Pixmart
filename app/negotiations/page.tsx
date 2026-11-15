@@ -1,5 +1,4 @@
 import { requireSimpleSession } from "@/app/actions/auth";
-import { redirect } from "next/navigation";
 import { PublicNav } from "@/components/layout/PublicNav";
 import { PublicFooter } from "@/components/layout/PublicFooter";
 import { createSupabaseServerClient } from "@/lib/supabase/server";

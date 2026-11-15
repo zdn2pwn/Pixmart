@@ -1,8 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
-import { ShieldCheck, MapPin, CheckCircle2, Lock, ArrowRight, Key, Sparkles } from "lucide-react";
+import { MapPin, CheckCircle2 } from "lucide-react";
 
 export function LiveTerminalWidget() {
   const [buyerSigned, setBuyerSigned] = useState(true);

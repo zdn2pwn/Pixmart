@@ -79,7 +79,7 @@ export async function createOfferAction(formData: FormData) {
 }
 
 export async function counterOfferAction(formData: FormData) {
-  const session = await requireSimpleSession();
+  await requireSimpleSession();
   const supabase = await createSupabaseServerClient();
   
   const negotiationId = formData.get("negotiationId") as string;
@@ -119,28 +119,6 @@ export async function counterOfferAction(formData: FormData) {
 
   revalidatePath(`/negotiations/${negotiationId}`);
   return { success: true };
-}
-
-// Helper to transform negotiation
-function transformNegotiation(dbNego: any) {
-  if (!dbNego) return null;
-  return {
-    id: dbNego.id,
-    buyerId: dbNego.buyer_id,
-    sellerId: dbNego.seller_id,
-    listingId: dbNego.listing_id,
-    initialOfferBtc: dbNego.initial_offer_btc,
-    initialOfferXmr: dbNego.initial_offer_xmr,
-    currentOfferBtc: dbNego.current_offer_btc,
-    currentOfferXmr: dbNego.current_offer_xmr,
-    status: dbNego.status,
-    createdAt: dbNego.created_at,
-    updatedAt: dbNego.updated_at,
-    messages: [], // Will be fetched separately
-    listing: null,
-    buyer: null,
-    seller: null,
-  } as any;
 }
 
 export async function acceptOfferAction(formData: FormData) {
@@ -288,7 +266,7 @@ export async function acceptOfferAction(formData: FormData) {
 }
 
 export async function rejectOfferAction(formData: FormData) {
-  const session = await requireSimpleSession();
+  await requireSimpleSession();
   const supabase = await createSupabaseServerClient();
   
   const negotiationId = formData.get("negotiationId") as string;

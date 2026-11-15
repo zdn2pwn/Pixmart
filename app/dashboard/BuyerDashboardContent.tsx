@@ -11,48 +11,53 @@ import {
   MapPin,
   Heart,
   CheckCircle2,
-  Clock,
-  ArrowRight,
   Package,
-  Calendar,
-  AlertTriangle,
-  Compass,
   Wallet,
-  Coins,
   Copy,
   Check,
   PlusCircle,
   Loader2,
-  Sparkles,
-  Info,
 } from "lucide-react";
 
 export function BuyerDashboardContent({
   session,
+  profile,
   negotiations,
   escrowRooms,
+  completedEscrows,
   wishlistListings,
-  nearbyListings,
 }: {
   session: any;
+  profile: {
+    balance_btc?: number | null;
+    balance_xmr?: number | null;
+    wallet_btc?: string | null;
+    wallet_xmr?: string | null;
+    deposit_address_btc?: string | null;
+    deposit_address_xmr?: string | null;
+    location_city?: string | null;
+  };
   negotiations: NegotiationWithDetails[];
   escrowRooms: EscrowRoomWithDetails[];
+  completedEscrows: EscrowRoomWithDetails[];
   wishlistListings: PublicListingItem[];
-  nearbyListings: PublicListingItem[];
 }) {
   const [activeTab, setActiveTab] = useState<"OVERVIEW" | "WALLET" | "NEGOTIATIONS" | "ESCROW" | "WISHLIST" | "HISTORY">("OVERVIEW");
 
   // Local state for dynamic balances
-  const [balanceXmr, setBalanceXmr] = useState<number>(session?.balanceXmr ?? 3.5);
-  const [balanceBtc, setBalanceBtc] = useState<number>(session?.balanceBtc ?? 0.05);
+  const [balanceXmr, setBalanceXmr] = useState<number>(Number(profile?.balance_xmr) || 0);
+  const [balanceBtc, setBalanceBtc] = useState<number>(Number(profile?.balance_btc) || 0);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [customToast, setCustomToast] = useState<{ msg: string; type: "SUCCESS" | "INFO" } | null>(null);
   const [isPendingTopUp, startTopUp] = useTransition();
 
-  const activeNegs = (negotiations || []).filter((n) => n.status !== "DEAL_AGREED" && n.status !== "REJECTED");
-  const activeEscrows = (escrowRooms || []).filter((r) => r.status !== "COMPLETED" && r.status !== "CANCELLED");
-  const completedEscrows = (escrowRooms || []).filter((r) => r.status === "COMPLETED");
-  const upcomingMeetups = (escrowRooms || []).filter((r) => r.status === "MEETING_CONFIRMED");
+  const activeNegs = (negotiations || []).filter(
+    (n) => n.status === "PENDING" || n.status === "COUNTER_OFFER"
+  );
+  const activeEscrows = escrowRooms || [];
+  const upcomingMeetups = (escrowRooms || []).filter(
+    (r) => Boolean((r as any).meeting_accepted) && !(r as any).completed_at
+  );
 
   function copyToClipboard(text: string, keyName: string) {
     if (!text) return;
@@ -65,6 +70,25 @@ export function BuyerDashboardContent({
   function showToast(msg: string, type: "SUCCESS" | "INFO" = "SUCCESS") {
     setCustomToast({ msg, type });
     setTimeout(() => setCustomToast(null), 3500);
+  }
+
+  function getEscrowTitle(room: any) {
+    return (
+      room.listing?.title ||
+      room.negotiation?.listing?.title ||
+      room.item_title ||
+      "Produk"
+    );
+  }
+
+  function getEscrowPriceIdr(room: any) {
+    return room.agreed_price_idr || room.finalPriceIdr || 0;
+  }
+
+  function getOfferLabel(negotiation: any) {
+    if (negotiation.current_offer_btc) return formatBtc(negotiation.current_offer_btc);
+    if (negotiation.current_offer_xmr) return formatXmr(negotiation.current_offer_xmr);
+    return "Belum ada tawaran";
   }
 
   function handleTopUp(currency: "BTC" | "XMR", amount: number) {
@@ -81,8 +105,8 @@ export function BuyerDashboardContent({
     });
   }
 
-  const depositBtc = session?.depositAddressBtc || "bc1q8f9a2e3c4d5b6a7f8e9a2b3c4d5e6f7a8b9c";
-  const depositXmr = session?.depositAddressXmr || "888xmr90a8b7c6d5e4f3a2b1c9d8e7f6a5b4c3d2e1f0a9b8c7d6e5f4a3b2c1d0";
+  const depositBtc = profile?.deposit_address_btc || "";
+  const depositXmr = profile?.deposit_address_xmr || "";
 
   return (
     <main className="flex-1 max-w-6xl mx-auto w-full px-4 sm:px-8 py-8 space-y-6">
@@ -111,7 +135,7 @@ export function BuyerDashboardContent({
             Dashboard Pembeli
           </h1>
           <p className="text-xs font-mono text-[#888] mt-1">
-            Identitas Anonim: <span className="text-[#39FF14] font-bold">{session?.name}</span> • Wilayah: {session?.locationCity || "Jakarta"}
+            Identitas Anonim: <span className="text-[#39FF14] font-bold">{session?.codename}</span> • Wilayah: {profile?.location_city || "Jakarta"}
           </p>
         </div>
 
@@ -157,7 +181,7 @@ export function BuyerDashboardContent({
                 <span>{copiedKey === "Monero (XMR)" ? "Tersalin!" : "Salin"}</span>
               </button>
             </div>
-            <div className="text-[11px] text-[#ccc] truncate select-all">{depositXmr}</div>
+            <div className="text-[11px] text-[#ccc] truncate select-all">{depositXmr || "Belum tersedia"}</div>
           </div>
 
           {/* Faucet Top Up Button */}
@@ -210,7 +234,7 @@ export function BuyerDashboardContent({
                 <span>{copiedKey === "Bitcoin (BTC)" ? "Tersalin!" : "Salin"}</span>
               </button>
             </div>
-            <div className="text-[11px] text-[#ccc] truncate select-all">{depositBtc}</div>
+            <div className="text-[11px] text-[#ccc] truncate select-all">{depositBtc || "Belum tersedia"}</div>
           </div>
 
           {/* Faucet Top Up Button */}
@@ -297,14 +321,14 @@ export function BuyerDashboardContent({
             <div className="bg-[#161616] border border-[#262626] p-4 space-y-2">
               <div className="text-xs font-bold text-[#FF6600]">Dompet Monero (XMR) Terdaftar:</div>
               <div className="text-xs text-[#ccc] break-all bg-[#111] p-2.5 border border-[#222]">
-                {session?.walletXmr || "Belum diisi saat pendaftaran"}
+                {profile?.wallet_xmr || "Belum diisi saat pendaftaran"}
               </div>
             </div>
 
             <div className="bg-[#161616] border border-[#262626] p-4 space-y-2">
               <div className="text-xs font-bold text-[#F7931A]">Dompet Bitcoin (BTC) Terdaftar:</div>
               <div className="text-xs text-[#ccc] break-all bg-[#111] p-2.5 border border-[#222]">
-                {session?.walletBtc || "Belum diisi saat pendaftaran"}
+                {profile?.wallet_btc || "Belum diisi saat pendaftaran"}
               </div>
             </div>
           </div>
@@ -330,13 +354,13 @@ export function BuyerDashboardContent({
                   >
                     <div className="flex items-center justify-between text-xs font-mono text-[#888] mb-1">
                       <span>Room #{r.id}</span>
-                      <span className="text-[#39FF14] font-bold">{r.meetingStatus}</span>
+                      <span className="text-[#39FF14] font-bold">{r.status || "ACTIVE"}</span>
                     </div>
                     <div className="text-sm font-bold text-white group-hover:text-[#39FF14] transition-colors line-clamp-1">
-                      {r.listing?.title || (r as any).item_title || "Produk"}
+                      {getEscrowTitle(r)}
                     </div>
                     <div className="text-xs font-mono text-[#aaa] mt-2 flex items-center justify-between">
-                      <span>Rp {((r as any).agreed_price_idr || r.finalPriceIdr || 0).toLocaleString("id-ID")}</span>
+                      <span>Rp {getEscrowPriceIdr(r).toLocaleString("id-ID")}</span>
                       <span className="text-[#39FF14] flex items-center gap-1 font-bold">
                         Buka Ruang COD →
                       </span>
@@ -362,9 +386,9 @@ export function BuyerDashboardContent({
                     className="p-4 bg-[#141414] border border-[#333] hover:border-[#39FF14] transition-all block group"
                   >
                     <div className="flex items-center justify-between text-xs font-mono text-[#888] mb-1">
-                      <span>Tawaran: {n.lastOfferBy === "BUYER" ? "Kamu" : "Penjual"}</span>
+                      <span>Status: {n.status || "OPEN"}</span>
                       <span className="text-[#FFB800] font-bold">
-                        Rp {(n.currentOfferPrice || 0).toLocaleString("id-ID")}
+                        {getOfferLabel(n)}
                       </span>
                     </div>
                     <div className="text-sm font-bold text-white group-hover:text-[#39FF14] transition-colors line-clamp-1">
@@ -443,7 +467,7 @@ export function BuyerDashboardContent({
             <div className="p-12 bg-[#111] border border-[#222] text-center space-y-3 font-mono text-xs">
               <MessageSquare size={32} className="mx-auto text-[#444]" />
               <div className="text-white font-bold">Belum Ada Riwayat Negosiasi</div>
-              <p className="text-[#777]">Buka katalog produk dan klik 'Ajukan Penawaran' untuk mulai menawar.</p>
+              <p className="text-[#777]">Buka katalog produk dan klik &apos;Ajukan Penawaran&apos; untuk mulai menawar.</p>
               <Link href="/marketplace" className="btn-primary text-xs font-bold px-4 py-2 inline-block">
                 Lihat Katalog
               </Link>
@@ -455,7 +479,7 @@ export function BuyerDashboardContent({
                   <div>
                     <div className="text-sm font-bold text-white">{n.listing?.title || "Produk"}</div>
                     <div className="text-xs font-mono text-[#888] mt-1">
-                      Penjual: {n.seller?.codename || "Unknown"} • Tawaran Terakhir: Rp {(n.currentOfferPrice || 0).toLocaleString("id-ID")}
+                      Penjual: {n.seller?.codename || "Unknown"} • Tawaran Terakhir: {getOfferLabel(n)}
                     </div>
                   </div>
                   <Link href={`/negotiations/${n.id}`} className="btn-ghost text-xs font-bold px-3 py-1.5 shrink-0">
@@ -482,10 +506,10 @@ export function BuyerDashboardContent({
               {escrowRooms.map((r) => (
                 <div key={r.id} className="p-4 bg-[#121212] border border-[#262626] flex items-center justify-between gap-4">
                   <div>
-                    <div className="text-xs font-mono text-[#39FF14] font-bold">Room #{r.id} • {r.meetingStatus}</div>
-                    <div className="text-sm font-bold text-white mt-0.5">{r.listing?.title || (r as any).item_title || "Produk"}</div>
+                    <div className="text-xs font-mono text-[#39FF14] font-bold">Room #{r.id} • {r.status || "ACTIVE"}</div>
+                    <div className="text-sm font-bold text-white mt-0.5">{getEscrowTitle(r)}</div>
                     <div className="text-xs font-mono text-[#888] mt-1">
-                      Harga COD: Rp {((r as any).agreed_price_idr || r.finalPriceIdr || 0).toLocaleString("id-ID")} ({(r as any).agreed_price_btc || r.cryptoAmount || 0} {(r as any).crypto_type || r.cryptoCurrency || "BTC"})
+                      Harga COD: Rp {getEscrowPriceIdr(r).toLocaleString("id-ID")} ({(r as any).agreed_price_btc || r.cryptoAmount || 0} {(r as any).crypto_type || r.cryptoCurrency || "BTC"})
                     </div>
                   </div>
                   <Link href={`/escrow/${r.id}`} className="btn-primary text-xs font-bold px-4 py-2 shrink-0">
@@ -561,9 +585,9 @@ export function BuyerDashboardContent({
                 <div key={r.id} className="p-4 bg-[#121212] border border-[#222] flex items-center justify-between">
                   <div>
                     <span className="badge-green text-[10px]">SELESAI (COD DUAL CONFIRMED)</span>
-                    <div className="text-sm font-bold text-white mt-1">{r.listing?.title || (r as any).item_title || "Produk"}</div>
+                    <div className="text-sm font-bold text-white mt-1">{getEscrowTitle(r)}</div>
                     <div className="text-xs font-mono text-[#888] mt-0.5">
-                      Nilai Transaksi: Rp {((r as any).agreed_price_idr || r.finalPriceIdr || 0).toLocaleString("id-ID")} • Penjual: {r.seller?.codename || "Unknown"}
+                      Nilai Transaksi: Rp {getEscrowPriceIdr(r).toLocaleString("id-ID")} • Penjual: {r.seller?.codename || "Unknown"}
                     </div>
                   </div>
                   <Link href={`/escrow/${r.id}`} className="btn-ghost text-xs font-mono px-3 py-1.5">

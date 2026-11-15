@@ -67,7 +67,6 @@ export default async function OwnerDashboardPage() {
     <div className="min-h-screen bg-[#0a0a0a] text-[#e8e8e8] flex flex-col">
       <PublicNav currentRole={session.role} codename={session.codename} isLoggedIn={true} />
       <OwnerDashboardContent
-        session={session}
         escrowSessions={sessions}
         recentActivities={activities}
         stats={{

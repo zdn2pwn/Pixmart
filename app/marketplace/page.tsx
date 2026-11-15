@@ -2,7 +2,6 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSimpleSession } from "@/app/actions/auth";
 import { PublicNav } from "@/components/layout/PublicNav";
 import { PublicFooter } from "@/components/layout/PublicFooter";
-import { RoleSwitcherHUD } from "@/components/layout/RoleSwitcherHUD";
 import { MarketplaceExplorer } from "./MarketplaceExplorer";
 import type { Metadata } from "next";
 

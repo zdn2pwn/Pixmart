@@ -16,27 +16,23 @@ export function SelfDestructMessage({
   onRead,
   onDestruct,
 }: SelfDestructMessageProps) {
-  const [isReading, setIsReading] = useState(false);
+  const [hasStartedReading, setHasStartedReading] = useState(false);
   const [countdown, setCountdown] = useState(10); // 10 seconds to read
   const [isDestroying, setIsDestroying] = useState(false);
 
   const isUnread = !message.read_at && !isOwnMessage;
   const isDeleted = message.is_deleted;
 
+  // The sender's countdown starts automatically once the recipient has read it.
+  const isReading = hasStartedReading || Boolean(isOwnMessage && message.read_at);
+
   // Handle reading message (only recipient can trigger)
   const handleStartReading = () => {
     if (isOwnMessage || isDeleted) return;
     
-    setIsReading(true);
+    setHasStartedReading(true);
     onRead(message.id);
   };
-
-  // Auto-start countdown for sender when recipient reads it
-  useEffect(() => {
-    if (isOwnMessage && message.read_at && !isReading) {
-      setIsReading(true);
-    }
-  }, [isOwnMessage, message.read_at, isReading]);
 
   // Countdown timer after reading (for BOTH sender and recipient)
   useEffect(() => {

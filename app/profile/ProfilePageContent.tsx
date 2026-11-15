@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { User, Wallet, MapPin, Shield, Save, Eye, EyeOff, Key } from "lucide-react";
+import { User, Wallet, MapPin, Shield, Save, Key } from "lucide-react";
 import type { SimpleSession } from "@/app/actions/auth";
 
 interface ProfilePageContentProps {
@@ -10,7 +10,7 @@ interface ProfilePageContentProps {
 }
 
 export function ProfilePageContent({ session, profile }: ProfilePageContentProps) {
-  const [isPending, startTransition] = useTransition();
+  const [isPending] = useTransition();
   
   // Form state
   const [codename, setCodename] = useState(profile.codename || "");

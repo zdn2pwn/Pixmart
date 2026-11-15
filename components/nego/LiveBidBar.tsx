@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Loader2, TrendingDown, DollarSign } from "lucide-react";
+import { Loader2, TrendingDown } from "lucide-react";
 
 interface LiveBidBarProps {
   negotiation: any;

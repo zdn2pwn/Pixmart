@@ -1,124 +1,107 @@
 "use server";
 
-import { requireSession } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
-
-/**
- * Tarik saldo payout Monero (XMR) atau Bitcoin (BTC) dari penjualan COD
- */
-export async function withdrawSellerPayoutAction(formData: FormData) {
-  const session = await requireSession();
-  if (session.role !== "SELLER" && session.role !== "OWNER") {
-    return { success: false, error: "Hanya akun Seller yang dapat menarik saldo payout." };
-  }
-
-  const currency = (formData.get("currency") as "BTC" | "XMR") || "XMR";
-  const amount = Number(formData.get("amount"));
-  const destinationAddress = (formData.get("destinationAddress") as string)?.trim();
-
-  if (!destinationAddress) {
-    return { success: false, error: "Alamat wallet tujuan penarikan wajib diisi." };
-  }
-
-  if (!amount || isNaN(amount) || amount <= 0) {
-    return { success: false, error: "Jumlah penarikan harus lebih dari 0." };
-  }
-
-  // TODO: Implement actual withdrawal logic with Supabase
-  // For now, return placeholder
-  console.log("[WithdrawPayout] TODO: Implement withdrawal", { currency, amount, destinationAddress });
-
-  revalidatePath("/seller");
-  return {
-    success: true,
-    newBalance: 0,
-    txHash: "placeholder-tx-hash",
-    currency,
-    amount,
-  };
-}
+import { requireSimpleSession } from "./auth";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 /**
  * Hapus listing barang dari marketplace
  */
 export async function deleteListingAction(listingId: string) {
-  console.log("[deleteListingAction] START - listingId:", listingId);
-  
-  const session = await requireSession();
-  console.log("[deleteListingAction] Session:", { userId: session.userId, role: session.role });
-  
+  if (!listingId) {
+    return { success: false, error: "ID listing tidak valid." };
+  }
+
+  const session = await requireSimpleSession();
+
   if (session.role !== "SELLER" && session.role !== "OWNER") {
-    console.log("[deleteListingAction] REJECTED - Not seller/owner");
     return { success: false, error: "Hanya seller pemilik yang dapat menghapus barang ini." };
   }
 
-  const { createSupabaseServerClient } = await import("@/lib/supabase/server");
   const supabase = await createSupabaseServerClient();
 
   // Verify ownership
-  console.log("[deleteListingAction] Fetching listing for ownership check...");
   const { data: listing, error: fetchError } = await supabase
     .from("marketplace_listings")
-    .select("seller_id")
+    .select("id, seller_id, title")
     .eq("id", listingId)
-    .single();
-
-  console.log("[deleteListingAction] Fetch result:", { listing, fetchError });
+    .maybeSingle();
 
   if (fetchError) {
-    console.error("[deleteListingAction] Fetch error:", fetchError);
+    console.error("[DeleteListing] Fetch error:", fetchError);
     return { success: false, error: "Gagal memverifikasi listing: " + fetchError.message };
   }
 
   if (!listing) {
-    console.log("[deleteListingAction] Listing not found");
-    return { success: false, error: "Listing tidak ditemukan." };
+    return { success: false, error: "Listing tidak ditemukan atau sudah dihapus." };
   }
 
   if (listing.seller_id !== session.userId && session.role !== "OWNER") {
-    console.log("[deleteListingAction] REJECTED - Not owner", { 
-      listingSellerId: listing.seller_id, 
-      sessionUserId: session.userId 
-    });
     return { success: false, error: "Anda tidak memiliki hak untuk menghapus listing ini." };
   }
 
-  // Delete from database
-  console.log("[deleteListingAction] Deleting from database...");
-  const { error: deleteError } = await supabase
+  // Delete from database and return the deleted row so we can verify that
+  // the delete really happened (instead of being silently blocked by RLS).
+  const { data: deleted, error: deleteError } = await supabase
     .from("marketplace_listings")
     .delete()
-    .eq("id", listingId);
+    .eq("id", listingId)
+    .select("id");
 
   if (deleteError) {
-    console.error("[deleteListingAction] Delete error:", deleteError);
-    return { success: false, error: "Gagal menghapus listing dari database: " + deleteError.message };
+    console.error("[DeleteListing] Delete error:", deleteError);
+    return { success: false, error: "Gagal menghapus listing: " + deleteError.message };
   }
 
-  console.log("[deleteListingAction] SUCCESS - Listing deleted");
+  if (!deleted || deleted.length === 0) {
+    console.error("[DeleteListing] No rows deleted for listing:", listingId);
+    return {
+      success: false,
+      error: "Listing gagal dihapus. Pastikan Anda masih login sebagai pemilik listing.",
+    };
+  }
+
   revalidatePath("/marketplace");
   revalidatePath("/seller");
+  revalidatePath(`/marketplace/${listingId}`);
+
   return { success: true };
 }
 
 /**
- * Ubah status listing (ACTIVE / PAUSED / SOLD)
+ * Ubah status listing.
+ * Catatan: constraint database hanya mengizinkan ACTIVE, SOLD, dan CANCELLED.
  */
-export async function toggleListingStatusAction(listingId: string, newStatus: "ACTIVE" | "PAUSED" | "SOLD") {
-  const session = await requireSession();
+export async function toggleListingStatusAction(
+  listingId: string,
+  newStatus: "ACTIVE" | "SOLD" | "CANCELLED"
+) {
+  if (!listingId) {
+    return { success: false, error: "ID listing tidak valid." };
+  }
+
+  if (!["ACTIVE", "SOLD", "CANCELLED"].includes(newStatus)) {
+    return { success: false, error: "Status listing tidak valid." };
+  }
+
+  const session = await requireSimpleSession();
   if (session.role !== "SELLER" && session.role !== "OWNER") {
     return { success: false, error: "Tidak memiliki hak akses." };
   }
 
-  const { createSupabaseServerClient } = await import("@/lib/supabase/server");
   const supabase = await createSupabaseServerClient();
 
   // Verify ownership
-  const { data: listing } = await supabase
+  const { data: listing, error: fetchError } = await supabase
     .from("marketplace_listings")
     .select("seller_id")
     .eq("id", listingId)
-    .single();
+    .maybeSingle();
+
+  if (fetchError) {
+    console.error("[ToggleListingStatus] Fetch error:", fetchError);
+    return { success: false, error: "Gagal memverifikasi listing." };
+  }
 
   if (!listing) {
     return { success: false, error: "Listing tidak ditemukan." };
@@ -128,20 +111,24 @@ export async function toggleListingStatusAction(listingId: string, newStatus: "A
     return { success: false, error: "Anda tidak memiliki hak untuk mengubah listing ini." };
   }
 
-  // Update status
   const { data: updated, error } = await supabase
     .from("marketplace_listings")
-    .update({ status: newStatus })
+    .update({ status: newStatus, updated_at: new Date().toISOString() })
     .eq("id", listingId)
-    .select()
-    .single();
+    .select("id, status")
+    .maybeSingle();
 
   if (error) {
     console.error("[ToggleListingStatus] Error:", error);
-    return { success: false, error: "Gagal memperbarui status produk." };
+    return { success: false, error: "Gagal memperbarui status produk: " + error.message };
+  }
+
+  if (!updated) {
+    return { success: false, error: "Status produk gagal diperbarui." };
   }
 
   revalidatePath("/marketplace");
   revalidatePath("/seller");
+  revalidatePath(`/marketplace/${listingId}`);
   return { success: true, listing: updated };
 }

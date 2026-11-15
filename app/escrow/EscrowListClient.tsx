@@ -39,7 +39,7 @@ export function EscrowListClient({
   const [rooms, setRooms] = useState(initialRooms);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [filter, setFilter] = useState<FilterType>("ALL");
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
 
   // Filter rooms
   const filteredRooms = rooms.filter((room) => {
