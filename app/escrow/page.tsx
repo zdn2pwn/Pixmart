@@ -3,15 +3,16 @@ import { redirect } from "next/navigation";
 import { PublicNav } from "@/components/layout/PublicNav";
 import { PublicFooter } from "@/components/layout/PublicFooter";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { EscrowListClient } from "./EscrowListClient";
 import Link from "next/link";
-import { ShieldCheck, MapPin, CheckCircle2, Clock, AlertTriangle, ArrowRight, Package } from "lucide-react";
+import { ShieldCheck } from "lucide-react";
 import type { Metadata } from "next";
 
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  title: "Pusat Escrow Room COD — PIXMART",
-  description: "Daftar ruang transaksi escrow COD aktif dan riwayat transaksi selesai.",
+  title: "Pusat Escrow Room — PIXMART",
+  description: "Daftar ruang transaksi escrow aktif dan riwayat transaksi selesai.",
 };
 
 export default async function EscrowListPage() {
@@ -21,13 +22,14 @@ export default async function EscrowListPage() {
   const currentRole = session.role;
   const userId = session.userId;
 
-  // Fetch escrow sessions
+  // Fetch escrow sessions with midman info
   const { data: rooms = [] } = await supabase
     .from("escrow_sessions")
     .select(`
       *,
       buyer:profiles!escrow_sessions_buyer_id_fkey(id, codename, email),
       seller:profiles!escrow_sessions_seller_id_fkey(id, codename, email),
+      midman:profiles!escrow_sessions_midman_id_fkey(id, codename, email),
       negotiation:negotiations(
         listing:marketplace_listings(*)
       )
@@ -35,20 +37,55 @@ export default async function EscrowListPage() {
     .or(`buyer_id.eq.${userId},seller_id.eq.${userId}`)
     .order("created_at", { ascending: false });
 
+  // Fetch unread message counts
+  const unreadCounts: { [key: string]: number } = {};
+  
+  if (rooms && rooms.length > 0) {
+    for (const room of rooms) {
+      const { count } = await supabase
+        .from("escrow_messages")
+        .select("*", { count: "exact", head: true })
+        .eq("escrow_id", room.id)
+        .neq("sender_id", userId)
+        .is("read_at", null);
+      
+      unreadCounts[room.id] = count || 0;
+    }
+  }
+
+  // Fetch latest message for each escrow
+  const latestMessages: { [key: string]: any } = {};
+  
+  if (rooms && rooms.length > 0) {
+    for (const room of rooms) {
+      const { data } = await supabase
+        .from("escrow_messages")
+        .select("content, created_at")
+        .eq("escrow_id", room.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .single();
+      
+      if (data) {
+        latestMessages[room.id] = data;
+      }
+    }
+  }
+
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-[#e8e8e8] flex flex-col">
       <PublicNav currentRole={currentRole} codename={session.codename} isLoggedIn={true} />
 
-      <main className="flex-1 max-w-5xl mx-auto w-full px-4 sm:px-8 py-8 space-y-6">
+      <main className="flex-1 max-w-6xl mx-auto w-full px-4 sm:px-8 py-8 space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#222222]">
           <div>
             <div className="flex items-center gap-2 text-xs font-mono text-[#39FF14] uppercase tracking-wider mb-1 font-bold">
               <span className="w-2 h-2 rounded-full bg-[#39FF14] pulse-green" />
-              <span>ACTIVE ESCROW ROOMS</span>
+              <span>ESCROW TRANSACTION CENTER</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
-              Ruang Transaksi Escrow COD
+              Ruang Transaksi Escrow
             </h1>
             <p className="text-xs font-mono text-[#888] mt-1">
               Login sebagai: <span className="text-[#39FF14] font-bold">{session?.codename}</span> ({currentRole})
@@ -75,88 +112,12 @@ export default async function EscrowListPage() {
             </Link>
           </div>
         ) : (
-          <div className="space-y-4">
-            {rooms.map((room: any) => {
-              const listing = room.negotiation?.listing;
-              const hasImage = listing?.images && listing.images.length > 0;
-              const isCompleted = room.status === "COMPLETED";
-              const isDisputed = room.status === "DISPUTED";
-              const counterparty =
-                room.buyer_id === userId ? room.seller?.codename : room.buyer?.codename;
-              
-              // Calculate IDR from crypto
-              const btcToIdr = 1400000000;
-              const xmrToIdr = 3500000;
-              const agreedPriceIdr = room.crypto_type === 'BTC' 
-                ? Math.round((room.agreed_price_btc || 0) * btcToIdr)
-                : Math.round((room.agreed_price_xmr || 0) * xmrToIdr);
-
-              return (
-                <Link
-                  key={room.id}
-                  href={`/escrow/${room.id}`}
-                  className="block bg-[#121212] border border-[#262626] hover:border-[#39FF14]/70 p-5 transition-all group"
-                >
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div className="flex items-center gap-4">
-                      <div className="w-16 h-16 bg-[#181818] border border-[#333] shrink-0 overflow-hidden flex items-center justify-center">
-                        {hasImage ? (
-                          <img
-                            src={listing.images[0]}
-                            alt={listing.title}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <Package size={24} className="text-[#555]" />
-                        )}
-                      </div>
-
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2 text-[11px] font-mono text-[#888]">
-                          <span className="text-[#39FF14] font-bold">Room #{room.id.slice(0, 8)}</span>
-                          <span>•</span>
-                          <span>Lawan: {counterparty}</span>
-                        </div>
-                        <h3 className="text-sm font-bold text-white group-hover:text-[#39FF14] transition-colors line-clamp-1">
-                          {room.item_title || listing?.title || "Produk"}
-                        </h3>
-                        <div className="text-xs font-mono text-[#aaa] flex items-center gap-3">
-                          <span className="text-white font-bold">
-                            Rp {agreedPriceIdr.toLocaleString("id-ID")}
-                          </span>
-                          <span className="text-[#666]">|</span>
-                          <span className="flex items-center gap-1 text-[#39FF14]">
-                            <MapPin size={11} />
-                            {room.meeting_location || "Titik temu belum ditentukan"}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-4 self-end sm:self-center">
-                      {isCompleted ? (
-                        <span className="badge-green text-xs font-bold py-1.5 px-3 flex items-center gap-1.5">
-                          <CheckCircle2 size={13} /> SELESAI
-                        </span>
-                      ) : isDisputed ? (
-                        <span className="badge-danger text-xs font-bold py-1.5 px-3 flex items-center gap-1.5">
-                          <AlertTriangle size={13} /> SENGKETA
-                        </span>
-                      ) : (
-                        <span className="badge-warn text-xs font-bold py-1.5 px-3 flex items-center gap-1.5 animate-pulse">
-                          <Clock size={13} /> {room.status?.replace(/_/g, " ") || "PENDING"}
-                        </span>
-                      )}
-
-                      <div className="text-[#666] group-hover:text-[#39FF14] transition-colors">
-                        <ArrowRight size={18} />
-                      </div>
-                    </div>
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
+          <EscrowListClient
+            rooms={rooms}
+            userId={userId}
+            unreadCounts={unreadCounts}
+            latestMessages={latestMessages}
+          />
         )}
       </main>
 

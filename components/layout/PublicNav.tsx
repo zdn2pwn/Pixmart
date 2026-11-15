@@ -108,7 +108,7 @@ export function PublicNav({
                     className="hover:text-white transition-colors flex items-center gap-1.5"
                   >
                     <ShieldCheck size={14} className="text-[#39FF14]" />
-                    <span>Escrow COD</span>
+                    <span>Escrow</span>
                   </Link>
 
                   {currentRole === "SELLER" && (
@@ -301,7 +301,7 @@ export function PublicNav({
                     className="flex items-center gap-2 text-[#ccc] hover:text-white py-1 font-medium"
                   >
                     <ShieldCheck size={16} className="text-[#39FF14]" />
-                    <span>Ruang Escrow COD</span>
+                    <span>Escrow</span>
                   </Link>
 
                   {currentRole === "SELLER" && (
