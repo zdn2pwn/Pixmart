@@ -9,6 +9,7 @@ import { LiveBidBar } from "@/components/nego/LiveBidBar";
 import { sendNegotiationMessageAction } from "@/app/actions/messaging";
 import { acceptOfferAction, rejectOfferAction, counterOfferAction, cancelNegotiationAction } from "@/app/actions/negotiation";
 import { markNegoMessageAsReadAction, deleteNegoMessageAction } from "@/app/actions/messages";
+import { customAlert } from "@/components/ui/CustomAlert";
 import {
   ArrowLeft,
   MessageSquare,
@@ -55,14 +56,17 @@ export function NegotiationRoomClient({
       if (result.success) {
         if (result.bothAgreed && result.escrowRoomId) {
           // Both agreed (2/2) - Redirect to escrow
-          router.push(`/escrow/${result.escrowRoomId}`);
+          customAlert.success(result.message || "Escrow room berhasil dibuat!", "Deal 2/2!");
+          setTimeout(() => {
+            router.push(`/escrow/${result.escrowRoomId}`);
+          }, 1500);
         } else {
           // Only one agreed (1/2) - Refresh to show status
           router.refresh();
-          alert(result.message || "Deal agreement updated. Menunggu pihak lain...");
+          customAlert.info(result.message || "Deal agreement updated. Menunggu pihak lain...");
         }
       } else {
-        alert(result.error || "Gagal update agreement");
+        customAlert.error(result.error || "Gagal update agreement");
       }
     });
   }
@@ -76,38 +80,44 @@ export function NegotiationRoomClient({
       const result = await rejectOfferAction(formData);
       
       if (result.success) {
-        alert(result.message || "Offer ditolak. Silakan counter offer lagi.");
+        customAlert.info(result.message || "Offer ditolak. Silakan counter offer lagi.", "Offer Ditolak");
         router.refresh();
       } else {
-        alert(result.error || "Gagal menolak penawaran");
+        customAlert.error(result.error || "Gagal menolak penawaran");
       }
     });
   }
 
   // Handle canceling entire negotiation
   async function handleCancelNegotiation() {
-    if (!confirm("Yakin ingin MEMBATALKAN negosiasi ini secara permanen? Negosiasi akan ditutup dan tidak bisa dilanjutkan.")) return;
-    
-    startTransition(async () => {
-      const formData = new FormData();
-      formData.append("negotiationId", negotiation.id);
-      
-      const result = await cancelNegotiationAction(formData);
-      
-      if (result.success) {
-        alert(result.message || "Negosiasi dibatalkan.");
-        router.push("/negotiations");
-      } else {
-        alert(result.error || "Gagal membatalkan negosiasi");
-      }
-    });
+    customAlert.confirm(
+      "Yakin ingin MEMBATALKAN negosiasi ini secara permanen? Negosiasi akan ditutup dan tidak bisa dilanjutkan.",
+      () => {
+        startTransition(async () => {
+          const formData = new FormData();
+          formData.append("negotiationId", negotiation.id);
+          
+          const result = await cancelNegotiationAction(formData);
+          
+          if (result.success) {
+            customAlert.success(result.message || "Negosiasi dibatalkan.", "Negosiasi Dibatalkan");
+            setTimeout(() => {
+              router.push("/negotiations");
+            }, 1500);
+          } else {
+            customAlert.error(result.error || "Gagal membatalkan negosiasi");
+          }
+        });
+      },
+      "Batalkan Negosiasi?"
+    );
   }
 
   // Handle counter offer from Live Bid Bar
   async function handleCounterOffer(method: 'BTC' | 'XMR', amount: number) {
     // Validation
     if (isNaN(amount) || amount <= 0) {
-      alert("Masukkan jumlah yang valid!");
+      customAlert.error("Masukkan jumlah yang valid!", "Input Tidak Valid");
       return;
     }
 
@@ -115,7 +125,10 @@ export function NegotiationRoomClient({
     if (isBuyer) {
       const listingPrice = method === 'BTC' ? negotiation.listing?.price_btc : negotiation.listing?.price_xmr;
       if (amount > listingPrice) {
-        alert(`Counter offer tidak boleh lebih tinggi dari harga listing! (Max: ${listingPrice.toFixed(method === 'BTC' ? 8 : 4)} ${method})`);
+        customAlert.error(
+          `Counter offer tidak boleh lebih tinggi dari harga listing! (Max: ${listingPrice.toFixed(method === 'BTC' ? 8 : 4)} ${method})`,
+          "Tawaran Terlalu Tinggi"
+        );
         return;
       }
     }
@@ -148,7 +161,7 @@ export function NegotiationRoomClient({
         // Refresh to show updated offer in Live Bid Bar
         router.refresh();
       } else {
-        alert(result.error || "Gagal update offer");
+        customAlert.error(result.error || "Gagal update offer");
       }
     });
   }
@@ -529,9 +542,11 @@ export function NegotiationRoomClient({
                 isSeller={isSeller}
                 onCounterOffer={handleCounterOffer}
                 onAccept={() => {
-                  if (confirm("Yakin setuju dengan harga ini? Escrow room akan otomatis dibuat.")) {
-                    handleAcceptOffer();
-                  }
+                  customAlert.confirm(
+                    "Yakin setuju dengan harga ini? Escrow room akan otomatis dibuat.",
+                    handleAcceptOffer,
+                    "Konfirmasi Deal"
+                  );
                 }}
                 onReject={handleRejectOffer}
                 isPending={isPending}

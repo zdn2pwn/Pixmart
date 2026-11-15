@@ -226,13 +226,15 @@ export async function acceptOfferAction(formData: FormData) {
 
     const midmanId = ownerProfile?.id || nego.buyer_id;
 
-    // Generate escrow address (placeholder for now)
-    const escrowAddress = `escrow_${crypto.randomUUID().slice(0, 8)}`;
+    // Generate escrow ID and address
+    const escrowId = crypto.randomUUID();
+    const escrowAddress = `escrow_${escrowId.slice(0, 8)}`;
 
-    // Insert with MIDMAN
+    // Insert with MIDMAN and explicit ID (FIX NULL ID ERROR)
     const { data: escrow, error } = await supabase
       .from("escrow_sessions")
       .insert({
+        id: escrowId,
         buyer_id: nego.buyer_id,
         seller_id: nego.seller_id,
         midman_id: midmanId,
@@ -243,7 +245,7 @@ export async function acceptOfferAction(formData: FormData) {
         agreed_price_idr: agreedPriceIdr,
         crypto_type: cryptoType,
         escrow_address: escrowAddress,
-        status: "AWAITING_DEPOSIT",
+        status: "PENDING", // FIX: Valid status is PENDING, not AWAITING_DEPOSIT
         payment_status: "AWAITING_PAYMENT",
         shipment_status: "PENDING",
       })

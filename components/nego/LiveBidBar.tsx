@@ -50,13 +50,13 @@ export function LiveBidBar({
   const handleSubmitCounter = async () => {
     const amount = parseFloat(inputAmount);
     if (isNaN(amount) || amount <= 0) {
-      alert("Masukkan jumlah yang valid!");
-      return;
+      return; // Let parent handle validation
     }
 
     await onCounterOffer(paymentMethod, amount);
     setShowCounterForm(false);
     setInputAmount('');
+    setIdrPreview(0);
   };
 
   const listingPriceBTC = negotiation.listing?.price_btc || 0;
@@ -194,7 +194,7 @@ export function LiveBidBar({
           </div>
         </>
       ) : (
-        /* Counter Offer Form - Compact */
+        /* Counter Offer Form - Compact with BID NOW Info */
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <h4 className="text-xs font-bold text-white">
@@ -204,11 +204,36 @@ export function LiveBidBar({
               onClick={() => {
                 setShowCounterForm(false);
                 setInputAmount('');
+                setIdrPreview(0);
               }}
-              className="text-xs text-[#666] hover:text-white"
+              className="text-xs text-[#FF4444] hover:text-[#FF6666] flex items-center gap-1 font-bold transition-colors"
             >
-              ✕ Tutup
+              ✕ Batal
             </button>
+          </div>
+
+          {/* Current BID NOW Info (FIX: Show current offer, not just listing) */}
+          <div className="bg-[#1a1a1a] border border-[#333] p-3 space-y-2">
+            <div className="text-xs text-[#888] uppercase mb-2">Harga Saat Ini:</div>
+            
+            {/* BID NOW (Current Offer) */}
+            {hasOffer && (
+              <div className="flex items-center justify-between pb-2 border-b border-[#222]">
+                <div className="text-[10px] text-[#39FF14]">BID NOW:</div>
+                <div className="text-sm font-bold text-[#39FF14]">
+                  {offerMethod === 'BTC' && `${offerAmount.toFixed(8)} BTC`}
+                  {offerMethod === 'XMR' && `${offerAmount.toFixed(4)} XMR`}
+                </div>
+              </div>
+            )}
+
+            {/* LISTING (Original Price) */}
+            <div className="flex items-center justify-between">
+              <div className="text-[10px] text-[#666]">LISTING:</div>
+              <div className="text-xs font-mono text-[#666]">
+                {listingPriceBTC.toFixed(8)} BTC
+              </div>
+            </div>
           </div>
 
           {/* Payment Method Radio - Horizontal */}
@@ -273,17 +298,6 @@ export function LiveBidBar({
             >
               {isPending ? <Loader2 size={12} className="animate-spin mx-auto" /> : "Kirim"}
             </button>
-          </div>
-
-          {/* Reference Price - Compact */}
-          <div className="text-xs text-[#666] flex items-center justify-between">
-            <span>Listing:</span>
-            <span className="text-white font-mono">
-              {paymentMethod === 'BTC' 
-                ? `${listingPriceBTC.toFixed(8)} BTC`
-                : `${listingPriceXMR.toFixed(4)} XMR`
-              }
-            </span>
           </div>
         </div>
       )}
