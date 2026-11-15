@@ -3,8 +3,9 @@ import { redirect } from "next/navigation";
 import { PublicNav } from "@/components/layout/PublicNav";
 import { PublicFooter } from "@/components/layout/PublicFooter";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { NegotiationsListClient } from "./NegotiationsListClient";
 import Link from "next/link";
-import { MessageSquare, ArrowRight, Clock, CheckCircle2, XCircle, Package } from "lucide-react";
+import { MessageSquare } from "lucide-react";
 import type { Metadata } from "next";
 
 export const dynamic = 'force-dynamic';
@@ -21,7 +22,7 @@ export default async function NegotiationsPage() {
   const currentRole = session.role;
   const userId = session.userId;
 
-  // Fetch negotiations where user is buyer or seller
+  // Fetch negotiations with messages count
   const { data: negotiations = [] } = await supabase
     .from("negotiations")
     .select(`
@@ -31,7 +32,43 @@ export default async function NegotiationsPage() {
       listing:marketplace_listings(*)
     `)
     .or(`buyer_id.eq.${userId},seller_id.eq.${userId}`)
-    .order("created_at", { ascending: false });
+    .neq("status", "CANCELLED") // Don't show cancelled
+    .order("updated_at", { ascending: false });
+
+  // Fetch unread message counts for each negotiation
+  const unreadCounts: { [key: string]: number } = {};
+  
+  if (negotiations && negotiations.length > 0) {
+    for (const nego of negotiations) {
+      const { count } = await supabase
+        .from("negotiation_messages")
+        .select("*", { count: "exact", head: true })
+        .eq("negotiation_id", nego.id)
+        .neq("sender_id", userId)
+        .is("read_at", null);
+      
+      unreadCounts[nego.id] = count || 0;
+    }
+  }
+
+  // Fetch latest message for each negotiation
+  const latestMessages: { [key: string]: any } = {};
+  
+  if (negotiations && negotiations.length > 0) {
+    for (const nego of negotiations) {
+      const { data } = await supabase
+        .from("negotiation_messages")
+        .select("content, created_at")
+        .eq("negotiation_id", nego.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .single();
+      
+      if (data) {
+        latestMessages[nego.id] = data;
+      }
+    }
+  }
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-[#e8e8e8] flex flex-col">
@@ -76,88 +113,12 @@ export default async function NegotiationsPage() {
             </Link>
           </div>
         ) : (
-          <div className="space-y-4">
-            {negotiations.map((neg: any) => {
-              const hasImage = neg.listing?.images && neg.listing.images.length > 0;
-              const isBuyer = neg.buyer_id === userId;
-              const counterparty = isBuyer ? neg.seller?.codename : neg.buyer?.codename;
-
-              return (
-                <Link
-                  key={neg.id}
-                  href={`/negotiations/${neg.id}`}
-                  className="block bg-[#121212] border border-[#262626] hover:border-[#39FF14]/70 p-5 transition-all group"
-                >
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div className="flex items-center gap-4">
-                      {/* Product Thumbnail */}
-                      <div className="w-16 h-16 bg-[#1a1a1a] border border-[#333] shrink-0 overflow-hidden flex items-center justify-center">
-                        {hasImage ? (
-                          <img
-                            src={neg.listing.images[0]}
-                            alt={neg.listing.title}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <Package size={24} className="text-[#555]" />
-                        )}
-                      </div>
-
-                      {/* Info */}
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2 text-[11px] font-mono text-[#888]">
-                          <span>Lawan Bicara:</span>
-                          <span className="text-[#39FF14] font-bold">{counterparty}</span>
-                          <span>•</span>
-                          <span>{neg.listing?.location_city}</span>
-                        </div>
-                        <h3 className="text-sm font-bold text-white group-hover:text-[#39FF14] transition-colors line-clamp-1">
-                          {neg.listing?.title || "Produk"}
-                        </h3>
-                        <div className="text-xs font-mono text-[#aaa]">
-                          Tawaran Saat Ini:{" "}
-                          <span className="text-white font-bold">
-                            Rp {(neg.current_offer_price || 0).toLocaleString("id-ID")}
-                          </span>{" "}
-                          <span className="text-[#888]">
-                            (Harga Asli: Rp {(neg.listing?.fiat_estimate_idr || 0).toLocaleString("id-ID")})
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Status Badge & Arrow */}
-                    <div className="flex items-center gap-4 self-end sm:self-center">
-                      {neg.status === "DEAL_AGREED" && (
-                        <span className="badge-green text-xs font-bold py-1.5 px-3 flex items-center gap-1.5">
-                          <CheckCircle2 size={13} /> DEAL DISEPAKATI
-                        </span>
-                      )}
-                      {neg.status === "OFFER_MADE" && (
-                        <span className="badge-warn text-xs font-bold py-1.5 px-3 flex items-center gap-1.5">
-                          <Clock size={13} /> MENUNGGU RESPON
-                        </span>
-                      )}
-                      {neg.status === "COUNTER_OFFERED" && (
-                        <span className="badge-purple text-xs font-bold py-1.5 px-3 flex items-center gap-1.5">
-                          <MessageSquare size={13} /> COUNTER-OFFER AKTIF
-                        </span>
-                      )}
-                      {neg.status === "REJECTED" && (
-                        <span className="badge-danger text-xs font-bold py-1.5 px-3 flex items-center gap-1.5">
-                          <XCircle size={13} /> DITOLAK
-                        </span>
-                      )}
-
-                      <div className="text-[#666] group-hover:text-[#39FF14] transition-colors">
-                        <ArrowRight size={18} />
-                      </div>
-                    </div>
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
+          <NegotiationsListClient
+            negotiations={negotiations}
+            userId={userId}
+            unreadCounts={unreadCounts}
+            latestMessages={latestMessages}
+          />
         )}
       </main>
 

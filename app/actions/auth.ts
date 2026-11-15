@@ -5,6 +5,7 @@ import { cookies } from "next/headers";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { isValidBtcAddress, isValidXmrAddress } from "@/lib/crypto-wallet";
 import { generateBtcAddress, generateXmrAddress, hashPassword } from "@/lib/crypto-wallet";
+import { ensureUniqueCodename } from "@/lib/username";
 import type { UserRole } from "@/lib/types";
 
 const SESSION_COOKIE = "pixmart_session";
@@ -114,10 +115,14 @@ export async function registerSimpleAction(_prev: unknown, formData: FormData) {
 
     // Generate user ID
     const userId = `usr_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    const codename = `Anonymous Buyer #${userId.slice(4, 8).toUpperCase()}`;
+    const baseCodename = `Anonymous Buyer`;
+    
+    // Generate unique codename with suffix to prevent collision
+    const codename = await ensureUniqueCodename(supabase, baseCodename);
+    
     const passwordHash = hashPassword(password);
 
-    console.log("[Register] Creating user:", userId);
+    console.log("[Register] Creating user:", userId, "with codename:", codename);
 
     // Insert profile directly to database
     const { error: insertError } = await supabase.from("profiles").insert({
@@ -269,8 +274,9 @@ export async function completeOnboardingSimpleAction(_prev: unknown, formData: F
   try {
     const supabase = await createSupabaseServerClient();
 
-    // Generate new codename based on role
-    const codename = `Anonymous ${role === "SELLER" ? "Seller" : "Buyer"} #${session.userId.slice(4, 8).toUpperCase()}`;
+    // Generate unique codename based on role
+    const baseCodename = `Anonymous ${role === "SELLER" ? "Seller" : "Buyer"}`;
+    const codename = await ensureUniqueCodename(supabase, baseCodename);
 
     // Set initial balance based on role
     const balanceBtc = role === "BUYER" ? 0.05 : 0.02;
