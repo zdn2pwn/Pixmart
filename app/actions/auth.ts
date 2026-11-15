@@ -217,7 +217,14 @@ export async function loginSimpleAction(_prev: unknown, formData: FormData) {
       redirect("/onboarding");
     }
 
-    redirect(profile.role === "SELLER" ? "/seller" : "/dashboard");
+    // Redirect based on role
+    if (profile.role === "OWNER") {
+      redirect("/owner");
+    } else if (profile.role === "SELLER") {
+      redirect("/seller");
+    } else {
+      redirect("/dashboard");
+    }
   } catch (err: any) {
     // Re-throw redirect errors (they're not actual errors)
     if (err.message === "NEXT_REDIRECT" || err.digest?.includes("NEXT_REDIRECT")) {

@@ -35,6 +35,7 @@ export default async function BuyerDashboardPage() {
     .from("escrow_sessions")
     .select("*")
     .or(`buyer_id.eq.${session.userId},seller_id.eq.${session.userId}`)
+    .is("completed_at", null)
     .order("created_at", { ascending: false });
 
   // Fetch active listings for nearby

@@ -22,6 +22,13 @@ export default async function SellerDashboardPage() {
 
   const supabase = await createSupabaseServerClient();
 
+  // Get seller profile with balance
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("balance_btc, balance_xmr")
+    .eq("id", session.userId)
+    .single();
+
   const { data: myListings = [] } = await supabase
     .from("marketplace_listings")
     .select("*")
@@ -42,16 +49,27 @@ export default async function SellerDashboardPage() {
     .from("escrow_sessions")
     .select("*")
     .eq("seller_id", session.userId)
+    .is("completed_at", null) // Only active escrows (not completed)
     .order("created_at", { ascending: false });
+
+  // Fetch completed escrows for income calculation
+  const { data: completedEscrows = [] } = await supabase
+    .from("escrow_sessions")
+    .select("agreed_price_btc, agreed_price_xmr, crypto_type, completed_at")
+    .eq("seller_id", session.userId)
+    .not("completed_at", "is", null)
+    .order("completed_at", { ascending: false });
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-[#e8e8e8] flex flex-col">
       <PublicNav currentRole={session.role} codename={session.codename} isLoggedIn={true} />
       <SellerDashboardContentImproved
         session={session}
+        profile={profile || { balance_btc: 0, balance_xmr: 0 }}
         myListings={myListings as any}
         negotiations={negotiations as any}
         escrowRooms={escrowRooms as any}
+        completedEscrows={completedEscrows as any}
       />
       <PublicFooter />
     </div>

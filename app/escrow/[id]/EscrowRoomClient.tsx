@@ -13,6 +13,7 @@ import {
   confirmArrivalAction,
   confirmCodHandshakeAction,
 } from "@/app/actions/escrow";
+import { payEscrowAction } from "@/app/actions/payment";
 import {
   ArrowLeft,
   ShieldCheck,
@@ -24,6 +25,8 @@ import {
   UserCheck,
   Calendar,
   Navigation,
+  Wallet,
+  CreditCard,
 } from "lucide-react";
 
 interface EscrowRoomClientProps {
@@ -42,7 +45,9 @@ export function EscrowRoomClient({ room: initialRoom, messages: initialMessages,
 
   const isBuyer = session.userId === room.buyer_id;
   const isSeller = session.userId === room.seller_id;
+  const isMidman = session.userId === room.midman_id;
   const counterparty = isBuyer ? room.seller : room.buyer;
+  const midman = room.midman;
 
   // Get listing from negotiation
   const listing = room.negotiation?.listing;
@@ -97,8 +102,8 @@ export function EscrowRoomClient({ room: initialRoom, messages: initialMessages,
     
     const result = await proposeMeetingAction(formData);
     if (result.success) {
-      router.refresh();
       alert("Usulan titik temu berhasil dikirim!");
+      window.location.reload(); // Force full reload
     }
   }
 
@@ -106,8 +111,8 @@ export function EscrowRoomClient({ room: initialRoom, messages: initialMessages,
   async function handleAcceptMeeting() {
     const result = await acceptMeetingAction(room.id);
     if (result.success) {
-      router.refresh();
       alert("Titik temu disepakati!");
+      window.location.reload(); // Force full reload
     }
   }
 
@@ -117,8 +122,8 @@ export function EscrowRoomClient({ room: initialRoom, messages: initialMessages,
     
     const result = await confirmArrivalAction(room.id);
     if (result.success) {
-      router.refresh();
       alert("Kehadiran dikonfirmasi!");
+      window.location.reload(); // Force full reload
     }
   }
 
@@ -132,12 +137,25 @@ export function EscrowRoomClient({ room: initialRoom, messages: initialMessages,
     
     const result = await confirmCodHandshakeAction(room.id);
     if (result.success) {
-      router.refresh();
       if (result.bothConfirmed) {
-        alert("🎉 Transaksi SELESAI! Terima kasih.");
+        alert("🎉 Kedua pihak sudah konfirmasi! Menunggu Midman release dana...");
       } else {
         alert("Konfirmasi berhasil. Menunggu konfirmasi dari pihak lain...");
       }
+      window.location.reload(); // Force full reload
+    }
+  }
+
+  // Handle payment (Buyer only)
+  async function handlePayment() {
+    if (!confirm(`Bayar ${agreedPriceBtc?.toFixed(8) || 0} ${cryptoType} (≈ Rp ${agreedPriceIdr.toLocaleString("id-ID")})?`)) return;
+
+    const result = await payEscrowAction(room.id);
+    if (result.success) {
+      alert("✅ Pembayaran berhasil! Dana ditahan oleh sistem escrow.");
+      window.location.reload(); // Force full reload
+    } else {
+      alert(`❌ Pembayaran gagal: ${result.error}`);
     }
   }
 
@@ -193,6 +211,25 @@ export function EscrowRoomClient({ room: initialRoom, messages: initialMessages,
       )
       .subscribe();
 
+    // Subscribe to escrow_sessions changes (for cross-user updates)
+    const escrowChannel = supabase
+      .channel(`escrow_session:${room.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "escrow_sessions",
+          filter: `id=eq.${room.id}`,
+        },
+        (payload) => {
+          console.log("Escrow state changed:", payload);
+          // Force reload when escrow data changes (meeting, payment, confirmation, etc)
+          window.location.reload();
+        }
+      )
+      .subscribe();
+
     // POLLING: Fetch messages every 2 seconds as fallback
     const pollInterval = setInterval(() => {
       fetchMessages();
@@ -200,6 +237,7 @@ export function EscrowRoomClient({ room: initialRoom, messages: initialMessages,
 
     return () => {
       supabase.removeChannel(channel);
+      supabase.removeChannel(escrowChannel);
       clearInterval(pollInterval);
     };
   }, [room.id]);
@@ -231,6 +269,20 @@ export function EscrowRoomClient({ room: initialRoom, messages: initialMessages,
     <main className="flex-1 max-w-6xl mx-auto w-full px-4 sm:px-8 py-8">
       {/* Header */}
       <div className="mb-6 space-y-4">
+        {/* 3-Party Escrow Info Banner */}
+        <div className="bg-[#FFB800]/10 border border-[#FFB800]/30 p-3 flex items-start gap-3">
+          <ShieldCheck size={18} className="text-[#FFB800] flex-shrink-0 mt-0.5" />
+          <div className="flex-1 space-y-1">
+            <div className="text-xs font-bold text-[#FFB800]">
+              🔒 TRANSAKSI 3-PARTY ESCROW
+            </div>
+            <div className="text-[11px] text-[#aaa] leading-relaxed">
+              Dana Anda <span className="text-white font-bold">DITAHAN dan DILEPASKAN oleh MIDMAN</span> setelah verifikasi. 
+              Buyer dan Seller <span className="underline">tidak dapat langsung transfer</span> tanpa kontrol Midman.
+            </div>
+          </div>
+        </div>
+
         <Link
           href="/escrow"
           className="inline-flex items-center gap-2 text-xs font-mono text-[#888] hover:text-[#39FF14] transition-colors"
@@ -251,6 +303,10 @@ export function EscrowRoomClient({ room: initialRoom, messages: initialMessages,
             <div className="flex items-center gap-3 mt-2 text-xs font-mono text-[#888]">
               <span>
                 {isBuyer ? "Seller" : "Buyer"}: <span className="text-[#39FF14] font-bold">{counterparty?.codename}</span>
+              </span>
+              <span>•</span>
+              <span>
+                Midman: <span className="text-[#FFB800] font-bold">{midman?.codename || "OWNER"}</span>
               </span>
               <span>•</span>
               <span className="text-white font-bold">
@@ -465,7 +521,7 @@ export function EscrowRoomClient({ room: initialRoom, messages: initialMessages,
           <div className="bg-[#121212] border border-[#262626] p-4 space-y-3">
             <h3 className="text-xs font-mono text-[#888] uppercase tracking-wider font-bold">Status & Aksi</h3>
             
-            {/* Presence Indicators */}
+            {/* 3-Party Presence Indicators */}
             <div className="space-y-1.5 text-xs bg-[#0a0a0a] p-2 border border-[#222]">
               <div className="flex items-center justify-between">
                 <span className="flex items-center gap-1.5">
@@ -486,10 +542,50 @@ export function EscrowRoomClient({ room: initialRoom, messages: initialMessages,
                   {room.seller_arrived ? "✓ Hadir" : "Belum hadir"}
                 </span>
               </div>
+
+              <div className="border-t border-[#333] pt-1.5 mt-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">
+                    <ShieldCheck size={12} className="text-[#FFB800]" />
+                    <span className="text-[#FFB800] font-bold">Midman</span>
+                  </span>
+                  <span className="text-[#FFB800] font-bold text-[10px]">
+                    {room.funds_held ? "💰 DANA DITAHAN" : "⏳ Mengawasi"}
+                  </span>
+                </div>
+              </div>
             </div>
 
             {/* Action Buttons */}
             <div className="space-y-2">
+              {/* Payment Button (Buyer only, if payment not received yet) */}
+              {isBuyer && room.payment_status === 'AWAITING_PAYMENT' && (
+                <button
+                  onClick={handlePayment}
+                  className="w-full bg-[#39FF14] hover:bg-[#2ECC11] text-black py-3 text-sm font-bold flex items-center justify-center gap-2 animate-pulse"
+                >
+                  <Wallet size={16} />
+                  <span>Bayar Sekarang ({agreedPriceBtc?.toFixed(8) || 0} {cryptoType})</span>
+                </button>
+              )}
+
+              {/* Payment Status Info */}
+              {room.payment_status === 'RECEIVED' && !room.funds_held && (
+                <div className="bg-[#FFB800]/10 border border-[#FFB800]/50 p-2 text-center">
+                  <div className="text-xs font-bold text-[#FFB800]">
+                    💰 Dana Diterima - Menunggu Midman Hold
+                  </div>
+                </div>
+              )}
+
+              {room.funds_held && !room.funds_released && (
+                <div className="bg-[#39FF14]/10 border border-[#39FF14]/50 p-2 text-center">
+                  <div className="text-xs font-bold text-[#39FF14]">
+                    🔒 Dana Ditahan Midman - Aman untuk COD
+                  </div>
+                </div>
+              )}
+
               {/* Confirm Arrival Button */}
               {room.meeting_accepted && !(isBuyer ? room.buyer_arrived : room.seller_arrived) && (
                 <button
@@ -501,8 +597,8 @@ export function EscrowRoomClient({ room: initialRoom, messages: initialMessages,
                 </button>
               )}
 
-              {/* COD Handshake Button (only when both arrived) */}
-              {room.buyer_arrived && room.seller_arrived && (
+              {/* COD Handshake Button (only when both arrived & funds held) */}
+              {room.buyer_arrived && room.seller_arrived && room.funds_held && (
                 <>
                   {!(isBuyer ? room.buyer_confirmed : room.seller_confirmed) ? (
                     <button
@@ -519,12 +615,21 @@ export function EscrowRoomClient({ room: initialRoom, messages: initialMessages,
                       </div>
                       <div className="text-[10px] text-[#888] mt-1">
                         {room.buyer_confirmed && room.seller_confirmed 
-                          ? "Transaksi selesai! 🎉"
+                          ? "Menunggu Midman release dana..."
                           : "Menunggu pihak lain..."}
                       </div>
                     </div>
                   )}
                 </>
+              )}
+
+              {/* Warning if not paid yet */}
+              {room.payment_status === 'AWAITING_PAYMENT' && !isBuyer && (
+                <div className="bg-[#FF4444]/10 border border-[#FF4444]/50 p-2 text-center">
+                  <div className="text-xs text-[#FF4444]">
+                    ⏳ Menunggu Buyer melakukan pembayaran
+                  </div>
+                </div>
               )}
             </div>
           </div>
@@ -536,10 +641,10 @@ export function EscrowRoomClient({ room: initialRoom, messages: initialMessages,
             <div className="border-b border-[#222] px-4 py-3 bg-[#0f0f0f]">
               <h3 className="text-xs font-mono text-white uppercase tracking-wider font-bold flex items-center gap-2">
                 <ShieldCheck size={14} className="text-[#39FF14]" />
-                <span>Chat Koordinasi COD</span>
+                <span>Chat Koordinasi COD (3-Party Escrow)</span>
               </h3>
               <p className="text-[10px] font-mono text-[#666] mt-0.5">
-                Diskusikan titik temu, waktu, dan konfirmasi serah terima barang
+                Buyer, Seller, dan Midman berkoordinasi. Dana ditahan dan dilepaskan oleh Midman setelah verifikasi.
               </p>
             </div>
 

@@ -126,30 +126,38 @@ export function MarketplaceExplorer({
       let distanceKm: number | null = null;
       let distanceFormatted = "Deteksi lokasi untuk jarak";
 
-      if (userCoords && l.approxLatitude && l.approxLongitude) {
+      if (userCoords && l.approx_latitude && l.approx_longitude) {
         distanceKm = calculateDistanceKm(userCoords, {
-          latitude: l.approxLatitude,
-          longitude: l.approxLongitude,
+          latitude: l.approx_latitude,
+          longitude: l.approx_longitude,
         });
         distanceFormatted = formatDistance(distanceKm);
       }
 
-      const approxLocation = l.locationDistrict && l.locationCity
-        ? `${l.locationDistrict}, ${l.locationCity}`
-        : l.meetupZone || "Area Publik";
+      const approxLocation = l.location_district && l.location_city
+        ? `${l.location_district}, ${l.location_city}`
+        : l.meetup_zone || "Area Publik";
+
+      // Calculate IDR if not set (fallback)
+      const fiatEstimateIdr = l.fiat_estimate_idr && l.fiat_estimate_idr > 0
+        ? l.fiat_estimate_idr
+        : Math.round((l.price_btc || 0) * 1400000000);
 
       return {
         ...l,
         distanceKm,
         distanceFormatted,
         approxLocation,
-        isWishlisted: wishlistIds.includes(l.id) || l.isWishlisted,
+        fiatEstimateIdr, // Add computed field
+        priceBtc: l.price_btc || 0,
+        priceXmr: l.price_xmr || 0,
+        isWishlisted: wishlistIds.includes(l.id) || l.is_wishlisted,
       };
     });
 
     // City Filter
     if (city !== "ALL") {
-      items = items.filter((l) => l.locationCity?.toLowerCase() === city.toLowerCase());
+      items = items.filter((l) => l.location_city?.toLowerCase() === city.toLowerCase());
     }
 
     // Category Filter
@@ -164,8 +172,8 @@ export function MarketplaceExplorer({
         (l) =>
           l.title.toLowerCase().includes(q) ||
           l.description.toLowerCase().includes(q) ||
-          (l.locationDistrict && l.locationDistrict.toLowerCase().includes(q)) ||
-          (l.locationCity && l.locationCity.toLowerCase().includes(q)) ||
+          (l.location_district && l.location_district.toLowerCase().includes(q)) ||
+          (l.location_city && l.location_city.toLowerCase().includes(q)) ||
           (l.approxLocation && l.approxLocation.toLowerCase().includes(q))
       );
     }
@@ -194,7 +202,7 @@ export function MarketplaceExplorer({
         return (b.fiatEstimateIdr || 0) - (a.fiatEstimateIdr || 0);
       }
       // default: newest
-      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
     });
 
     return items;
@@ -489,17 +497,17 @@ export function MarketplaceExplorer({
                       <div className="text-[10px] font-mono text-[#666] uppercase">Harga Deal COD</div>
                       {currency === "IDR" && (
                         <div className="text-base font-bold text-white font-mono">
-                          Rp {Number(item.fiatEstimateIdr).toLocaleString("id-ID")}
+                          Rp {(item.fiatEstimateIdr || 0).toLocaleString("id-ID")}
                         </div>
                       )}
                       {currency === "XMR" && (
                         <div className="text-base font-bold text-[#FF6600] font-mono">
-                          {formatXmr(item.priceXmr)}
+                          {formatXmr(item.priceXmr || 0)}
                         </div>
                       )}
                       {currency === "BTC" && (
                         <div className="text-base font-bold text-[#F7931A] font-mono">
-                          {formatBtc(item.priceBtc)}
+                          {formatBtc(item.priceBtc || 0)}
                         </div>
                       )}
                     </div>

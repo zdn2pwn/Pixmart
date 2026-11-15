@@ -25,22 +25,35 @@ import {
 
 export function SellerDashboardContentImproved({
   session,
+  profile,
   myListings,
   negotiations,
   escrowRooms,
+  completedEscrows,
 }: {
   session: any;
+  profile: { balance_btc: number; balance_xmr: number };
   myListings: any[];
   negotiations: any[];
   escrowRooms: any[];
+  completedEscrows: any[];
 }) {
   const [activeTab, setActiveTab] = useState<"PRODUCTS" | "OFFERS" | "TRANSACTIONS">("PRODUCTS");
   const [isPending, startTransition] = useTransition();
   const [listingsList, setListingsList] = useState(myListings);
 
-  // Wallet state
-  const [balanceBtc, setBalanceBtc] = useState<number>(session?.balance_btc || session?.balanceBtc || 0.02);
-  const [balanceXmr, setBalanceXmr] = useState<number>(session?.balance_xmr || session?.balanceXmr || 1.25);
+  // Wallet balance from profile
+  const balanceBtc = profile.balance_btc || 0;
+  const balanceXmr = profile.balance_xmr || 0;
+
+  // Calculate total income from completed escrows
+  const totalIncomeBtc = completedEscrows
+    .filter((e: any) => e.crypto_type === "BTC")
+    .reduce((sum: number, e: any) => sum + (e.agreed_price_btc || 0), 0);
+  
+  const totalIncomeXmr = completedEscrows
+    .filter((e: any) => e.crypto_type === "XMR")
+    .reduce((sum: number, e: any) => sum + (e.agreed_price_xmr || 0), 0);
 
   function handleToggleStatus(listing: any) {
     const nextStatus = listing.status === "ACTIVE" ? "PAUSED" : "ACTIVE";
@@ -86,18 +99,44 @@ export function SellerDashboardContentImproved({
       <div className="bg-[#111] border border-[#262626] p-5">
         <div className="flex items-center gap-2 mb-4">
           <Wallet size={18} className="text-[#39FF14]" />
-          <h3 className="text-sm font-bold text-white">Saldo Anda</h3>
+          <h3 className="text-sm font-bold text-white">Saldo & Pemasukan</h3>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Monero */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Bitcoin Balance */}
+          <div className="bg-[#0a0a0a] border border-[#222] p-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs text-[#888]">BITCOIN (BTC)</span>
+              <span className="text-xs text-[#666]">1 BTC ≈ Rp 1.4M</span>
+            </div>
+            <div className="text-2xl font-bold text-[#F7931A] mb-1">
+              {balanceBtc.toFixed(8)} <span className="text-sm text-[#888]">BTC</span>
+            </div>
+            <div className="text-xs text-[#666] mb-3">
+              ≈ Rp {(balanceBtc * 1400000000).toLocaleString("id-ID")}
+            </div>
+            <div className="flex gap-2">
+              <Link
+                href="/seller/withdraw?crypto=BTC"
+                className="text-xs px-3 py-1.5 bg-[#39FF14] text-black font-bold hover:bg-[#32dd10] transition-colors flex items-center gap-1"
+              >
+                <ArrowUpRight size={12} />
+                Tarik
+              </Link>
+            </div>
+          </div>
+
+          {/* Monero Balance */}
           <div className="bg-[#0a0a0a] border border-[#222] p-4">
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs text-[#888]">MONERO (XMR)</span>
-              <span className="text-xs text-[#666]">1 XMR ≈ Rp 2.5jt</span>
+              <span className="text-xs text-[#666]">1 XMR ≈ Rp 3.5jt</span>
             </div>
-            <div className="text-2xl font-bold text-[#FF6600] mb-3">
+            <div className="text-2xl font-bold text-[#FF6600] mb-1">
               {balanceXmr.toFixed(4)} <span className="text-sm text-[#888]">XMR</span>
+            </div>
+            <div className="text-xs text-[#666] mb-3">
+              ≈ Rp {(balanceXmr * 3500000).toLocaleString("id-ID")}
             </div>
             <div className="flex gap-2">
               <Link
@@ -110,23 +149,22 @@ export function SellerDashboardContentImproved({
             </div>
           </div>
 
-          {/* Bitcoin */}
-          <div className="bg-[#0a0a0a] border border-[#222] p-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs text-[#888]">BITCOIN (BTC)</span>
-              <span className="text-xs text-[#666]">1 BTC ≈ Rp 1.4M</span>
+          {/* Total Income */}
+          <div className="bg-[#39FF14]/10 border border-[#39FF14]/50 p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <TrendingUp size={14} className="text-[#39FF14]" />
+              <span className="text-xs text-[#39FF14] font-bold">TOTAL PEMASUKAN</span>
             </div>
-            <div className="text-2xl font-bold text-[#F7931A] mb-3">
-              {balanceBtc.toFixed(6)} <span className="text-sm text-[#888]">BTC</span>
+            <div className="space-y-1 mb-3">
+              <div className="text-lg font-bold text-white">
+                {totalIncomeBtc.toFixed(8)} <span className="text-xs text-[#888]">BTC</span>
+              </div>
+              <div className="text-lg font-bold text-white">
+                {totalIncomeXmr.toFixed(4)} <span className="text-xs text-[#888]">XMR</span>
+              </div>
             </div>
-            <div className="flex gap-2">
-              <Link
-                href="/seller/withdraw?crypto=BTC"
-                className="text-xs px-3 py-1.5 bg-[#39FF14] text-black font-bold hover:bg-[#32dd10] transition-colors flex items-center gap-1"
-              >
-                <ArrowUpRight size={12} />
-                Tarik
-              </Link>
+            <div className="text-xs text-[#666]">
+              Dari {completedEscrows.length} transaksi selesai
             </div>
           </div>
         </div>

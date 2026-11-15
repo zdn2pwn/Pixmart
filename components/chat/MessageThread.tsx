@@ -43,14 +43,14 @@ export function MessageThread({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const prevMessageCountRef = useRef(messages.length);
 
-  // Auto-scroll ONLY when new message is added (not on every render)
-  useEffect(() => {
-    if (messages.length > prevMessageCountRef.current) {
-      // New message arrived, scroll to bottom
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    }
-    prevMessageCountRef.current = messages.length;
-  }, [messages.length]);
+  // DISABLED: Auto-scroll removed per user request
+  // Users can manually scroll to see new messages
+  // useEffect(() => {
+  //   if (messages.length > prevMessageCountRef.current) {
+  //     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  //   }
+  //   prevMessageCountRef.current = messages.length;
+  // }, [messages.length]);
 
   async function handleSendMessage(e: React.FormEvent) {
     e.preventDefault();

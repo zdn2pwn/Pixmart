@@ -204,23 +204,44 @@ export async function acceptOfferAction(formData: FormData) {
     
     // Determine crypto type
     const cryptoType = agreedPriceBtc && agreedPriceBtc > 0 ? 'BTC' : 'XMR';
+    
+    // Calculate IDR
+    const btcToIdr = 1400000000;
+    const xmrToIdr = 3500000;
+    const agreedPriceIdr = cryptoType === 'BTC' 
+      ? Math.round((agreedPriceBtc || 0) * btcToIdr)
+      : Math.round((agreedPriceXmr || 0) * xmrToIdr);
+
+    // Get default midman (first OWNER account)
+    const { data: ownerProfile } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("role", "OWNER")
+      .limit(1)
+      .single();
+
+    const midmanId = ownerProfile?.id || nego.buyer_id;
 
     // Generate escrow address (placeholder for now)
     const escrowAddress = `escrow_${crypto.randomUUID().slice(0, 8)}`;
 
-    // Insert with CORRECT column names
+    // Insert with MIDMAN
     const { data: escrow, error } = await supabase
       .from("escrow_sessions")
       .insert({
         buyer_id: nego.buyer_id,
         seller_id: nego.seller_id,
+        midman_id: midmanId,
         negotiation_id: negotiationId,
         item_title: listing?.title || "Produk",
         agreed_price_btc: agreedPriceBtc,
         agreed_price_xmr: agreedPriceXmr,
+        agreed_price_idr: agreedPriceIdr,
         crypto_type: cryptoType,
         escrow_address: escrowAddress,
         status: "AWAITING_DEPOSIT",
+        payment_status: "AWAITING_PAYMENT",
+        shipment_status: "PENDING",
       })
       .select()
       .single();
@@ -230,14 +251,24 @@ export async function acceptOfferAction(formData: FormData) {
       return { success: false, error: `Gagal membuat escrow session: ${error?.message || 'Unknown error'}` };
     }
 
+    // Log initial activity
+    await supabase.from("escrow_activities").insert({
+      escrow_id: escrow.id,
+      actor_id: session.userId,
+      actor_role: session.role,
+      action: "ESCROW_CREATED",
+      description: `Escrow dibuat setelah deal 2/2. Midman ditugaskan.`,
+    });
+
     revalidatePath(`/negotiations/${negotiationId}`);
     revalidatePath("/escrow");
+    revalidatePath("/owner");
     
     return {
       success: true,
       escrowRoomId: escrow.id,
       bothAgreed: true,
-      message: "Escrow room berhasil dibuat! Redirect...",
+      message: "Escrow room berhasil dibuat dengan Midman! Redirect...",
     };
   }
 

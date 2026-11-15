@@ -59,63 +59,78 @@ export function PublicNav({
 
         {/* Center Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-7 text-xs font-mono font-medium text-[#888]">
-          {/* Show Katalog Lokal only if NOT seller */}
-          {currentRole !== "SELLER" && (
-            <Link
-              href="/marketplace"
-              className="hover:text-white transition-colors flex items-center gap-1.5"
-            >
-              <Compass size={14} className="text-[#39FF14]" />
-              <span>Katalog Lokal</span>
-            </Link>
-          )}
-
-          {isLoggedIn && (
+          {/* OWNER: Only Katalog Lokal + Midman Dashboard */}
+          {currentRole === "OWNER" && (
             <>
               <Link
-                href="/negotiations"
+                href="/marketplace"
                 className="hover:text-white transition-colors flex items-center gap-1.5"
               >
-                <MessageSquare size={14} className="text-[#39FF14]" />
-                <span>Negosiasi</span>
+                <Compass size={14} className="text-[#39FF14]" />
+                <span>Katalog Lokal</span>
               </Link>
-
               <Link
-                href="/escrow"
-                className="hover:text-white transition-colors flex items-center gap-1.5"
+                href="/owner"
+                className="hover:text-white transition-colors flex items-center gap-1.5 text-[#FFB800]"
               >
-                <ShieldCheck size={14} className="text-[#39FF14]" />
-                <span>Escrow COD</span>
+                <Radio size={14} />
+                <span>Midman Dashboard</span>
               </Link>
+            </>
+          )}
 
-              {currentRole === "SELLER" && (
+          {/* BUYER/SELLER: Full navigation */}
+          {currentRole !== "OWNER" && (
+            <>
+              {/* Show Katalog Lokal only if NOT seller */}
+              {currentRole !== "SELLER" && (
                 <Link
-                  href="/seller"
-                  className="hover:text-white transition-colors flex items-center gap-1.5 text-[#39FF14]"
+                  href="/marketplace"
+                  className="hover:text-white transition-colors flex items-center gap-1.5"
                 >
-                  <Store size={14} />
-                  <span>Seller Hub</span>
+                  <Compass size={14} className="text-[#39FF14]" />
+                  <span>Katalog Lokal</span>
                 </Link>
               )}
 
-              {currentRole === "BUYER" && (
-                <Link
-                  href="/dashboard"
-                  className="hover:text-white transition-colors flex items-center gap-1.5 text-[#39FF14]"
-                >
-                  <ShoppingBag size={14} />
-                  <span>Buyer Hub</span>
-                </Link>
-              )}
+              {isLoggedIn && (
+                <>
+                  <Link
+                    href="/negotiations"
+                    className="hover:text-white transition-colors flex items-center gap-1.5"
+                  >
+                    <MessageSquare size={14} className="text-[#39FF14]" />
+                    <span>Negosiasi</span>
+                  </Link>
 
-              {currentRole === "OWNER" && (
-                <Link
-                  href="/admin"
-                  className="hover:text-white transition-colors flex items-center gap-1.5 text-[#FFB800]"
-                >
-                  <Radio size={14} />
-                  <span>Owner Radar</span>
-                </Link>
+                  <Link
+                    href="/escrow"
+                    className="hover:text-white transition-colors flex items-center gap-1.5"
+                  >
+                    <ShieldCheck size={14} className="text-[#39FF14]" />
+                    <span>Escrow COD</span>
+                  </Link>
+
+                  {currentRole === "SELLER" && (
+                    <Link
+                      href="/seller"
+                      className="hover:text-white transition-colors flex items-center gap-1.5 text-[#39FF14]"
+                    >
+                      <Store size={14} />
+                      <span>Seller Hub</span>
+                    </Link>
+                  )}
+
+                  {currentRole === "BUYER" && (
+                    <Link
+                      href="/dashboard"
+                      className="hover:text-white transition-colors flex items-center gap-1.5 text-[#39FF14]"
+                    >
+                      <ShoppingBag size={14} />
+                      <span>Buyer Hub</span>
+                    </Link>
+                  )}
+                </>
               )}
             </>
           )}
@@ -220,83 +235,28 @@ export function PublicNav({
       {/* Mobile Drawer */}
       {open && (
         <div className="md:hidden border-t border-[#222222] bg-[#111111] px-6 py-5 space-y-4 font-mono text-xs">
-          {/* Show Katalog Lokal only if NOT seller */}
-          {currentRole !== "SELLER" && (
-            <Link
-              href="/marketplace"
-              onClick={() => setOpen(false)}
-              className="flex items-center gap-2 text-[#ccc] hover:text-white py-1 font-medium"
-            >
-              <Compass size={16} className="text-[#39FF14]" />
-              <span>Katalog Lokal Terdekat</span>
-            </Link>
-          )}
-
-          {isLoggedIn && (
+          {/* OWNER: Only Katalog Lokal + Midman Dashboard */}
+          {currentRole === "OWNER" && isLoggedIn && (
             <>
               <Link
-                href="/negotiations"
+                href="/marketplace"
                 onClick={() => setOpen(false)}
                 className="flex items-center gap-2 text-[#ccc] hover:text-white py-1 font-medium"
               >
-                <MessageSquare size={16} className="text-[#39FF14]" />
-                <span>Pusat Negosiasi</span>
+                <Compass size={16} className="text-[#39FF14]" />
+                <span>Katalog Lokal</span>
               </Link>
-
               <Link
-                href="/escrow"
+                href="/owner"
                 onClick={() => setOpen(false)}
-                className="flex items-center gap-2 text-[#ccc] hover:text-white py-1 font-medium"
+                className="flex items-center gap-2 text-[#FFB800] py-1 font-bold"
               >
-                <ShieldCheck size={16} className="text-[#39FF14]" />
-                <span>Ruang Escrow COD</span>
+                <Radio size={16} />
+                <span>Midman Dashboard</span>
               </Link>
-
-              {currentRole === "SELLER" && (
-                <>
-                  <Link
-                    href="/seller"
-                    onClick={() => setOpen(false)}
-                    className="flex items-center gap-2 text-[#39FF14] py-1 font-bold"
-                  >
-                    <Store size={16} />
-                    <span>Seller Dashboard</span>
-                  </Link>
-                  <Link
-                    href="/marketplace/new"
-                    onClick={() => setOpen(false)}
-                    className="btn-primary w-full py-2.5 text-center text-xs font-bold block"
-                  >
-                    + Pasang Iklan
-                  </Link>
-                </>
-              )}
-
-              {currentRole === "BUYER" && (
-                <Link
-                  href="/dashboard"
-                  onClick={() => setOpen(false)}
-                  className="flex items-center gap-2 text-[#39FF14] py-1 font-bold"
-                >
-                  <ShoppingBag size={16} />
-                  <span>Buyer Dashboard</span>
-                </Link>
-              )}
-
-              {currentRole === "OWNER" && (
-                <Link
-                  href="/admin"
-                  onClick={() => setOpen(false)}
-                  className="flex items-center gap-2 text-[#FFB800] py-1 font-bold"
-                >
-                  <Radio size={16} />
-                  <span>Owner Radar & Dispute</span>
-                </Link>
-              )}
-
               <div className="pt-2 border-t border-[#222]">
                 <div className="text-[11px] text-[#555] mb-2">
-                  Login sebagai: <span className="text-[#39FF14]">{displayName}</span>
+                  Login sebagai: <span className="text-[#FFB800]">{displayName}</span>
                 </div>
                 <button
                   onClick={handleLogout}
@@ -309,23 +269,106 @@ export function PublicNav({
             </>
           )}
 
-          {!isLoggedIn && (
-            <div className="pt-2 space-y-2">
-              <Link
-                href="/register"
-                onClick={() => setOpen(false)}
-                className="btn-primary w-full py-2.5 text-center text-xs font-bold block"
-              >
-                Daftar Gratis
-              </Link>
-              <Link
-                href="/login"
-                onClick={() => setOpen(false)}
-                className="btn-ghost w-full py-2.5 text-center text-xs font-bold block"
-              >
-                Masuk
-              </Link>
-            </div>
+          {/* BUYER/SELLER: Full navigation */}
+          {currentRole !== "OWNER" && (
+            <>
+              {/* Show Katalog Lokal only if NOT seller */}
+              {currentRole !== "SELLER" && (
+                <Link
+                  href="/marketplace"
+                  onClick={() => setOpen(false)}
+                  className="flex items-center gap-2 text-[#ccc] hover:text-white py-1 font-medium"
+                >
+                  <Compass size={16} className="text-[#39FF14]" />
+                  <span>Katalog Lokal Terdekat</span>
+                </Link>
+              )}
+
+              {isLoggedIn && (
+                <>
+                  <Link
+                    href="/negotiations"
+                    onClick={() => setOpen(false)}
+                    className="flex items-center gap-2 text-[#ccc] hover:text-white py-1 font-medium"
+                  >
+                    <MessageSquare size={16} className="text-[#39FF14]" />
+                    <span>Pusat Negosiasi</span>
+                  </Link>
+
+                  <Link
+                    href="/escrow"
+                    onClick={() => setOpen(false)}
+                    className="flex items-center gap-2 text-[#ccc] hover:text-white py-1 font-medium"
+                  >
+                    <ShieldCheck size={16} className="text-[#39FF14]" />
+                    <span>Ruang Escrow COD</span>
+                  </Link>
+
+                  {currentRole === "SELLER" && (
+                    <>
+                      <Link
+                        href="/seller"
+                        onClick={() => setOpen(false)}
+                        className="flex items-center gap-2 text-[#39FF14] py-1 font-bold"
+                      >
+                        <Store size={16} />
+                        <span>Seller Dashboard</span>
+                      </Link>
+                      <Link
+                        href="/marketplace/new"
+                        onClick={() => setOpen(false)}
+                        className="btn-primary w-full py-2.5 text-center text-xs font-bold block"
+                      >
+                        + Pasang Iklan
+                      </Link>
+                    </>
+                  )}
+
+                  {currentRole === "BUYER" && (
+                    <Link
+                      href="/dashboard"
+                      onClick={() => setOpen(false)}
+                      className="flex items-center gap-2 text-[#39FF14] py-1 font-bold"
+                    >
+                      <ShoppingBag size={16} />
+                      <span>Buyer Dashboard</span>
+                    </Link>
+                  )}
+
+                  <div className="pt-2 border-t border-[#222]">
+                    <div className="text-[11px] text-[#555] mb-2">
+                      Login sebagai: <span className="text-[#39FF14]">{displayName}</span>
+                    </div>
+                    <button
+                      onClick={handleLogout}
+                      className="flex items-center gap-2 text-[#FF6666] py-1"
+                    >
+                      <LogOut size={14} />
+                      <span>Logout</span>
+                    </button>
+                  </div>
+                </>
+              )}
+
+              {!isLoggedIn && (
+                <div className="pt-2 space-y-2">
+                  <Link
+                    href="/register"
+                    onClick={() => setOpen(false)}
+                    className="btn-primary w-full py-2.5 text-center text-xs font-bold block"
+                  >
+                    Daftar Gratis
+                  </Link>
+                  <Link
+                    href="/login"
+                    onClick={() => setOpen(false)}
+                    className="btn-ghost w-full py-2.5 text-center text-xs font-bold block"
+                  >
+                    Masuk
+                  </Link>
+                </div>
+              )}
+            </>
           )}
         </div>
       )}

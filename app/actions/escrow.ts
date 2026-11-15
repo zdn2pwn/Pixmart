@@ -115,9 +115,22 @@ export async function createDirectEscrowAction(formData: FormData) {
     content: "Pembelian langsung sesuai harga pas katalog.",
   });
 
+  // Auto-assign first OWNER as Midman
+  const { data: ownerProfile } = await supabase
+    .from("profiles")
+    .select("id")
+    .eq("role", "OWNER")
+    .limit(1)
+    .single();
+
+  if (!ownerProfile) {
+    return { success: false, error: "Sistem escrow belum siap (Midman tidak tersedia)" };
+  }
+
   // Create escrow session with generated ID
   const escrowId = crypto.randomUUID();
   const escrowAddress = `escrow_${escrowId.slice(0, 8)}`;
+  const agreedPriceIdr = Math.round(listing.price_btc * 1400000000); // 1 BTC ≈ 1.4B IDR
   
   const { data: escrow, error } = await supabase
     .from("escrow_sessions")
@@ -125,13 +138,17 @@ export async function createDirectEscrowAction(formData: FormData) {
       id: escrowId,
       buyer_id: session.userId,
       seller_id: listing.seller_id,
+      midman_id: ownerProfile.id,
       negotiation_id: negotiationId,
       item_title: listing.title,
       agreed_price_btc: listing.price_btc,
       agreed_price_xmr: listing.price_xmr,
+      agreed_price_idr: agreedPriceIdr,
       crypto_type: "BTC", // Default BTC untuk direct buy
       escrow_address: escrowAddress,
-      status: "AWAITING_DEPOSIT",
+      status: "PENDING", // Changed: was AWAITING_PAYMENT
+      payment_status: "AWAITING_PAYMENT",
+      shipment_status: "NOT_STARTED",
     })
     .select()
     .single();
@@ -141,9 +158,24 @@ export async function createDirectEscrowAction(formData: FormData) {
     return { success: false, error: "Gagal membuat Escrow Room" };
   }
 
+  // Log activity: Escrow created
+  await supabase.from("escrow_activities").insert({
+    escrow_id: escrow.id,
+    actor_id: session.userId,
+    actor_role: "BUYER",
+    action: "ESCROW_CREATED",
+    description: `Buyer membuat escrow untuk pembelian langsung: ${listing.title}`,
+    metadata: {
+      listing_id: listingId,
+      agreed_price_idr: agreedPriceIdr,
+      crypto_type: "BTC",
+    },
+  });
+
   revalidatePath("/marketplace");
   revalidatePath(`/marketplace/${listingId}`);
   revalidatePath("/escrow");
+  revalidatePath("/owner");
   
   return { success: true, escrowRoomId: escrow.id };
 }

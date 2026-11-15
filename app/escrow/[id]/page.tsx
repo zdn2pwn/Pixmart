@@ -29,13 +29,14 @@ export default async function EscrowRoomPage({
   const { id } = await params;
   const supabase = await createSupabaseServerClient();
 
-  // Fetch escrow session with related data + negotiation + listing via negotiation
+  // Fetch escrow session with related data + negotiation + listing via negotiation + midman
   const { data: room } = await supabase
     .from("escrow_sessions")
     .select(`
       *,
       buyer:profiles!escrow_sessions_buyer_id_fkey(id, codename, email),
       seller:profiles!escrow_sessions_seller_id_fkey(id, codename, email),
+      midman:profiles!escrow_sessions_midman_id_fkey(id, codename, email),
       negotiation:negotiations(
         id,
         listing_id,
@@ -51,11 +52,12 @@ export default async function EscrowRoomPage({
     notFound();
   }
 
-  // Authorization Check: Only Buyer, Seller, or Owner can access
+  // Authorization Check: Only Buyer, Seller, Midman, or Owner can access
   const isParticipant =
     session.role === "OWNER" ||
     session.userId === room.buyer_id ||
-    session.userId === room.seller_id;
+    session.userId === room.seller_id ||
+    session.userId === room.midman_id;
 
   if (!isParticipant) {
     redirect("/escrow");
