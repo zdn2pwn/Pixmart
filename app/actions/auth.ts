@@ -3,37 +3,12 @@
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { createHmac, timingSafeEqual } from "node:crypto";
 import { isValidBtcAddress, isValidXmrAddress } from "@/lib/crypto-wallet";
 import { generateBtcAddress, generateXmrAddress, hashPassword } from "@/lib/crypto-wallet";
 import { ensureUniqueCodename } from "@/lib/username";
 import type { UserRole } from "@/lib/types";
 
 const SESSION_COOKIE = "pixmart_session";
-
-function sessionSecret(): string {
-  return process.env.SESSION_SECRET || "pixmart-demo-secret-change-me";
-}
-
-function signSession(payload: string): string {
-  const hmac = createHmac("sha256", sessionSecret()).update(payload).digest("base64url");
-  return `${payload}.${hmac}`;
-}
-
-function verifySession(signed: string): string | null {
-  const idx = signed.lastIndexOf(".");
-  if (idx < 0) return null;
-  const payload = signed.slice(0, idx);
-  const sig = signed.slice(idx + 1);
-  const expected = createHmac("sha256", sessionSecret()).update(payload).digest("base64url");
-  try {
-    if (sig.length !== expected.length) return null;
-    if (!timingSafeEqual(Buffer.from(sig), Buffer.from(expected))) return null;
-  } catch {
-    return null;
-  }
-  return payload;
-}
 
 export interface SimpleSession {
   userId: string;
@@ -49,9 +24,8 @@ export interface SimpleSession {
 
 async function setSessionCookie(session: SimpleSession) {
   const cookieStore = await cookies();
-  const encoded = Buffer.from(JSON.stringify(session)).toString("base64url");
-  const signed = signSession(encoded);
-  cookieStore.set(SESSION_COOKIE, signed, {
+  const encoded = Buffer.from(JSON.stringify(session)).toString("base64");
+  cookieStore.set(SESSION_COOKIE, encoded, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
@@ -69,12 +43,7 @@ export async function getSimpleSession(): Promise<SimpleSession | null> {
       return null;
     }
 
-    const payload = verifySession(cookie.value);
-    if (!payload) {
-      return null;
-    }
-
-    const decoded = Buffer.from(payload, "base64url").toString("utf-8");
+    const decoded = Buffer.from(cookie.value, "base64").toString("utf-8");
     const session = JSON.parse(decoded) as SimpleSession;
     
     // Verify user still exists in database

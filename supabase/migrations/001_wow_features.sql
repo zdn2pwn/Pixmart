@@ -1,10 +1,15 @@
 -- PIXMART wow features migration (wishlist, notifications, reviews)
 -- Run this in Supabase SQL Editor.
 
+-- Clean slate for demo (safe to re-run)
+drop table if exists public.wishlists cascade;
+drop table if exists public.notifications cascade;
+drop table if exists public.reviews cascade;
+
 -- Wishlists
 create table if not exists public.wishlists (
   user_id text not null,
-  listing_id uuid not null references public.marketplace_listings(id) on delete cascade,
+  listing_id text not null references public.marketplace_listings(id) on delete cascade,
   created_at timestamptz not null default now(),
   primary key (user_id, listing_id)
 );
@@ -26,7 +31,7 @@ create table if not exists public.reviews (
   id uuid primary key default gen_random_uuid(),
   reviewer_id text not null,
   reviewee_id text not null,
-  escrow_id uuid,
+  escrow_id text,
   rating int not null check (rating between 1 and 5),
   comment text,
   created_at timestamptz not null default now()
