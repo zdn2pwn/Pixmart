@@ -34,11 +34,19 @@ interface EscrowRoomClientProps {
 }
 
 export function EscrowRoomClient({ room: initialRoom, messages: initialMessages, session }: EscrowRoomClientProps) {
-  const [room] = useState(initialRoom);
+  const [room, setRoom] = useState(initialRoom);
   const [messages, setMessages] = useState(initialMessages);
   const [showMeetingForm, setShowMeetingForm] = useState(false);
   const [meetingLocation, setMeetingLocation] = useState("");
   const [meetingTime, setMeetingTime] = useState("");
+
+  // Merge a fresh database row into local state without a full page reload.
+  // Full reloads during a Server Action response are what triggered the
+  // "Error in input stream" overlay in Next.js dev.
+  function applyRoomUpdate(updatedRoom: Record<string, unknown>) {
+    if (!updatedRoom) return;
+    setRoom((prev: typeof initialRoom) => ({ ...prev, ...updatedRoom }));
+  }
 
   const isBuyer = session.userId === room.buyer_id;
   const counterparty = isBuyer ? room.seller : room.buyer;
@@ -97,8 +105,8 @@ export function EscrowRoomClient({ room: initialRoom, messages: initialMessages,
     
     const result = await proposeMeetingAction(formData);
     if (result.success) {
+      applyRoomUpdate(result.room);
       customAlert.success("Usulan titik temu berhasil dikirim!");
-      setTimeout(() => window.location.reload(), 1500);
     }
   }
 
@@ -106,8 +114,8 @@ export function EscrowRoomClient({ room: initialRoom, messages: initialMessages,
   async function handleAcceptMeeting() {
     const result = await acceptMeetingAction(room.id);
     if (result.success) {
+      applyRoomUpdate(result.room);
       customAlert.success("Titik temu disepakati!");
-      setTimeout(() => window.location.reload(), 1500);
     }
   }
 
@@ -118,8 +126,8 @@ export function EscrowRoomClient({ room: initialRoom, messages: initialMessages,
       async () => {
         const result = await confirmArrivalAction(room.id);
         if (result.success) {
+          applyRoomUpdate(result.room);
           customAlert.success("Kehadiran dikonfirmasi!");
-          setTimeout(() => window.location.reload(), 1500);
         }
       }
     );
@@ -134,12 +142,12 @@ export function EscrowRoomClient({ room: initialRoom, messages: initialMessages,
     customAlert.confirm(confirmText, async () => {
       const result = await confirmCodHandshakeAction(room.id);
       if (result.success) {
+        applyRoomUpdate(result.room);
         if (result.bothConfirmed) {
           customAlert.success("🎉 Kedua pihak sudah konfirmasi! Menunggu Midman release dana...");
         } else {
           customAlert.success("Konfirmasi berhasil. Menunggu konfirmasi dari pihak lain...");
         }
-        setTimeout(() => window.location.reload(), 1500);
       }
     });
   }
@@ -151,8 +159,8 @@ export function EscrowRoomClient({ room: initialRoom, messages: initialMessages,
       async () => {
         const result = await payEscrowAction(room.id);
         if (result.success) {
+          applyRoomUpdate(result.escrow);
           customAlert.success("✅ Pembayaran berhasil! Dana ditahan oleh sistem escrow.");
-          setTimeout(() => window.location.reload(), 1500);
         } else {
           customAlert.error(result.error || "Pembayaran gagal");
         }
@@ -175,6 +183,19 @@ export function EscrowRoomClient({ room: initialRoom, messages: initialMessages,
       
       if (data) {
         setMessages(data);
+      }
+    };
+
+    // Function to fetch latest room state (fallback when Realtime is unavailable)
+    const fetchRoom = async () => {
+      const { data } = await supabase
+        .from("escrow_sessions")
+        .select("*")
+        .eq("id", room.id)
+        .single();
+
+      if (data) {
+        setRoom((prev: typeof initialRoom) => ({ ...prev, ...data }));
       }
     };
 
@@ -226,15 +247,19 @@ export function EscrowRoomClient({ room: initialRoom, messages: initialMessages,
         },
         (payload) => {
           console.log("Escrow state changed:", payload);
-          // Force reload when escrow data changes (meeting, payment, confirmation, etc)
-          window.location.reload();
+          // Merge the changed row instead of reloading the page.
+          // Reloading here raced with in-flight Server Action/RSC streams.
+          if (payload.new) {
+            setRoom((prev: typeof initialRoom) => ({ ...prev, ...payload.new }));
+          }
         }
       )
       .subscribe();
 
-    // POLLING: Fetch messages every 2 seconds as fallback
+    // POLLING: Fetch messages and room state every 2 seconds as fallback
     const pollInterval = setInterval(() => {
       fetchMessages();
+      fetchRoom();
     }, 2000); // 2 seconds
 
     return () => {

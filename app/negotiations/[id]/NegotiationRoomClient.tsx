@@ -61,8 +61,7 @@ export function NegotiationRoomClient({
             router.push(`/escrow/${result.escrowRoomId}`);
           }, 1500);
         } else {
-          // Only one agreed (1/2) - Refresh to show status
-          router.refresh();
+          // Only one agreed (1/2). Realtime/polling updates the local state.
           customAlert.info(result.message || "Deal agreement updated. Menunggu pihak lain...");
         }
       } else {
@@ -81,7 +80,6 @@ export function NegotiationRoomClient({
       
       if (result.success) {
         customAlert.info(result.message || "Offer ditolak. Silakan counter offer lagi.", "Offer Ditolak");
-        router.refresh();
       } else {
         customAlert.error(result.error || "Gagal menolak penawaran");
       }
@@ -158,8 +156,7 @@ export function NegotiationRoomClient({
       const result = await counterOfferAction(counterFormData);
       
       if (result.success) {
-        // Refresh to show updated offer in Live Bid Bar
-        router.refresh();
+        // Realtime/polling refreshes the bid bar with the new offer.
       } else {
         customAlert.error(result.error || "Gagal update offer");
       }
@@ -189,10 +186,7 @@ export function NegotiationRoomClient({
     const result = await sendNegotiationMessageAction(formData);
 
     if (result.success) {
-      // Replace temp message with real one from server
-      setTimeout(() => {
-        router.refresh();
-      }, 300);
+      // Realtime/polling replaces the optimistic message with the saved row.
     } else {
       // Remove temp message on error
       setMessages((prev) => prev.filter((m) => m.id !== tempMessage.id));

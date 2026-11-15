@@ -4,39 +4,6 @@ import { requireSimpleSession } from "./auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
-// Helper to transform snake_case database to camelCase for components
-function transformEscrowRoom(dbRoom: any) {
-  if (!dbRoom) return null;
-  return {
-    id: dbRoom.id,
-    buyerId: dbRoom.buyer_id,
-    sellerId: dbRoom.seller_id,
-    listingId: dbRoom.listing_id,
-    negotiationId: dbRoom.negotiation_id,
-    agreedPriceIdr: dbRoom.agreed_price_idr,
-    agreedPriceBtc: dbRoom.agreed_price_btc,
-    agreedPriceXmr: dbRoom.agreed_price_xmr,
-    status: dbRoom.status,
-    meetingProposal: dbRoom.meeting_proposal,
-    meetingConfirmed: dbRoom.meeting_accepted,
-    meetingStatus: dbRoom.meeting_accepted ? "SCHEDULED" : "PENDING",
-    buyerArrived: dbRoom.buyer_arrived || false,
-    sellerArrived: dbRoom.seller_arrived || false,
-    buyerConfirmed: dbRoom.buyer_confirmed || false,
-    buyerConfirmedReceived: dbRoom.buyer_confirmed || false,
-    sellerConfirmed: dbRoom.seller_confirmed || false,
-    sellerConfirmedHandedOver: dbRoom.seller_confirmed || false,
-    dispute: dbRoom.dispute,
-    disputeResolution: dbRoom.dispute_resolution,
-    completedAt: dbRoom.completed_at,
-    createdAt: dbRoom.created_at,
-    messages: [], // Will be fetched separately in components
-    listing: null,
-    buyer: null,
-    seller: null,
-  } as any;
-}
-
 /**
  * Authorization check: User must be Buyer, Seller of the room, or Owner
  */
@@ -231,7 +198,7 @@ export async function proposeMeetingAction(formData: FormData) {
     .single();
 
   revalidatePath(`/escrow/${roomId}`);
-  return { success: true, room: transformEscrowRoom(room) };
+  return { success: true, room: room };
 }
 
 /**
@@ -261,7 +228,7 @@ export async function acceptMeetingAction(roomId: string) {
     .single();
 
   revalidatePath(`/escrow/${roomId}`);
-  return { success: true, room: transformEscrowRoom(room) };
+  return { success: true, room: room };
 }
 
 /**
@@ -293,7 +260,7 @@ export async function confirmArrivalAction(roomId: string) {
     .single();
 
   revalidatePath(`/escrow/${roomId}`);
-  return { success: true, room: transformEscrowRoom(room) };
+  return { success: true, room: room };
 }
 
 /**
@@ -351,7 +318,7 @@ export async function confirmCodHandshakeAction(roomId: string) {
   revalidatePath(`/escrow/${roomId}`);
   return {
     success: true,
-    room: transformEscrowRoom(room),
+    room: room,
     bothConfirmed,
   };
 }
@@ -400,7 +367,7 @@ export async function fileDisputeAction(formData: FormData) {
   revalidatePath(`/escrow/${roomId}`);
   revalidatePath("/owner");
   revalidatePath(`/owner/escrow/${roomId}`);
-  return { success: true, room: transformEscrowRoom(room) };
+  return { success: true, room: room };
 }
 
 /**

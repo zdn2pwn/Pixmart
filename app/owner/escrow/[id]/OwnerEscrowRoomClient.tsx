@@ -37,11 +37,17 @@ export function OwnerEscrowRoomClient({
   activities: initialActivities,
   session 
 }: OwnerEscrowRoomClientProps) {
-  const [escrow] = useState(initialEscrow);
+  const [escrow, setEscrow] = useState(initialEscrow);
   const [messages, setMessages] = useState(initialMessages);
   const [activities, setActivities] = useState(initialActivities);
   const [isPending, startTransition] = useTransition();
   const [activeView, setActiveView] = useState<"INFO" | "CHAT" | "ACTIVITIES">("INFO");
+
+  // Update local UI from the row returned by the action instead of reloading.
+  function applyEscrowUpdate(updatedEscrow: Record<string, unknown>) {
+    if (!updatedEscrow) return;
+    setEscrow((prev: typeof initialEscrow) => ({ ...prev, ...updatedEscrow }));
+  }
 
   const listing = escrow.negotiation?.listing;
   const agreedPriceBtc = escrow.agreed_price_btc;
@@ -66,8 +72,8 @@ export function OwnerEscrowRoomClient({
         startTransition(async () => {
           const result = await holdFundsAction(escrow.id);
           if (result.success) {
+            applyEscrowUpdate(result.escrow);
             customAlert.success("✓ Dana berhasil ditahan di escrow!");
-            setTimeout(() => window.location.reload(), 1500);
           } else {
             customAlert.error(result.error || "Gagal menahan dana");
           }
@@ -83,8 +89,8 @@ export function OwnerEscrowRoomClient({
         startTransition(async () => {
           const result = await releaseFundsAction(escrow.id);
           if (result.success) {
+            applyEscrowUpdate(result.escrow);
             customAlert.success("✓ Dana berhasil dilepas ke Seller! Transaksi selesai.");
-            setTimeout(() => window.location.reload(), 1500);
           } else {
             customAlert.error(result.error || "Gagal melepas dana");
           }
@@ -101,8 +107,14 @@ export function OwnerEscrowRoomClient({
         startTransition(async () => {
           const result = await verifyEscrowAction(escrow.id);
           if (result.success) {
-            customAlert.success("✓ Transaksi diverifikasi!");
-            setTimeout(() => window.location.reload(), 1500);
+            applyEscrowUpdate(result.escrow);
+            if (result.alreadyVerified) {
+              customAlert.info(result.message || "Transaksi sudah diverifikasi.");
+            } else if (typeof result.stock === "number") {
+              customAlert.success(`✓ Transaksi diverifikasi! Stok listing tersisa ${result.stock}.`);
+            } else {
+              customAlert.success("✓ Transaksi diverifikasi!");
+            }
           } else {
             customAlert.error(result.error || "Gagal verifikasi");
           }
@@ -165,6 +177,18 @@ export function OwnerEscrowRoomClient({
       }
     };
 
+    const fetchEscrow = async () => {
+      const { data } = await supabase
+        .from("escrow_sessions")
+        .select("*")
+        .eq("id", escrow.id)
+        .single();
+
+      if (data) {
+        setEscrow((prev: typeof initialEscrow) => ({ ...prev, ...data }));
+      }
+    };
+
     // Subscribe to messages
     const messagesChannel = supabase
       .channel(`escrow_messages:${escrow.id}`)
@@ -214,6 +238,7 @@ export function OwnerEscrowRoomClient({
     const pollInterval = setInterval(() => {
       fetchMessages();
       fetchActivities();
+      fetchEscrow();
     }, 3000);
 
     // Subscribe to escrow_sessions changes (for cross-user updates)
@@ -229,8 +254,10 @@ export function OwnerEscrowRoomClient({
         },
         (payload) => {
           console.log("Escrow state changed:", payload);
-          // Force reload when escrow data changes
-          window.location.reload();
+          // Merge instead of reloading to avoid aborting in-flight RSC streams.
+          if (payload.new) {
+            setEscrow((prev: typeof initialEscrow) => ({ ...prev, ...payload.new }));
+          }
         }
       )
       .subscribe();

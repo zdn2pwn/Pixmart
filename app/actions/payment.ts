@@ -59,13 +59,15 @@ export async function payEscrowAction(escrowId: string) {
   }
 
   // Update escrow payment status
-  const { error: escrowError } = await supabase
+  const { data: updatedEscrow, error: escrowError } = await supabase
     .from("escrow_sessions")
     .update({
       payment_status: "RECEIVED",
       payment_amount_idr: escrow.agreed_price_idr,
     })
-    .eq("id", escrowId);
+    .eq("id", escrowId)
+    .select("*")
+    .maybeSingle();
 
   if (escrowError) {
     console.error("[PayEscrow] Escrow update error:", escrowError);
@@ -90,6 +92,6 @@ export async function payEscrowAction(escrowId: string) {
   revalidatePath("/dashboard");
   revalidatePath("/owner");
 
-  return { success: true };
+  return { success: true, escrow: updatedEscrow };
 }
 

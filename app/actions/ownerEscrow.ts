@@ -4,6 +4,74 @@ import { requireSimpleSession } from "./auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
+type ServerSupabase = Awaited<ReturnType<typeof createSupabaseServerClient>>;
+
+/**
+ * Decrement listing stock exactly once when an escrow is verified.
+ * Uses compare-and-swap on the current stock value so concurrent
+ * verifications cannot drive the stock below zero.
+ */
+async function decrementListingStock(
+  supabase: ServerSupabase,
+  escrow: { seller_id: string; negotiation_id: string | null }
+): Promise<{ updated: boolean; listingId?: string; stock?: number; error?: string }> {
+  if (!escrow.negotiation_id) {
+    return { updated: false };
+  }
+
+  const { data: negotiation, error: negotiationError } = await supabase
+    .from("negotiations")
+    .select("listing_id")
+    .eq("id", escrow.negotiation_id)
+    .maybeSingle();
+
+  if (negotiationError || !negotiation?.listing_id) {
+    return { updated: false };
+  }
+
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const { data: listing, error: listingError } = await supabase
+      .from("marketplace_listings")
+      .select("id, seller_id, stock")
+      .eq("id", negotiation.listing_id)
+      .maybeSingle();
+
+    if (listingError || !listing || listing.seller_id !== escrow.seller_id) {
+      return { updated: false };
+    }
+
+    const currentStock = Math.max(0, Number(listing.stock ?? 0));
+    if (currentStock === 0) {
+      return { updated: false, listingId: listing.id, stock: 0 };
+    }
+
+    const nextStock = currentStock - 1;
+    const updatePayload: Record<string, unknown> = { stock: nextStock };
+    if (nextStock === 0) {
+      updatePayload.status = "SOLD";
+    }
+
+    const { data: updated, error: updateError } = await supabase
+      .from("marketplace_listings")
+      .update(updatePayload)
+      .eq("id", listing.id)
+      .eq("stock", currentStock)
+      .select("id, stock")
+      .maybeSingle();
+
+    if (updateError) {
+      return { updated: false, error: updateError.message };
+    }
+
+    if (updated) {
+      return { updated: true, listingId: listing.id, stock: nextStock };
+    }
+  }
+
+  // Stock changed concurrently several times; do not block verification.
+  return { updated: false };
+}
+
 /**
  * Hold funds from buyer (Midman action)
  */
@@ -17,13 +85,15 @@ export async function holdFundsAction(escrowId: string) {
   const supabase = await createSupabaseServerClient();
 
   // Update escrow
-  const { error } = await supabase
+  const { data: updatedEscrow, error } = await supabase
     .from("escrow_sessions")
     .update({
       funds_held: true,
       payment_status: "HELD_BY_MIDMAN",
     })
-    .eq("id", escrowId);
+    .eq("id", escrowId)
+    .select("*")
+    .maybeSingle();
 
   if (error) {
     console.error("[HoldFunds] Error:", error);
@@ -42,7 +112,7 @@ export async function holdFundsAction(escrowId: string) {
   revalidatePath(`/owner/escrow/${escrowId}`);
   revalidatePath("/owner");
   
-  return { success: true };
+  return { success: true, escrow: updatedEscrow };
 }
 
 /**
@@ -106,7 +176,7 @@ export async function releaseFundsAction(escrowId: string) {
   }
 
   // Update escrow
-  const { error } = await supabase
+  const { data: updatedEscrow, error } = await supabase
     .from("escrow_sessions")
     .update({
       funds_released: true,
@@ -115,7 +185,9 @@ export async function releaseFundsAction(escrowId: string) {
       payment_status: "RELEASED_TO_SELLER",
       status: "COMPLETED",
     })
-    .eq("id", escrowId);
+    .eq("id", escrowId)
+    .select("*")
+    .maybeSingle();
 
   if (error) {
     console.error("[ReleaseFunds] Error:", error);
@@ -142,7 +214,7 @@ export async function releaseFundsAction(escrowId: string) {
   revalidatePath("/seller");
   revalidatePath(`/escrow/${escrowId}`);
   
-  return { success: true };
+  return { success: true, escrow: updatedEscrow };
 }
 
 /**
@@ -173,18 +245,64 @@ export async function verifyEscrowAction(escrowId: string) {
     return { success: false, error: "Buyer dan Seller harus melakukan konfirmasi terlebih dahulu" };
   }
 
-  // Update escrow
-  const { error } = await supabase
+  // Validation: funds must already be held by the Midman.
+  // This prevents stock from being deducted for an unpaid escrow.
+  if (!escrow.funds_held) {
+    return { success: false, error: "Dana belum ditahan oleh Midman. Tahan dana terlebih dahulu." };
+  }
+
+  // Idempotency guard: only the call that flips midman_verified to true
+  // is allowed to decrement stock. Repeated clicks will not reduce it again.
+  if (escrow.midman_verified) {
+    return {
+      success: true,
+      alreadyVerified: true,
+      escrow,
+      message: "Transaksi sudah diverifikasi sebelumnya",
+    };
+  }
+
+  const { data: verifiedEscrow, error } = await supabase
     .from("escrow_sessions")
     .update({
       midman_verified: true,
       midman_verified_at: new Date().toISOString(),
     })
-    .eq("id", escrowId);
+    .eq("id", escrowId)
+    .or("midman_verified.eq.false,midman_verified.is.null")
+    .select("*")
+    .maybeSingle();
 
   if (error) {
     console.error("[VerifyEscrow] Error:", error);
     return { success: false, error: "Gagal verifikasi" };
+  }
+
+  if (!verifiedEscrow) {
+    // Another request verified it first; do not decrement stock again.
+    return {
+      success: true,
+      alreadyVerified: true,
+      escrow,
+      message: "Transaksi sudah diverifikasi sebelumnya",
+    };
+  }
+
+  // Transaction is verified -> reduce listing stock by one (idempotent).
+  const stockResult = await decrementListingStock(supabase, escrow);
+
+  if (stockResult.error) {
+    console.error("[VerifyEscrow] Stock decrement error:", stockResult.error);
+    // Compensating rollback so verification can be retried safely.
+    await supabase
+      .from("escrow_sessions")
+      .update({ midman_verified: false, midman_verified_at: null })
+      .eq("id", escrowId);
+
+    return {
+      success: false,
+      error: "Gagal mengurangi stok listing. Verifikasi dibatalkan, silakan coba lagi.",
+    };
   }
 
   // Log activity
@@ -193,12 +311,26 @@ export async function verifyEscrowAction(escrowId: string) {
     actor_id: session.userId,
     actor_role: "MIDMAN",
     action: "MIDMAN_VERIFIED",
-    description: "Midman memverifikasi transaksi COD selesai",
+    description: stockResult.updated
+      ? `Midman memverifikasi transaksi COD selesai. Stok listing berkurang 1 (sisa ${stockResult.stock}).`
+      : "Midman memverifikasi transaksi COD selesai",
+    metadata: stockResult.updated
+      ? { listing_id: stockResult.listingId, stock_remaining: stockResult.stock }
+      : null,
   });
 
   revalidatePath(`/owner/escrow/${escrowId}`);
   revalidatePath("/owner");
-  
-  return { success: true };
+  revalidatePath("/seller");
+  revalidatePath("/marketplace");
+  if (stockResult.listingId) {
+    revalidatePath(`/marketplace/${stockResult.listingId}`);
+  }
+
+  return {
+    success: true,
+    escrow: verifiedEscrow,
+    stock: stockResult.updated ? stockResult.stock : null,
+  };
 }
 
