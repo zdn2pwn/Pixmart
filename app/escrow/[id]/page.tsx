@@ -29,14 +29,20 @@ export default async function EscrowRoomPage({
   const { id } = await params;
   const supabase = await createSupabaseServerClient();
 
-  // Fetch escrow session with related data
+  // Fetch escrow session with related data + negotiation + listing via negotiation
   const { data: room } = await supabase
     .from("escrow_sessions")
     .select(`
       *,
       buyer:profiles!escrow_sessions_buyer_id_fkey(id, codename, email),
       seller:profiles!escrow_sessions_seller_id_fkey(id, codename, email),
-      listing:marketplace_listings(*)
+      negotiation:negotiations(
+        id,
+        listing_id,
+        current_offer_btc,
+        current_offer_xmr,
+        listing:marketplace_listings(*)
+      )
     `)
     .eq("id", id)
     .single();

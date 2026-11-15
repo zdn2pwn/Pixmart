@@ -28,7 +28,9 @@ export default async function EscrowListPage() {
       *,
       buyer:profiles!escrow_sessions_buyer_id_fkey(id, codename, email),
       seller:profiles!escrow_sessions_seller_id_fkey(id, codename, email),
-      listing:marketplace_listings(*)
+      negotiation:negotiations(
+        listing:marketplace_listings(*)
+      )
     `)
     .or(`buyer_id.eq.${userId},seller_id.eq.${userId}`)
     .order("created_at", { ascending: false });
@@ -75,11 +77,19 @@ export default async function EscrowListPage() {
         ) : (
           <div className="space-y-4">
             {rooms.map((room: any) => {
-              const hasImage = room.listing?.images && room.listing.images.length > 0;
+              const listing = room.negotiation?.listing;
+              const hasImage = listing?.images && listing.images.length > 0;
               const isCompleted = room.status === "COMPLETED";
               const isDisputed = room.status === "DISPUTED";
               const counterparty =
                 room.buyer_id === userId ? room.seller?.codename : room.buyer?.codename;
+              
+              // Calculate IDR from crypto
+              const btcToIdr = 1400000000;
+              const xmrToIdr = 3500000;
+              const agreedPriceIdr = room.crypto_type === 'BTC' 
+                ? Math.round((room.agreed_price_btc || 0) * btcToIdr)
+                : Math.round((room.agreed_price_xmr || 0) * xmrToIdr);
 
               return (
                 <Link
@@ -92,8 +102,8 @@ export default async function EscrowListPage() {
                       <div className="w-16 h-16 bg-[#181818] border border-[#333] shrink-0 overflow-hidden flex items-center justify-center">
                         {hasImage ? (
                           <img
-                            src={room.listing.images[0]}
-                            alt={room.listing.title}
+                            src={listing.images[0]}
+                            alt={listing.title}
                             className="w-full h-full object-cover"
                           />
                         ) : (
@@ -103,16 +113,16 @@ export default async function EscrowListPage() {
 
                       <div className="space-y-1">
                         <div className="flex items-center gap-2 text-[11px] font-mono text-[#888]">
-                          <span className="text-[#39FF14] font-bold">Room #{room.id}</span>
+                          <span className="text-[#39FF14] font-bold">Room #{room.id.slice(0, 8)}</span>
                           <span>•</span>
                           <span>Lawan: {counterparty}</span>
                         </div>
                         <h3 className="text-sm font-bold text-white group-hover:text-[#39FF14] transition-colors line-clamp-1">
-                          {room.listing?.title || "Produk"}
+                          {room.item_title || listing?.title || "Produk"}
                         </h3>
                         <div className="text-xs font-mono text-[#aaa] flex items-center gap-3">
                           <span className="text-white font-bold">
-                            Rp {(room.final_price_idr || 0).toLocaleString("id-ID")}
+                            Rp {agreedPriceIdr.toLocaleString("id-ID")}
                           </span>
                           <span className="text-[#666]">|</span>
                           <span className="flex items-center gap-1 text-[#39FF14]">

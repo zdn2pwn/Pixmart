@@ -117,6 +117,7 @@ export async function createDirectEscrowAction(formData: FormData) {
 
   // Create escrow session with generated ID
   const escrowId = crypto.randomUUID();
+  const escrowAddress = `escrow_${escrowId.slice(0, 8)}`;
   
   const { data: escrow, error } = await supabase
     .from("escrow_sessions")
@@ -124,11 +125,13 @@ export async function createDirectEscrowAction(formData: FormData) {
       id: escrowId,
       buyer_id: session.userId,
       seller_id: listing.seller_id,
-      listing_id: listingId,
       negotiation_id: negotiationId,
+      item_title: listing.title,
       agreed_price_btc: listing.price_btc,
       agreed_price_xmr: listing.price_xmr,
-      status: "PENDING_DEPOSIT",
+      crypto_type: "BTC", // Default BTC untuk direct buy
+      escrow_address: escrowAddress,
+      status: "AWAITING_DEPOSIT",
     })
     .select()
     .single();
@@ -180,7 +183,6 @@ export async function proposeMeetingAction(formData: FormData) {
     .from("escrow_sessions")
     .update({ 
       meeting_proposal: meetingProposal,
-      status: "MEETING_PROPOSED"
     })
     .eq("id", roomId);
 
@@ -211,7 +213,6 @@ export async function acceptMeetingAction(roomId: string) {
     .from("escrow_sessions")
     .update({ 
       meeting_accepted: true,
-      status: "MEETING_SCHEDULED"
     })
     .eq("id", roomId);
 
@@ -244,7 +245,6 @@ export async function confirmArrivalAction(roomId: string) {
     .from("escrow_sessions")
     .update({ 
       [field]: true,
-      status: "IN_PROGRESS"
     })
     .eq("id", roomId);
 
@@ -289,13 +289,19 @@ export async function confirmCodHandshakeAction(roomId: string) {
   const sellerConfirmed = field === "seller_confirmed" ? true : currentRoom.seller_confirmed;
   const bothConfirmed = buyerConfirmed && sellerConfirmed;
 
+  const updateData: any = {
+    [field]: true,
+  };
+  
+  // Only update status and completed_at if both confirmed
+  if (bothConfirmed) {
+    updateData.completed_at = new Date().toISOString();
+    // Don't update status, let it stay as is
+  }
+
   const { error } = await supabase
     .from("escrow_sessions")
-    .update({ 
-      [field]: true,
-      status: bothConfirmed ? "COMPLETED" : "IN_PROGRESS",
-      completed_at: bothConfirmed ? new Date().toISOString() : null,
-    })
+    .update(updateData)
     .eq("id", roomId);
 
   if (error) {
@@ -349,7 +355,6 @@ export async function fileDisputeAction(formData: FormData) {
     .from("escrow_sessions")
     .update({ 
       dispute,
-      status: "DISPUTED"
     })
     .eq("id", roomId);
 
@@ -392,7 +397,6 @@ export async function resolveDisputeAction(formData: FormData) {
     .from("escrow_sessions")
     .update({ 
       dispute_resolution: resolutionNote,
-      status: "RESOLVED"
     })
     .eq("id", roomId);
 

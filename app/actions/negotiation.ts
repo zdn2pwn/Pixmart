@@ -191,23 +191,43 @@ export async function acceptOfferAction(formData: FormData) {
       .update({ status: "ACCEPTED" })
       .eq("id", negotiationId);
 
+    // Get listing info
+    const { data: listing } = await supabase
+      .from("marketplace_listings")
+      .select("title")
+      .eq("id", nego.listing_id)
+      .single();
+
+    // Use agreed crypto prices (whichever is NOT null)
+    const agreedPriceBtc = nego.current_offer_btc;
+    const agreedPriceXmr = nego.current_offer_xmr;
+    
+    // Determine crypto type
+    const cryptoType = agreedPriceBtc && agreedPriceBtc > 0 ? 'BTC' : 'XMR';
+
+    // Generate escrow address (placeholder for now)
+    const escrowAddress = `escrow_${crypto.randomUUID().slice(0, 8)}`;
+
+    // Insert with CORRECT column names
     const { data: escrow, error } = await supabase
       .from("escrow_sessions")
       .insert({
         buyer_id: nego.buyer_id,
         seller_id: nego.seller_id,
-        listing_id: nego.listing_id,
         negotiation_id: negotiationId,
-        agreed_price_btc: nego.current_offer_btc,
-        agreed_price_xmr: nego.current_offer_xmr,
-        status: "PENDING_DEPOSIT",
+        item_title: listing?.title || "Produk",
+        agreed_price_btc: agreedPriceBtc,
+        agreed_price_xmr: agreedPriceXmr,
+        crypto_type: cryptoType,
+        escrow_address: escrowAddress,
+        status: "AWAITING_DEPOSIT",
       })
       .select()
       .single();
 
     if (error || !escrow) {
-      console.error("[AcceptOffer] Error:", error);
-      return { success: false, error: "Gagal membuat escrow session" };
+      console.error("[AcceptOffer] Error creating escrow:", error);
+      return { success: false, error: `Gagal membuat escrow session: ${error?.message || 'Unknown error'}` };
     }
 
     revalidatePath(`/negotiations/${negotiationId}`);
@@ -217,6 +237,7 @@ export async function acceptOfferAction(formData: FormData) {
       success: true,
       escrowRoomId: escrow.id,
       bothAgreed: true,
+      message: "Escrow room berhasil dibuat! Redirect...",
     };
   }
 
