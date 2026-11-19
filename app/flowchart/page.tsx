@@ -47,7 +47,7 @@ flowchart TD
     WISH --> NTF[Notifikasi]
     NEGO --> NTF
     ESC --> NTF
-    L --> NF[404 Not Found]
+    L -. "URL tidak ditemukan" .-> NF[404 Not Found]
 
     classDef buyer fill:#dcfce7,stroke:#16a34a,color:#14532d,stroke-width:2px;
     classDef seller fill:#dbeafe,stroke:#2563eb,color:#1e3a8a,stroke-width:2px;
@@ -164,3 +164,4 @@ export default function FlowchartPage() {
     </main>
   );
 }
+
