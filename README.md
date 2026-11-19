@@ -1,6 +1,6 @@
 # PIXMART
 
-PIXMART is a demo local marketplace for physical goods. Buyers and sellers negotiate price and meeting point, then complete the deal in person (cash on delivery) with a simulated escrow and dual confirmation. All balances, deposits, and cryptocurrency (BTC/XMR) are simulated; no real funds move.
+PIXMART is a demo Anonymous local marketplace for physical goods. Buyers and sellers negotiate price and meeting point, then complete the deal in person (cash on delivery) with a simulated escrow and dual confirmation. All balances, deposits, and cryptocurrency (BTC/XMR) are simulated; no real funds move.
 
 The interface uses an arcade-inspired design system with dark-first theming, lime accents, and vendored 8-bit UI primitives.
 
