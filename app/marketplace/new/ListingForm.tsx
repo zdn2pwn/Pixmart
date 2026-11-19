@@ -40,11 +40,6 @@ const IMAGE_PRESETS = [
   },
 ];
 
-function formatRupiah(value: string): string {
-  if (!value) return "";
-  return Number(value).toLocaleString("id-ID");
-}
-
 export function ListingForm() {
   const [isPending, startTransition] = useTransition();
 
@@ -217,11 +212,11 @@ export function ListingForm() {
                 Harga Jual Patokan (IDR) <span className="text-[#C8FF4D]">*</span>
               </label>
               <input
-                type="text"
-                inputMode="numeric"
-                value={formatRupiah(fiatEstimateIdr)}
-                onChange={(e) => setFiatEstimateIdr(e.target.value.replace(/\\D/g, ""))}
-                placeholder="0"
+                type="number"
+                value={fiatEstimateIdr}
+                onChange={(e) => setFiatEstimateIdr(e.target.value)}
+                min={50000}
+                step={50000}
                 className="input-dark w-full py-2.5 px-3 text-sm font-mono font-bold text-[#C8FF4D]"
                 required
               />
@@ -415,5 +410,3 @@ export function ListingForm() {
     </div>
   );
 }
-
-
