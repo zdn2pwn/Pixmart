@@ -10,7 +10,7 @@ const embedHtml = `<mermaid-embed src="https://mermaid.live/embed?theme=default&
 %%{init: {'theme':'default','themeVariables':{'background':'#ffffff','primaryColor':'#f9fafb','primaryTextColor':'#111827','primaryBorderColor':'#6b7280','lineColor':'#4b5563'}}}%%
 flowchart TD
     A([Start]) --> L[Landing /]
-    L --> AUTH{Akun?}
+    L --> AUTH{Sudah punya akun?}
     AUTH -- Ya --> LG[Login]
     AUTH -- Tidak --> RG[Register]
     RG --> ONB[Onboarding&lt;br/&gt;pilih role &amp; wallet]
