@@ -4,6 +4,10 @@ PIXMART is a demo Anonymous local marketplace for physical goods. Buyers and sel
 
 The interface uses an arcade-inspired design system with dark-first theming, lime accents, and vendored 8-bit UI primitives.
 
+## Preview
+
+![PIXMART Neon Local Marketplace](public/pixmart-neon-local-marketplace.png)
+
 ## Features
 
 - Marketplace catalog with filters for city, category, radius, and sort order
@@ -143,3 +147,5 @@ The project is deployed on Vercel. To deploy your own instance:
 ## License
 
 This repository is provided for demo and presentation purposes.
+
+
