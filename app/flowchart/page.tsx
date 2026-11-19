@@ -1,48 +1,68 @@
-import { ArrowDown, Circle } from "lucide-react";
+import Script from "next/script";
 
 export const metadata = {
   title: "Flowchart | PIXMART",
   description: "Flowchart alur aplikasi PIXMART.",
 };
 
-type Tone = "buyer" | "seller" | "midman" | "neutral";
+const embedHtml = `<mermaid-embed src="https://mermaid.live/embed?theme=default&look=neo&mode=light" height="640">
+%%{init: {'theme':'default','themeVariables':{'background':'#ffffff','primaryColor':'#f9fafb','primaryTextColor':'#111827','primaryBorderColor':'#6b7280','lineColor':'#4b5563'}}}%%
+flowchart TD
+    A([Start]) --> L[Landing /]
+    L --> AUTH{Akun?}
+    AUTH -- Ya --> LG[Login]
+    AUTH -- Tidak --> RG[Register]
+    RG --> ONB[Onboarding&lt;br/&gt;pilih role &amp; wallet]
+    LG --> SETUP{Setup selesai?}
+    SETUP -- Belum --> ONB
+    SETUP -- Sudah --> ROLE{Role}
+    ONB --> ROLE
 
-const TONE: Record<Tone, string> = {
-  buyer: "border-emerald-400/60 bg-emerald-400/5 text-emerald-100",
-  seller: "border-sky-400/60 bg-sky-400/5 text-sky-100",
-  midman: "border-amber-400/60 bg-amber-400/5 text-amber-100",
-  neutral: "border-white/15 bg-white/5 text-cream",
-};
+    ROLE -->|Buyer| BD[Buyer Dashboard]
+    BD --> MKT[Marketplace&lt;br/&gt;filter kota/kategori/radius]
+    MKT --> DET[Detail Produk]
+    DET --> WISH[Wishlist]
+    DET --> NEGO[Nego&lt;br/&gt;chat &amp; offer]
+    NEGO --> ESC[Escrow]
+    ESC --> P1[Proposal Pertemuan]
+    P1 --> P2[Konfirmasi Jadwal]
+    P2 --> P3[Kedatangan Buyer &amp; Seller]
+    P3 --> P4[Handshake Dua Pihak]
+    P4 --> OK[Selesai]
+    BD --> PROF[Profil&lt;br/&gt;wallet &amp; reputasi]
 
-function Node({ title, desc, tone = "neutral" }: { title: string; desc?: string; tone?: Tone }) {
-  return (
-    <div className={`rounded-md border px-4 py-3 ${TONE[tone]}`}>
-      <div className="text-sm font-semibold tracking-tight">{title}</div>
-      {desc && <div className="mt-1 text-[12px] leading-snug opacity-80">{desc}</div>}
-    </div>
-  );
-}
+    ROLE -->|Seller| SD[Seller Dashboard]
+    SD --> NEW[Pasang/Edit Iklan&lt;br/&gt;stok &amp; lokasi]
+    NEW --> LST[(Listing ACTIVE)]
+    LST --> MKT
+    SD --> INB[Nego Masuk]
+    INB --> NEGO
 
-function Arrow() {
-  return (
-    <div className="flex justify-center py-1 text-muted-ink">
-      <ArrowDown size={16} />
-    </div>
-  );
-}
+    ROLE -->|Midman| OD[Midman Dashboard]
+    OD --> Q[Antrian Escrow]
+    Q --> VER[Verifikasi &amp; Rilis Dana]
+    VER --> OK
 
-function Branch({ label }: { label: string }) {
-  return (
-    <div className="my-2 text-center font-mono text-[10px] font-bold uppercase tracking-[0.16em] text-muted-ink">
-      {label}
-    </div>
-  );
-}
+    WISH --> NTF[Notifikasi]
+    NEGO --> NTF
+    ESC --> NTF
+    L --> NF[404 Not Found]
+
+    classDef buyer fill:#dcfce7,stroke:#16a34a,color:#14532d,stroke-width:2px;
+    classDef seller fill:#dbeafe,stroke:#2563eb,color:#1e3a8a,stroke-width:2px;
+    classDef midman fill:#fef9c3,stroke:#ca8a04,color:#713f12,stroke-width:2px;
+    classDef neutral fill:#f3f4f6,stroke:#6b7280,color:#111827;
+
+    class BD,MKT,DET,WISH,NEGO,ESC,P1,P2,P3,P4,OK,PROF buyer;
+    class SD,NEW,LST,INB seller;
+    class OD,Q,VER midman;
+    class A,L,AUTH,LG,RG,ONB,SETUP,ROLE,NTF,NF neutral;
+</mermaid-embed>`;
 
 export default function FlowchartPage() {
   return (
     <main className="min-h-screen bg-ink text-cream">
-      <div className="mx-auto max-w-4xl px-4 py-10 sm:px-8">
+      <div className="mx-auto max-w-5xl px-4 py-8 sm:px-8">
         <p className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-lime">
           Alur aplikasi
         </p>
@@ -50,111 +70,84 @@ export default function FlowchartPage() {
           Flowchart PIXMART
         </h1>
         <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-ink">
-          Alur end-to-end dari landing, autentikasi, onboarding, hingga transaksi
-          escrow untuk tiga peran utama.
+          Diagram alur end-to-end dari landing hingga transaksi escrow untuk
+          tiga peran utama. Gunakan legenda di bawah untuk membaca warna.
         </p>
 
-        {/* Legend */}
-        <div className="mt-6 flex flex-wrap gap-3 font-mono text-[10px] font-bold uppercase tracking-[0.12em]">
-          <span className="flex items-center gap-2 rounded border border-emerald-400/40 bg-emerald-400/5 px-2.5 py-1 text-emerald-100">
-            <Circle size={8} className="fill-emerald-400 text-emerald-400" /> Buyer
-          </span>
-          <span className="flex items-center gap-2 rounded border border-sky-400/40 bg-sky-400/5 px-2.5 py-1 text-sky-100">
-            <Circle size={8} className="fill-sky-400 text-sky-400" /> Seller
-          </span>
-          <span className="flex items-center gap-2 rounded border border-amber-400/40 bg-amber-400/5 px-2.5 py-1 text-amber-100">
-            <Circle size={8} className="fill-amber-400 text-amber-400" /> Midman
-          </span>
-          <span className="flex items-center gap-2 rounded border border-white/15 bg-white/5 px-2.5 py-1 text-cream">
-            <Circle size={8} className="fill-white/60 text-white/60" /> Umum
-          </span>
+        {/* Mermaid embed */}
+        <div className="mt-6 overflow-hidden rounded-md border border-line bg-white p-2">
+          <Script src="https://mermaid.live/embed.js" strategy="afterInteractive" />
+          <div dangerouslySetInnerHTML={{ __html: embedHtml }} />
         </div>
 
-        {/* Entry & Auth */}
+        {/* Legend */}
         <section className="mt-8">
           <h2 className="font-mono text-[11px] font-bold uppercase tracking-[0.18em] text-muted-ink">
-            1. Masuk & autentikasi
+            Legenda
           </h2>
-          <div className="mt-3 space-y-2">
-            <Node title="Landing /" desc="Halaman utama PIXMART" />
-            <Arrow />
-            <Node title="Punya akun?" desc="Login atau register" />
-            <Arrow />
-            <div className="grid gap-2 sm:grid-cols-2">
-              <Node title="Login" desc="Verifikasi email & password" />
-              <Node title="Register" desc="Buat akun baru" />
-            </div>
-            <Arrow />
-            <Node title="Onboarding" desc="Pilih role & isi wallet" />
-            <Arrow />
-            <Node title="Setup selesai?" desc="Belum: onboarding, Sudah: ke role" />
-            <Arrow />
-            <Node title="Role" desc="Buyer / Seller / Midman" />
+          <div className="mt-3 flex flex-wrap gap-3 font-mono text-[10px] font-bold uppercase tracking-[0.12em]">
+            <span className="rounded border border-emerald-400/40 bg-emerald-400/5 px-2.5 py-1 text-emerald-100">
+              Buyer
+            </span>
+            <span className="rounded border border-sky-400/40 bg-sky-400/5 px-2.5 py-1 text-sky-100">
+              Seller
+            </span>
+            <span className="rounded border border-amber-400/40 bg-amber-400/5 px-2.5 py-1 text-amber-100">
+              Midman
+            </span>
+            <span className="rounded border border-white/15 bg-white/5 px-2.5 py-1 text-cream">
+              Umum
+            </span>
           </div>
         </section>
 
-        {/* Buyer */}
-        <section className="mt-10">
-          <h2 className="font-mono text-[11px] font-bold uppercase tracking-[0.18em] text-emerald-300">
-            2. Alur Buyer
-          </h2>
-          <div className="mt-3 space-y-2">
-            <Node title="Buyer Dashboard" tone="buyer" />
-            <Arrow />
-            <Node title="Marketplace" desc="Filter kota, kategori, radius" tone="buyer" />
-            <Arrow />
-            <Node title="Detail Produk" desc="Lihat info & wishlist" tone="buyer" />
-            <Arrow />
-            <Node title="Negosiasi" desc="Chat & penawaran harga" tone="buyer" />
-            <Arrow />
-            <Node title="Escrow" desc="Proposal, konfirmasi, kedatangan, handshake" tone="buyer" />
-            <Arrow />
-            <Node title="Selesai" desc="Transaksi tuntas" tone="buyer" />
-            <Branch label="juga" />
-            <Node title="Profil" desc="Wallet & reputasi" tone="buyer" />
-          </div>
-        </section>
-
-        {/* Seller */}
-        <section className="mt-10">
-          <h2 className="font-mono text-[11px] font-bold uppercase tracking-[0.18em] text-sky-300">
-            3. Alur Seller
-          </h2>
-          <div className="mt-3 space-y-2">
-            <Node title="Seller Dashboard" tone="seller" />
-            <Arrow />
-            <Node title="Pasang/Edit Iklan" desc="Stok & lokasi" tone="seller" />
-            <Arrow />
-            <Node title="Listing ACTIVE" desc="Tampil di marketplace" tone="seller" />
-            <Arrow />
-            <Node title="Negosiasi Masuk" desc="Respon penawaran buyer" tone="seller" />
-          </div>
-        </section>
-
-        {/* Midman */}
-        <section className="mt-10">
-          <h2 className="font-mono text-[11px] font-bold uppercase tracking-[0.18em] text-amber-300">
-            4. Alur Midman (Owner)
-          </h2>
-          <div className="mt-3 space-y-2">
-            <Node title="Midman Dashboard" tone="midman" />
-            <Arrow />
-            <Node title="Antrian Escrow" desc="Transaksi butuh aksi" tone="midman" />
-            <Arrow />
-            <Node title="Verifikasi & Rilis Dana" desc="Setelah handshake dua pihak" tone="midman" />
-          </div>
-        </section>
-
-        {/* Shared */}
-        <section className="mt-10">
+        {/* Penjelasan */}
+        <section className="mt-8">
           <h2 className="font-mono text-[11px] font-bold uppercase tracking-[0.18em] text-muted-ink">
-            5. Bersama
+            Penjelasan alur
           </h2>
-          <div className="mt-3 grid gap-2 sm:grid-cols-3">
-            <Node title="Notifikasi" desc="Bell & dropdown" />
-            <Node title="Wishlist" desc="Simpan listing" />
-            <Node title="404 Arcade" desc="Halaman tidak ditemukan" />
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            <div className="rounded-md border border-line bg-surface p-4">
+              <div className="text-sm font-semibold text-cream">Buyer</div>
+              <p className="mt-1 text-[12px] leading-relaxed text-muted-ink">
+                Mencari produk, negosiasi harga, masuk escrow, lalu menyelesaikan
+                handshake dua pihak setelah cek barang.
+              </p>
+            </div>
+            <div className="rounded-md border border-line bg-surface p-4">
+              <div className="text-sm font-semibold text-cream">Seller</div>
+              <p className="mt-1 text-[12px] leading-relaxed text-muted-ink">
+                Memasang iklan, mengelola stok dan lokasi, merespon negosiasi,
+                dan menyerahkan barang saat pertemuan.
+              </p>
+            </div>
+            <div className="rounded-md border border-line bg-surface p-4">
+              <div className="text-sm font-semibold text-cream">Midman</div>
+              <p className="mt-1 text-[12px] leading-relaxed text-muted-ink">
+                Memantau antrian escrow dan memverifikasi transaksi setelah
+                kedua pihak konfirmasi.
+              </p>
+            </div>
+            <div className="rounded-md border border-line bg-surface p-4">
+              <div className="text-sm font-semibold text-cream">Escrow</div>
+              <p className="mt-1 text-[12px] leading-relaxed text-muted-ink">
+                Proposal pertemuan, konfirmasi jadwal, kedatangan, dan handshake
+                dua pihak sebelum penyelesaian.
+              </p>
+            </div>
           </div>
+        </section>
+
+        {/* Catatan */}
+        <section className="mt-8 rounded-md border border-amber-400/30 bg-amber-400/5 p-4">
+          <div className="font-mono text-[10px] font-bold uppercase tracking-[0.16em] text-amber-300">
+            Catatan
+          </div>
+          <p className="mt-2 text-[12px] leading-relaxed text-muted-ink">
+            Escrow, saldo, dan cryptocurrency (BTC/XMR) pada aplikasi ini
+            bersifat simulasi untuk keperluan demo. Tidak ada dana nyata yang
+            bergerak.
+          </p>
         </section>
       </div>
     </main>
