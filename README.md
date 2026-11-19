@@ -92,9 +92,9 @@ supabase/migrations/       SQL migrations
 
 Note: the base schema itself is not included in this repository; ensure those base tables exist in your Supabase project before running the migrations.
 
-   - `supabase/migrations/20240116000000_add_stock_column.sql`
-   - `supabase/migrations/20240117000000_add_soft_delete_to_escrow.sql`
-   - `supabase/migrations/001_wow_features.sql`
+   - `supabase/migrations/001_add_stock_column.sql`
+   - `supabase/migrations/002_add_soft_delete_to_escrow.sql`
+   - `supabase/migrations/003_wow_features.sql`
 
 5. Start the development server:
 
@@ -149,6 +149,7 @@ The project is deployed on Vercel. To deploy your own instance:
 ## License
 
 This repository is provided for demo and presentation purposes.
+
 
 
 
