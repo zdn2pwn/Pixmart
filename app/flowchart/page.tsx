@@ -1,3 +1,4 @@
+import Link from "next/link";
 import Script from "next/script";
 
 export const metadata = {
@@ -149,6 +150,16 @@ export default function FlowchartPage() {
             bergerak.
           </p>
         </section>
+
+        {/* Tombol ke landing */}
+        <div className="mt-10 flex justify-center">
+          <Link
+            href="/"
+            className="btn-primary !border-lime !bg-lime !text-ink hover:!bg-lime/80"
+          >
+            Kembali ke Landing
+          </Link>
+        </div>
       </div>
     </main>
   );
