@@ -88,7 +88,9 @@ supabase/migrations/       SQL migrations
    NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
    ```
 
-4. Run the database migrations in the Supabase SQL Editor, in order:
+4. Run the database migrations in the Supabase SQL Editor, in order (these extend the base schema tables such as `profiles`, `marketplace_listings`, `escrow_sessions`, and `negotiations`):
+
+Note: the base schema itself is not included in this repository; ensure those base tables exist in your Supabase project before running the migrations.
 
    - `supabase/migrations/20240116000000_add_stock_column.sql`
    - `supabase/migrations/20240117000000_add_soft_delete_to_escrow.sql`
@@ -147,5 +149,6 @@ The project is deployed on Vercel. To deploy your own instance:
 ## License
 
 This repository is provided for demo and presentation purposes.
+
 
 
